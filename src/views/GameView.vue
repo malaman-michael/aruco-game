@@ -2,6 +2,7 @@
   <div class="game-view">
     <div class="viewport" ref="viewportEl">
       <CameraView
+        ref="cameraViewRef"
         :active="isActive"
         @unknown-marker="onUnknownMarker"
         @frame-processed="onFrameProcessed"
@@ -34,7 +35,19 @@
     />
 
     <!-- Pannello impostazioni -->
-    <CameraSettingsPanel :visible="showSettings" @close="showSettings = false" />
+    <CameraSettingsPanel
+      :visible="showSettings"
+      @close="showSettings = false"
+      @calibrate="showSettings = false; showCalibration = true"
+    />
+
+    <!-- Modal taratura automatica -->
+    <CalibrationModal
+      :visible="showCalibration"
+      :get-frame="getCalibrationFrame"
+      @close="showCalibration = false"
+      @applied="showCalibration = false"
+    />
 
     <!-- Pannello lista pedine -->
     <transition name="slide-up">
@@ -67,17 +80,23 @@
 import { ref, computed, onMounted } from 'vue'
 import CameraView from '../components/CameraView.vue'
 import MarkerSetupDialog from '../components/MarkerSetupDialog.vue'
+import CameraSettingsPanel from '../components/CameraSettingsPanel.vue'
+import CalibrationModal from '../components/CalibrationModal.vue'
 import { useMarkersStore, CORNER_ROLES } from '../stores/markersStore.js'
 import { useGameStore } from '../stores/gameStore.js'
 
 const markersStore = useMarkersStore()
 const gameStore    = useGameStore()
 
-const isActive      = ref(true)
-const showSettings  = ref(false)
-const showPieceList = ref(false)
-const dialogVisible = ref(false)
-const unknownMarker = ref(null)
+const isActive        = ref(true)
+const showSettings    = ref(false)
+const showCalibration = ref(false)
+const showPieceList   = ref(false)
+const dialogVisible   = ref(false)
+const unknownMarker   = ref(null)
+
+// Ref al componente CameraView per poter leggere il frame corrente
+const cameraViewRef = ref(null)
 
 onMounted(() => gameStore.startGame())
 
@@ -91,6 +110,14 @@ function onUnknownMarker(marker) {
 }
 
 function onFrameProcessed() {}
+
+/**
+ * Fornisce al CalibrationModal il frame corrente + il detector.
+ * CameraView espone questi tramite defineExpose.
+ */
+function getCalibrationFrame() {
+  return cameraViewRef.value?.getCalibrationData?.() ?? { imageData: null, detector: null }
+}
 </script>
 
 <style scoped>

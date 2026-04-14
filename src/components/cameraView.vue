@@ -363,7 +363,25 @@ function drawMarkers(ctx, markers, H, videoW) {
   })
 }
 
-// ─── Logica di gioco ───────────────────────────────────────────────────────
+// ─── Espone dati per la taratura automatica ───────────────────────────────────
+defineExpose({
+  getCalibrationData() {
+    if (!video.videoWidth || !offCtx) return { imageData: null, detector: null }
+    // Cattura il frame corrente (senza filtri — la taratura li testa da sola)
+    const tmp = new OffscreenCanvas(video.videoWidth, video.videoHeight)
+    const c   = tmp.getContext('2d')
+    c.drawImage(video, 0, 0)
+    const imageData = c.getImageData(0, 0, video.videoWidth, video.videoHeight)
+    const detector  = window.AR?.DICTIONARIES ? (() => {
+      // Restituisce il detector già costruito
+      try { return arucoService?._detector ?? null } catch { return null }
+    })() : null
+    // Il detector lo prendiamo da window.AR direttamente
+    const AR = window.AR
+    const det = AR ? new AR.Detector({ dictionaryName: Object.keys(AR.DICTIONARIES ?? {})[0] }) : null
+    return { imageData, detector: det }
+  }
+})
 function handleGameLogic(markers, H) {
   for (const m of markers) {
     if (!markersStore.isKnown(m.id)) { emit('unknown-marker', m); break }

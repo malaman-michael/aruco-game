@@ -9,6 +9,11 @@
             <button class="close-btn" @click="$emit('close')">✕</button>
           </div>
 
+          <!-- Taratura automatica -->
+          <div class="section">
+            <button class="btn-calibrate" @click="$emit('calibrate')">🎯 Avvia taratura automatica</button>
+          </div>
+
           <!-- Immagine -->
           <div class="section">
             <div class="section-title">📷 Immagine</div>
@@ -88,7 +93,7 @@ import { useCameraStore } from '../stores/cameraStore.js'
 import SliderRow from './SliderRow.vue'
 
 defineProps({ visible: { type: Boolean, default: false } })
-defineEmits(['close'])
+defineEmits(['close','calibrate'])
 
 const cam = useCameraStore()
 
@@ -162,4 +167,18 @@ function applyPreset(name) {
 
 .slide-up-enter-active, .slide-up-leave-active { transition: transform 0.25s ease; }
 .slide-up-enter-from, .slide-up-leave-to { transform: translateY(100%); }
+
+.btn-calibrate {
+  width: 100%; background: #1a3a2a; border: 2px solid #2a6a3a;
+  border-radius: 12px; color: #7fff7f; padding: 0.8rem;
+  font-size: 1rem; cursor: pointer; font-weight: 600;
+}
+</style>
+
+<style>
+.btn-calibrate {
+  width: 100%; background: linear-gradient(135deg, #2a4a2a, #1a3a3a);
+  border: 2px solid #3a7a3a; border-radius: 12px; color: #7fff7f;
+  padding: 0.8rem; font-size: 1rem; cursor: pointer; font-weight: 600;
+}
 </style>

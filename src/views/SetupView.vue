@@ -1,203 +1,476 @@
 <template>
   <div class="setup-view">
+
+    <!-- Header -->
     <div class="setup-header">
-      <button class="back-btn" @click="$router.push('/')">← Indietro</button>
+      <button class="back-btn" @click="$router.push('/')">←</button>
       <h1>Configurazione</h1>
+      <div class="header-actions">
+        <button class="icon-action" title="Esporta JSON" @click="doExport">💾</button>
+        <label class="icon-action" title="Importa JSON">
+          📂<input type="file" accept=".json" hidden @change="doImport">
+        </label>
+      </div>
     </div>
 
-    <!-- Griglia -->
-    <section class="card">
-      <h2>Dimensioni griglia</h2>
-      <div class="grid-inputs">
-        <label>
-          Colonne
-          <input type="number" v-model.number="cols" min="4" max="30" />
-        </label>
-        <label>
-          Righe
-          <input type="number" v-model.number="rows" min="4" max="30" />
-        </label>
-      </div>
-      <button class="btn-primary" @click="saveGrid">Salva griglia</button>
-    </section>
-
-    <!-- Marker registrati -->
-    <section class="card">
-      <h2>Marker registrati ({{ Object.keys(markersStore.registry).length }})</h2>
-      <div v-if="!Object.keys(markersStore.registry).length" class="empty-list">
-        Nessun marker configurato — puntate la fotocamera sui marker durante il gioco.
-      </div>
-      <div class="marker-list">
-        <div
-          v-for="(data, id) in markersStore.registry"
-          :key="id"
-          class="marker-row"
-          :class="data.category"
-        >
-          <span class="marker-emoji">{{ data.emoji }}</span>
-          <div class="marker-info">
-            <strong>{{ data.label }}</strong>
-            <small>#{{ id }} · {{ data.category }}</small>
-          </div>
-          <button class="del-btn" @click="deleteMarker(id)">🗑</button>
-        </div>
-      </div>
-      <button v-if="Object.keys(markersStore.registry).length" class="btn-danger" @click="clearAll">
-        Cancella tutto
+    <!-- Tabs -->
+    <div class="tabs">
+      <button v-for="t in tabs" :key="t.id" class="tab" :class="{ active: activeTab === t.id }" @click="activeTab = t.id">
+        {{ t.icon }} {{ t.label }}
       </button>
-    </section>
+    </div>
 
-    <!-- Corner status -->
-    <section class="card">
-      <h2>Angoli griglia</h2>
-      <div class="corners-grid">
-        <div
-          v-for="pos in cornerRoles"
-          :key="pos"
-          class="corner-chip"
-          :class="{ assigned: !!markersStore.corners[pos] }"
-        >
-          <strong>{{ pos }}</strong>
-          <small v-if="markersStore.corners[pos]">#{{ markersStore.corners[pos].id }}</small>
-          <small v-else>—</small>
+    <!-- ══════════════ TAB: GRIGLIA ══════════════ -->
+    <div v-if="activeTab === 'grid'" class="tab-content">
+      <div class="card">
+        <h2>Dimensioni griglia</h2>
+        <div class="grid-inputs">
+          <label>Colonne<input type="number" v-model.number="cols" min="4" max="40" /></label>
+          <label>Righe<input type="number" v-model.number="rows" min="4" max="40" /></label>
+        </div>
+        <button class="btn-primary" @click="saveGrid">Salva griglia</button>
+      </div>
+
+      <!-- Stato angoli -->
+      <div class="card">
+        <h2>Marker angolo griglia</h2>
+        <div class="corners-visual">
+          <div class="corner-grid-display">
+            <div v-for="pos in ['NO','NE','SO','SE']" :key="pos"
+              class="corner-chip" :class="{ assigned: !!markersStore.corners[pos] }">
+              <strong>{{ pos }}</strong>
+              <small v-if="markersStore.corners[pos]">#{{ markersStore.corners[pos].id }}</small>
+              <small v-else>—</small>
+            </div>
+          </div>
+          <p class="corners-hint">Assegna i 4 angoli puntando la camera sui marker durante il gioco</p>
         </div>
       </div>
-    </section>
+    </div>
+
+    <!-- ══════════════ TAB: MARKER ══════════════ -->
+    <div v-if="activeTab === 'markers'" class="tab-content">
+
+      <!-- Filtri -->
+      <div class="filters">
+        <select v-model="filterCat" class="filter-select">
+          <option value="">Tutti i tipi</option>
+          <option value="corner">📍 Angolo</option>
+          <option value="player">🧙 Giocatore</option>
+          <option value="enemy">💀 Nemico</option>
+          <option value="furniture">🚪 Mobile</option>
+        </select>
+        <input v-model="filterSearch" class="filter-input" placeholder="Cerca ID o nome…" />
+      </div>
+
+      <!-- Tabella marker -->
+      <div class="marker-table-wrap">
+        <table class="marker-table" v-if="filteredMarkers.length">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Emoji</th>
+              <th>Nome</th>
+              <th>Tipo</th>
+              <th>Sottotipo</th>
+              <th>Descrizione</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="m in filteredMarkers" :key="m.id"
+              :class="['row-' + m.category, { editing: editingId === m.id }]">
+
+              <td class="col-id">#{{ m.id }}</td>
+              <td class="col-emoji">{{ m.emoji }}</td>
+
+              <!-- Nome (editabile) -->
+              <td class="col-name">
+                <template v-if="editingId === m.id">
+                  <input class="edit-input" v-model="editData.label" />
+                </template>
+                <template v-else>{{ m.label }}</template>
+              </td>
+
+              <!-- Tipo -->
+              <td class="col-type">
+                <span class="type-badge" :class="m.category">{{ catLabel(m.category) }}</span>
+              </td>
+
+              <!-- Sottotipo (editabile) -->
+              <td class="col-sub">
+                <template v-if="editingId === m.id">
+                  <select class="edit-select" v-model="editData.role">
+                    <option v-for="opt in subtypeOptions(editData.category)" :key="opt.id" :value="opt.id">
+                      {{ opt.emoji }} {{ opt.label }}
+                    </option>
+                  </select>
+                </template>
+                <template v-else>{{ subtypeLabel(m.category, m.role) }}</template>
+              </td>
+
+              <!-- Descrizione (editabile) -->
+              <td class="col-desc">
+                <template v-if="editingId === m.id">
+                  <input class="edit-input" v-model="editData.description" placeholder="descrizione opzionale" />
+                </template>
+                <template v-else>{{ m.description || '—' }}</template>
+              </td>
+
+              <!-- Azioni -->
+              <td class="col-actions">
+                <template v-if="editingId === m.id">
+                  <button class="act-btn save" @click="saveEdit(m.id)">✓</button>
+                  <button class="act-btn cancel" @click="editingId = null">✕</button>
+                </template>
+                <template v-else>
+                  <button class="act-btn edit" @click="startEdit(m)">✏️</button>
+                  <button class="act-btn del"  @click="deleteMarker(m.id)">🗑</button>
+                </template>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div v-else class="empty-table">
+          {{ Object.keys(markersStore.registry).length === 0
+            ? 'Nessun marker configurato — punta la camera sui marker durante il gioco'
+            : 'Nessun marker corrisponde ai filtri' }}
+        </div>
+      </div>
+
+      <button v-if="Object.keys(markersStore.registry).length" class="btn-danger" @click="clearAll">
+        🗑 Cancella tutti i marker
+      </button>
+    </div>
+
+    <!-- ══════════════ TAB: IMPORT/EXPORT ══════════════ -->
+    <div v-if="activeTab === 'io'" class="tab-content">
+      <div class="card">
+        <h2>Esporta configurazione</h2>
+        <p class="card-desc">Salva griglia, marker e impostazioni camera in un file JSON.</p>
+        <button class="btn-primary" @click="doExport">💾 Scarica JSON</button>
+      </div>
+
+      <div class="card">
+        <h2>Importa configurazione</h2>
+        <p class="card-desc">Carica un file JSON esportato in precedenza.<br>
+          <strong>Attenzione:</strong> sovrascrive tutti i marker e le impostazioni attuali.</p>
+        <label class="btn-secondary file-label">
+          📂 Scegli file JSON
+          <input type="file" accept=".json" hidden @change="doImport">
+        </label>
+      </div>
+
+      <!-- Anteprima ultima importazione -->
+      <div v-if="importResult" class="card" :class="importResult.ok ? 'card-ok' : 'card-err'">
+        <h2>{{ importResult.ok ? '✓ Importazione riuscita' : '⚠️ Importazione con errori' }}</h2>
+        <p v-if="importResult.ok">
+          Importati {{ importResult.imported?.markers?.length ?? 0 }} marker,
+          griglia {{ importResult.imported?.grid?.cols }}×{{ importResult.imported?.grid?.rows }}.
+        </p>
+        <ul v-if="importResult.errors.length">
+          <li v-for="e in importResult.errors" :key="e" class="err-item">{{ e }}</li>
+        </ul>
+      </div>
+
+      <!-- Schema del formato JSON -->
+      <div class="card">
+        <h2>Formato file JSON</h2>
+        <pre class="json-schema">{{ jsonSchema }}</pre>
+      </div>
+    </div>
+
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { useMarkersStore, CORNER_ROLES } from '../stores/markersStore.js'
+import { ref, computed } from 'vue'
+import { useMarkersStore, CORNER_ROLES, PLAYER_TYPES, ENEMY_TYPES, FURNITURE_TYPES } from '../stores/markersStore.js'
 import { useGameStore } from '../stores/gameStore.js'
-import { useRouter } from 'vue-router'
+import { useCameraStore } from '../stores/cameraStore.js'
+import { downloadConfig, importConfig, readFile } from '../services/configIO.js'
 
-const router = useRouter()
 const markersStore = useMarkersStore()
-const gameStore = useGameStore()
+const gameStore    = useGameStore()
+const cameraStore  = useCameraStore()
 
 const cols = ref(gameStore.gridCols)
 const rows = ref(gameStore.gridRows)
-const cornerRoles = CORNER_ROLES
 
+const activeTab   = ref('markers')
+const filterCat   = ref('')
+const filterSearch = ref('')
+const editingId   = ref(null)
+const editData    = ref({})
+const importResult = ref(null)
+
+const tabs = [
+  { id: 'markers', label: 'Marker',        icon: '🎲' },
+  { id: 'grid',    label: 'Griglia',       icon: '📐' },
+  { id: 'io',      label: 'Import/Export', icon: '📁' },
+]
+
+// ─── Griglia ─────────────────────────────────────────────────────────────────
 function saveGrid() {
   gameStore.setGridSize(cols.value, rows.value)
-  router.push('/')
+}
+
+// ─── Filtri tabella ───────────────────────────────────────────────────────────
+const filteredMarkers = computed(() => {
+  return Object.entries(markersStore.registry)
+    .map(([id, data]) => ({ id: Number(id), ...data }))
+    .filter(m => {
+      if (filterCat.value && m.category !== filterCat.value) return false
+      if (filterSearch.value) {
+        const q = filterSearch.value.toLowerCase()
+        if (!String(m.id).includes(q) && !(m.label ?? '').toLowerCase().includes(q)) return false
+      }
+      return true
+    })
+    .sort((a, b) => a.id - b.id)
+})
+
+// ─── Labels ───────────────────────────────────────────────────────────────────
+const CAT_LABELS = { corner: 'Angolo', player: 'Giocatore', enemy: 'Nemico', furniture: 'Mobile' }
+function catLabel(cat) { return CAT_LABELS[cat] ?? cat }
+
+const ALL_SUBTYPES = {
+  corner:    CORNER_ROLES.map(r => ({ id: r, label: r, emoji: '📍' })),
+  player:    PLAYER_TYPES,
+  enemy:     ENEMY_TYPES,
+  furniture: FURNITURE_TYPES,
+}
+
+function subtypeOptions(cat) { return ALL_SUBTYPES[cat] ?? [] }
+
+function subtypeLabel(cat, role) {
+  if (!role) return '—'
+  const found = (ALL_SUBTYPES[cat] ?? []).find(o => o.id === role)
+  return found ? `${found.emoji} ${found.label}` : role
+}
+
+// ─── Editing inline ───────────────────────────────────────────────────────────
+function startEdit(m) {
+  editingId.value = m.id
+  editData.value  = {
+    label:       m.label,
+    role:        m.role,
+    description: m.description ?? '',
+    category:    m.category,
+  }
+}
+
+function saveEdit(id) {
+  const current = markersStore.getMarker(id)
+  const sub     = subtypeOptions(editData.value.category).find(o => o.id === editData.value.role)
+  markersStore.register(id, {
+    ...current,
+    label:       editData.value.label,
+    role:        editData.value.role,
+    description: editData.value.description,
+    emoji:       sub?.emoji ?? current.emoji,
+  })
+  editingId.value = null
 }
 
 function deleteMarker(id) {
-  markersStore.unregister(id)
+  if (confirm(`Eliminare marker #${id}?`)) markersStore.unregister(id)
 }
 
 function clearAll() {
-  if (confirm('Cancellare tutti i marker registrati?')) {
-    markersStore.clearAll()
-  }
+  if (confirm('Eliminare TUTTI i marker?')) markersStore.clearAll()
 }
+
+// ─── Import / Export ──────────────────────────────────────────────────────────
+function doExport() {
+  downloadConfig(markersStore, gameStore, cameraStore)
+}
+
+async function doImport(evt) {
+  const file = evt.target.files?.[0]
+  if (!file) return
+  try {
+    const text = await readFile(file)
+    importResult.value = importConfig(text, markersStore, gameStore, cameraStore)
+    if (importResult.value.ok) {
+      cols.value = gameStore.gridCols
+      rows.value = gameStore.gridRows
+    }
+  } catch (e) {
+    importResult.value = { ok: false, errors: [e.message] }
+  }
+  evt.target.value = ''
+}
+
+// ─── Schema JSON ──────────────────────────────────────────────────────────────
+const jsonSchema = `{
+  "version": "1.0",
+  "exportedAt": "2024-01-01T00:00:00.000Z",
+  "grid": { "cols": 10, "rows": 10 },
+  "camera": {
+    "brightness": 100, "contrast": 100,
+    "saturation": 100, "threshold": 0,
+    "grayscale": false, "sharpness": 0
+  },
+  "markers": [
+    {
+      "id": 0,
+      "category": "corner",
+      "role": "NO",
+      "label": "Angolo NO",
+      "emoji": "📍",
+      "description": ""
+    },
+    {
+      "id": 5,
+      "category": "player",
+      "role": "warrior",
+      "label": "Guerriero",
+      "emoji": "⚔️",
+      "description": "Il tank del gruppo"
+    }
+  ]
+}`
 </script>
 
 <style scoped>
 .setup-view {
-  min-height: 100vh;
-  background: #0f0f1e;
-  color: #eee;
-  padding: 1rem;
-  padding-top: env(safe-area-inset-top, 1rem);
+  min-height: 100vh; background: #0f0f1e; color: #eee;
+  padding-bottom: 2rem;
 }
 
 .setup-header {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  display: flex; align-items: center; gap: 0.8rem;
+  padding: 1rem 1rem env(safe-area-inset-top, 0.5rem);
+  background: #1a1a2e; position: sticky; top: 0; z-index: 10;
 }
-h1 { margin: 0; font-size: 1.3rem; }
-.back-btn { background: none; border: none; color: #7c9ef5; font-size: 1rem; cursor: pointer; }
+h1 { margin: 0; font-size: 1.2rem; flex: 1; }
+.back-btn { background: none; border: none; color: #7c9ef5; font-size: 1.2rem; cursor: pointer; padding: 0.3rem; }
+.header-actions { display: flex; gap: 0.4rem; }
+.icon-action {
+  background: #2a2a4a; border: 1px solid #3a3a6a; border-radius: 8px;
+  color: #ccc; padding: 0.4rem 0.6rem; font-size: 1rem; cursor: pointer;
+}
+
+.tabs {
+  display: flex; gap: 0; background: #1a1a2e;
+  border-bottom: 2px solid #2a2a4a; padding: 0 1rem;
+}
+.tab {
+  background: none; border: none; color: #888; padding: 0.7rem 1rem;
+  font-size: 0.85rem; cursor: pointer; border-bottom: 2px solid transparent;
+  margin-bottom: -2px; transition: all 0.15s; white-space: nowrap;
+}
+.tab.active { color: #7c9ef5; border-bottom-color: #4a7cf5; }
+
+.tab-content { padding: 1rem; display: flex; flex-direction: column; gap: 1rem; }
 
 .card {
-  background: #1a1a2e;
-  border-radius: 14px;
-  padding: 1.2rem;
-  margin-bottom: 1.2rem;
+  background: #1a1a2e; border-radius: 14px; padding: 1.2rem;
 }
-h2 { margin: 0 0 1rem; font-size: 1rem; color: #bbb; }
+.card-ok  { border: 1px solid #2a6a2a; background: #1a2a1a; }
+.card-err { border: 1px solid #6a2a2a; background: #2a1a1a; }
+h2 { margin: 0 0 0.8rem; font-size: 0.95rem; color: #bbb; }
+.card-desc { color: #888; font-size: 0.88rem; line-height: 1.6; margin-bottom: 0.8rem; }
 
-.grid-inputs {
-  display: flex;
-  gap: 1.5rem;
-  margin-bottom: 1rem;
-}
-label {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  font-size: 0.9rem;
-  color: #aaa;
-}
+.grid-inputs { display: flex; gap: 1.5rem; margin-bottom: 1rem; }
+label { display: flex; flex-direction: column; gap: 0.4rem; font-size: 0.88rem; color: #aaa; }
 input[type=number] {
-  background: #2a2a4a;
-  border: 2px solid #3a3a6a;
-  border-radius: 8px;
-  color: #eee;
-  padding: 0.5rem 0.7rem;
-  font-size: 1rem;
-  width: 80px;
+  background: #2a2a4a; border: 2px solid #3a3a6a; border-radius: 8px;
+  color: #eee; padding: 0.5rem 0.7rem; font-size: 1rem; width: 80px;
 }
 
-.btn-primary {
-  background: #4a7cf5;
-  color: #fff;
-  border: none;
-  border-radius: 10px;
-  padding: 0.7rem 1.5rem;
-  font-size: 0.95rem;
-  cursor: pointer;
-}
-.btn-danger {
-  background: #e54040;
-  color: #fff;
-  border: none;
-  border-radius: 10px;
-  padding: 0.6rem 1.2rem;
-  font-size: 0.9rem;
-  cursor: pointer;
-  margin-top: 0.8rem;
-}
-
-.marker-list { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 0.5rem; }
-.marker-row {
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
-  background: #2a2a4a;
-  border-radius: 10px;
-  padding: 0.6rem 0.8rem;
-}
-.marker-row.player   { border-left: 3px solid #4a7cf5; }
-.marker-row.enemy    { border-left: 3px solid #e54040; }
-.marker-row.furniture { border-left: 3px solid #b87820; }
-.marker-row.corner   { border-left: 3px solid #ffd700; }
-.marker-emoji { font-size: 1.5rem; }
-.marker-info { flex: 1; }
-.marker-info strong { display: block; font-size: 0.9rem; }
-.marker-info small { color: #888; font-family: monospace; font-size: 0.78rem; }
-.del-btn { background: none; border: none; cursor: pointer; font-size: 1rem; }
-
-.empty-list { color: #666; font-size: 0.9rem; padding: 0.5rem 0; }
-
-.corners-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.6rem;
-}
+/* Angoli */
+.corners-visual { display: flex; flex-direction: column; gap: 0.8rem; }
+.corner-grid-display { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; max-width: 200px; }
 .corner-chip {
-  background: #2a2a4a;
-  border-radius: 10px;
-  padding: 0.7rem;
-  text-align: center;
-  border: 2px solid #3a3a6a;
+  background: #2a2a4a; border: 2px solid #3a3a6a; border-radius: 10px;
+  padding: 0.6rem; text-align: center;
 }
 .corner-chip.assigned { border-color: #ffd700; }
-.corner-chip strong { display: block; font-size: 1.1rem; }
-.corner-chip small { color: #888; font-family: monospace; }
+.corner-chip strong { display: block; font-size: 1rem; }
+.corner-chip small  { color: #888; font-family: monospace; font-size: 0.78rem; }
+.corners-hint { font-size: 0.82rem; color: #666; }
+
+/* Filtri */
+.filters { display: flex; gap: 0.6rem; }
+.filter-select, .filter-input {
+  background: #2a2a4a; border: 1px solid #3a3a6a; border-radius: 8px;
+  color: #eee; padding: 0.5rem 0.7rem; font-size: 0.88rem;
+}
+.filter-select { flex: 0 0 auto; }
+.filter-input  { flex: 1; }
+
+/* Tabella */
+.marker-table-wrap { overflow-x: auto; border-radius: 12px; background: #1a1a2e; }
+.marker-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.marker-table thead tr { background: #2a2a4a; }
+.marker-table th {
+  padding: 0.6rem 0.8rem; text-align: left; color: #888;
+  font-weight: 600; font-size: 0.78rem; text-transform: uppercase;
+  border-bottom: 2px solid #3a3a6a; white-space: nowrap;
+}
+.marker-table td { padding: 0.55rem 0.8rem; border-bottom: 1px solid #222244; vertical-align: middle; }
+.marker-table tr:last-child td { border-bottom: none; }
+.marker-table tr.editing td { background: #1e2040; }
+
+.row-corner   td:first-child { border-left: 3px solid #ffd700; }
+.row-player   td:first-child { border-left: 3px solid #4a7cf5; }
+.row-enemy    td:first-child { border-left: 3px solid #e54040; }
+.row-furniture td:first-child { border-left: 3px solid #b87820; }
+
+.col-id    { font-family: monospace; color: #888; width: 50px; }
+.col-emoji { width: 40px; font-size: 1.2rem; }
+.col-name  { font-weight: 500; }
+.col-type  { width: 90px; }
+.col-sub   { color: #aaa; }
+.col-desc  { color: #666; font-size: 0.82rem; max-width: 140px; }
+.col-actions { width: 72px; white-space: nowrap; }
+
+.type-badge {
+  display: inline-block; padding: 0.15rem 0.5rem; border-radius: 6px;
+  font-size: 0.75rem; font-weight: 600;
+}
+.type-badge.corner    { background: #3a3000; color: #ffd700; }
+.type-badge.player    { background: #1a2a4a; color: #7cb8ff; }
+.type-badge.enemy     { background: #3a1a1a; color: #ff8888; }
+.type-badge.furniture { background: #3a2a1a; color: #ffb060; }
+
+.edit-input, .edit-select {
+  background: #2a2a5a; border: 1px solid #4a4a8a; border-radius: 6px;
+  color: #eee; padding: 0.3rem 0.5rem; font-size: 0.85rem; width: 100%;
+}
+
+.act-btn {
+  background: none; border: none; cursor: pointer; padding: 0.2rem 0.3rem;
+  font-size: 0.95rem; border-radius: 4px;
+}
+.act-btn.save   { color: #7fff7f; }
+.act-btn.cancel { color: #ff8888; }
+.act-btn.edit   { color: #aaa; }
+.act-btn.del    { color: #ff6666; }
+
+.empty-table { padding: 2rem; text-align: center; color: #555; font-size: 0.9rem; }
+
+/* Import/Export */
+.btn-primary {
+  background: #4a7cf5; color: #fff; border: none;
+  border-radius: 10px; padding: 0.7rem 1.5rem; font-size: 0.95rem; cursor: pointer;
+}
+.btn-secondary {
+  background: #2a2a4a; color: #aaa; border: 2px solid #3a3a6a;
+  border-radius: 10px; padding: 0.6rem 1.2rem; font-size: 0.9rem; cursor: pointer;
+}
+.btn-danger {
+  background: #3a1a1a; color: #ff8888; border: 2px solid #6a2a2a;
+  border-radius: 10px; padding: 0.6rem 1.2rem; font-size: 0.9rem; cursor: pointer;
+}
+.file-label { display: inline-block; cursor: pointer; }
+.err-item { color: #ff8888; font-size: 0.85rem; margin: 0.2rem 0; }
+
+.json-schema {
+  background: #0f0f1e; border-radius: 8px; padding: 0.8rem;
+  font-size: 0.75rem; color: #7c9ef5; overflow-x: auto;
+  font-family: monospace; line-height: 1.5; margin: 0;
+}
 </style>
