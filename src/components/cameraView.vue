@@ -120,9 +120,9 @@ function processFrame() {
 
 // ─── Preprocessing (miglioramento per detection) ──────────────────────────
 function preprocessFrame(w, h) {
-  const needsProcessing = cam.brightness.value !== 100 || cam.contrast.value !== 100
-    || cam.saturation.value !== 100 || cam.grayscale.value || cam.threshold.value > 0
-    || cam.sharpness.value > 0
+  const needsProcessing = cam.brightness !== 100 || cam.contrast !== 100
+    || cam.saturation !== 100 || cam.grayscale || cam.threshold > 0
+    || cam.sharpness > 0
   if (!needsProcessing) return false
 
   // Disegna con filtri CSS nel canvas offscreen
@@ -131,22 +131,22 @@ function preprocessFrame(w, h) {
   offCtx.filter = 'none'
 
   // Sharpness: unsharp mask semplice
-  if (cam.sharpness.value > 0) {
-    applySharpness(offCtx, w, h, cam.sharpness.value)
+  if (cam.sharpness > 0) {
+    applySharpness(offCtx, w, h, cam.sharpness)
   }
 
   // Threshold adattivo (binarizzazione)
-  if (cam.threshold.value > 0) {
-    applyThreshold(offCtx, w, h, cam.threshold.value)
+  if (cam.threshold > 0) {
+    applyThreshold(offCtx, w, h, cam.threshold)
   }
 
   return true
 }
 
 function buildCSSFilter() {
-  const b = cam.brightness.value
-  const c = cam.contrast.value
-  const s = cam.grayscale.value ? 0 : cam.saturation.value
+  const b = cam.brightness
+  const c = cam.contrast
+  const s = cam.grayscale ? 0 : cam.saturation
   return `brightness(${b}%) contrast(${c}%) saturate(${s}%)`
 }
 
@@ -206,7 +206,7 @@ function drawGrid(ctx, H, w, h) {
   const cols = gameStore.gridCols
   const rows = gameStore.gridRows
   const invH = invert3x3(H)
-  const opacity = cam.gridOpacity.value
+  const opacity = cam.gridOpacity
 
   ctx.save()
   ctx.strokeStyle = `rgba(100, 200, 255, ${opacity})`
@@ -286,7 +286,7 @@ function invert3x3(m) {
 
 // ─── Disegno marker ────────────────────────────────────────────────────────
 function drawMarkers(ctx, markers, H, videoW) {
-  if (!cam.showIds.value && !cam.showCubes.value) return
+  if (!cam.showIds && !cam.showCubes) return
   const fontSize = Math.max(16, videoW * 0.025)
 
   markers.forEach(({ id, corners, center }) => {
@@ -307,7 +307,7 @@ function drawMarkers(ctx, markers, H, videoW) {
     ctx.strokeStyle = color; ctx.lineWidth = 3; ctx.stroke()
 
     // Effetto cubo (faccia superiore)
-    if (cam.showCubes.value) {
+    if (cam.showCubes) {
       const lift = Math.max(18, videoW * 0.022)
       // Faccia top semitrasparente
       ctx.beginPath()
@@ -339,8 +339,8 @@ function drawMarkers(ctx, markers, H, videoW) {
     ctx.fillStyle = '#ffff00'; ctx.fill()
 
     // Label ID + emoji + posizione griglia
-    if (cam.showIds.value) {
-      const lift   = cam.showCubes.value ? Math.max(18, videoW * 0.022) : 0
+    if (cam.showIds) {
+      const lift   = cam.showCubes ? Math.max(18, videoW * 0.022) : 0
       const textY  = Math.min(...corners.map(c=>c.y)) - lift - 8
       const known  = markersStore.getMarker(id)
       let label    = `#${id}`

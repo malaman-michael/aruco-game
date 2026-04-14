@@ -69,6 +69,8 @@ export function createArucoService() {
     let rawMarkers = []
     try {
       rawMarkers = detector.detect(imageData)
+      console.info('Marker',rawMarkers)
+
     } catch (e) {
       console.warn('[ArUco] errore detect:', e.message)
       return []

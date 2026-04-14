@@ -9,76 +9,69 @@
             <button class="close-btn" @click="$emit('close')">✕</button>
           </div>
 
-          <!-- SEZIONE: Immagine -->
+          <!-- Immagine -->
           <div class="section">
             <div class="section-title">📷 Immagine</div>
 
-            <SliderRow label="Luminosità" :value="cam.brightness.value" :min="30" :max="250" unit="%"
-              @update="v => { cam.brightness.value = v; cam.save() }" />
-
-            <SliderRow label="Contrasto" :value="cam.contrast.value" :min="50" :max="400" unit="%"
-              @update="v => { cam.contrast.value = v; cam.save() }" />
-
-            <SliderRow label="Saturazione" :value="cam.saturation.value" :min="0" :max="200" unit="%"
-              @update="v => { cam.saturation.value = v; cam.save() }" />
-
-            <SliderRow label="Nitidezza" :value="cam.sharpness.value" :min="0" :max="5" :step="1" unit=""
-              @update="v => { cam.sharpness.value = v; cam.save() }" />
+            <SliderRow label="Luminosità"  :value="cam.brightness"  :min="30"  :max="250" unit="%" @update="v => { cam.brightness  = v; cam.save() }" />
+            <SliderRow label="Contrasto"   :value="cam.contrast"    :min="50"  :max="400" unit="%" @update="v => { cam.contrast    = v; cam.save() }" />
+            <SliderRow label="Saturazione" :value="cam.saturation"  :min="0"   :max="200" unit="%" @update="v => { cam.saturation  = v; cam.save() }" />
+            <SliderRow label="Nitidezza"   :value="cam.sharpness"   :min="0"   :max="5"   unit=""  :step="1" @update="v => { cam.sharpness = v; cam.save() }" />
           </div>
 
-          <!-- SEZIONE: Binarizzazione -->
+          <!-- Binarizzazione -->
           <div class="section">
-            <div class="section-title">🔲 Binarizzazione (aiuta con scarsa luce)</div>
+            <div class="section-title">🔲 Binarizzazione (scarsa luce)</div>
 
             <div class="toggle-row">
               <span class="toggle-label">Scala di grigi</span>
-              <button class="toggle-btn" :class="{ active: cam.grayscale.value }"
-                @click="cam.grayscale.value = !cam.grayscale.value; cam.save()">
-                {{ cam.grayscale.value ? 'ON' : 'OFF' }}
+              <button class="toggle-btn" :class="{ active: cam.grayscale }"
+                @click="cam.grayscale = !cam.grayscale; cam.save()">
+                {{ cam.grayscale ? 'ON' : 'OFF' }}
               </button>
             </div>
 
-            <SliderRow label="Soglia binarizzazione" :value="cam.threshold.value"
+            <SliderRow label="Soglia binarizzazione" :value="cam.threshold"
               :min="0" :max="255" unit="" hint="0 = disabilitata"
-              @update="v => { cam.threshold.value = v; cam.save() }" />
+              @update="v => { cam.threshold = v; cam.save() }" />
 
             <div class="preset-row">
-              <span class="preset-label">Preset rapidi:</span>
+              <span class="preset-label">Preset:</span>
               <button class="preset-btn" @click="applyPreset('bright')">☀️ Luce intensa</button>
               <button class="preset-btn" @click="applyPreset('dark')">🌙 Poca luce</button>
               <button class="preset-btn" @click="applyPreset('mixed')">⛅ Mista</button>
             </div>
           </div>
 
-          <!-- SEZIONE: Overlay -->
+          <!-- Overlay AR -->
           <div class="section">
             <div class="section-title">🗺️ Overlay AR</div>
 
             <div class="toggle-row">
               <span class="toggle-label">Mostra griglia</span>
-              <button class="toggle-btn" :class="{ active: cam.showGrid.value }"
-                @click="cam.showGrid.value = !cam.showGrid.value; cam.save()">
-                {{ cam.showGrid.value ? 'ON' : 'OFF' }}
+              <button class="toggle-btn" :class="{ active: cam.showGrid }"
+                @click="cam.showGrid = !cam.showGrid; cam.save()">
+                {{ cam.showGrid ? 'ON' : 'OFF' }}
               </button>
             </div>
 
-            <SliderRow label="Opacità griglia" :value="Math.round(cam.gridOpacity.value * 100)"
+            <SliderRow label="Opacità griglia" :value="Math.round(cam.gridOpacity * 100)"
               :min="10" :max="100" unit="%"
-              @update="v => { cam.gridOpacity.value = v / 100; cam.save() }" />
+              @update="v => { cam.gridOpacity = v / 100; cam.save() }" />
 
             <div class="toggle-row">
               <span class="toggle-label">ID sui marker</span>
-              <button class="toggle-btn" :class="{ active: cam.showIds.value }"
-                @click="cam.showIds.value = !cam.showIds.value; cam.save()">
-                {{ cam.showIds.value ? 'ON' : 'OFF' }}
+              <button class="toggle-btn" :class="{ active: cam.showIds }"
+                @click="cam.showIds = !cam.showIds; cam.save()">
+                {{ cam.showIds ? 'ON' : 'OFF' }}
               </button>
             </div>
 
             <div class="toggle-row">
               <span class="toggle-label">Effetto cubo 3D</span>
-              <button class="toggle-btn" :class="{ active: cam.showCubes.value }"
-                @click="cam.showCubes.value = !cam.showCubes.value; cam.save()">
-                {{ cam.showCubes.value ? 'ON' : 'OFF' }}
+              <button class="toggle-btn" :class="{ active: cam.showCubes }"
+                @click="cam.showCubes = !cam.showCubes; cam.save()">
+                {{ cam.showCubes ? 'ON' : 'OFF' }}
               </button>
             </div>
           </div>
@@ -107,39 +100,37 @@ const PRESETS = {
 
 function applyPreset(name) {
   const p = PRESETS[name]
-  cam.brightness.value  = p.brightness
-  cam.contrast.value    = p.contrast
-  cam.saturation.value  = p.saturation
-  cam.grayscale.value   = p.grayscale
-  cam.threshold.value   = p.threshold
-  cam.sharpness.value   = p.sharpness
+  cam.brightness = p.brightness
+  cam.contrast   = p.contrast
+  cam.saturation = p.saturation
+  cam.grayscale  = p.grayscale
+  cam.threshold  = p.threshold
+  cam.sharpness  = p.sharpness
   cam.save()
 }
 </script>
 
 <style scoped>
 .settings-backdrop {
-  position: fixed; inset: 0;
-  background: rgba(0,0,0,0.6);
-  display: flex; align-items: flex-end; justify-content: center;
-  z-index: 200;
+  position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+  display: flex; align-items: flex-end; justify-content: center; z-index: 200;
 }
 .settings-panel {
-  background: #1a1a2e; color: #eee;
-  border-radius: 20px 20px 0 0;
-  padding: 1.2rem 1rem 2rem;
-  width: 100%; max-width: 480px;
+  background: #1a1a2e; color: #eee; border-radius: 20px 20px 0 0;
+  padding: 1.2rem 1rem 2rem; width: 100%; max-width: 480px;
   max-height: 85vh; overflow-y: auto;
 }
 .panel-header {
-  display: flex; justify-content: space-between; align-items: center;
-  margin-bottom: 1rem;
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;
 }
 .panel-title { font-size: 1.1rem; font-weight: 600; }
 .close-btn { background: none; border: none; color: #aaa; font-size: 1.1rem; cursor: pointer; }
 
 .section { margin-bottom: 1.2rem; }
-.section-title { font-size: 0.85rem; color: #7c9ef5; font-weight: 600; margin-bottom: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; }
+.section-title {
+  font-size: 0.8rem; color: #7c9ef5; font-weight: 600;
+  margin-bottom: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em;
+}
 
 .toggle-row {
   display: flex; justify-content: space-between; align-items: center;
@@ -148,12 +139,14 @@ function applyPreset(name) {
 .toggle-label { font-size: 0.9rem; color: #ccc; }
 .toggle-btn {
   background: #2a2a4a; border: 2px solid #3a3a6a; border-radius: 8px;
-  color: #888; padding: 0.3rem 0.8rem; font-size: 0.85rem; cursor: pointer; min-width: 52px;
-  transition: all 0.15s;
+  color: #888; padding: 0.3rem 0.8rem; font-size: 0.85rem; cursor: pointer;
+  min-width: 52px; transition: all 0.15s;
 }
 .toggle-btn.active { background: #2a4a8a; border-color: #4a7cf5; color: #7cb8ff; }
 
-.preset-row { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.6rem; }
+.preset-row {
+  display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.6rem;
+}
 .preset-label { font-size: 0.8rem; color: #888; }
 .preset-btn {
   background: #2a2a4a; border: 1px solid #3a3a6a; border-radius: 8px;
