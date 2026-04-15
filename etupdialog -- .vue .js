@@ -1,0 +1,2 @@
+[35msrc/views/GameView.vue[m[36m:[m[32m38[m[36m:[m    <[1;31mCameraSettingsPanel[m
+[35msrc/views/GameView.vue[m[36m:[m[32m83[m[36m:[mimport [1;31mCameraSettingsPanel[m from '../components/[1;31mCamerasettingspanel[m.vue'

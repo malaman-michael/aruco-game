@@ -78,10 +78,10 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import CameraView from '../components/Cameraview.vue'
-import MarkerSetupDialog from '../components/Markersetupdialog.vue'
-import CameraSettingsPanel from '../components/Camerasettingspanel.vue'
-import CalibrationModal from '../components/Calibrationmodal.vue'
+import CameraView from '../components/CameraView2.vue'
+import MarkerSetupDialog from '../components/MarkerSetupDialog_temp.vue'
+import CameraSettingsPanel from '../components/CameraSettingsPanel2.vue'
+import CalibrationModal from '../components/CalibrationModal2.vue'
 import { useMarkersStore, CORNER_ROLES } from '../stores/markersStore.js'
 import { useGameStore } from '../stores/gameStore.js'
 
