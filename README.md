@@ -147,7 +147,7 @@ aruco-game/
 │   │   ├── arucoService.js       ← wrapper js-aruco2 + dizionario 4x4_50
 │   │   ├── homographyService.js  ← DLT homography + inversione 3x3
 │   │   ├── calibrationService.js ← taratura automatica (~300 combinazioni)
-│   │   └── configIO.js           ← import/export JSON configurazione
+│   │   └── configio.js           ← import/export JSON configurazione
 │   │
 │   ├── components/
 │   │   ├── CameraView.vue        ← canvas unico: feed + detection + overlay AR
