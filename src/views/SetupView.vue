@@ -188,7 +188,7 @@ import { ref, computed } from 'vue'
 import { useMarkersStore, CORNER_ROLES, PLAYER_TYPES, ENEMY_TYPES, FURNITURE_TYPES } from '../stores/markersStore.js'
 import { useGameStore } from '../stores/gameStore.js'
 import { useCameraStore } from '../stores/cameraStore.js'
-import { downloadConfig, importConfig, readFile } from '../services/configio.js'
+import { downloadConfig, importConfig, readFile } from '../services/configIO.js'
 
 const markersStore = useMarkersStore()
 const gameStore    = useGameStore()
