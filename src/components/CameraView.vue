@@ -12,7 +12,7 @@ import { createArucoService } from '../services/arucoService.js'
 import { useMarkersStore, MARKER_CATEGORIES } from '../stores/markersStore.js'
 import { useGameStore } from '../stores/gameStore.js'
 import { useCameraStore } from '../stores/cameraStore.js'
-import { buildHomographyFromCorners, pointToCell, computeHomography, applyHomography } from '../services/homographyService.js'
+import { buildHomographyFromCorners, pointToCell } from '../services/homographyService.js'
 
 const props = defineProps({
   active: { type: Boolean, default: true },
@@ -40,11 +40,6 @@ let arucoService = null
 let rafId = null
 let stream = null
 let ctx = null
-
-// Ultima omografia valida (smooth — non resettata se i corner escono per un frame)
-let lastH = null
-let lastHTimestamp = 0
-const H_TIMEOUT_MS = 2000 // mantieni l'ultima H per 2 secondi
 
 onMounted(async () => {
   try {
@@ -184,21 +179,18 @@ function applyThreshold(ctx, w, h, thresh) {
 }
 
 // ─── Omografia ─────────────────────────────────────────────────────────────
+// Ogni corner visibile nel frame aggiorna la sua posizione nello store.
+// L'omografia viene ricalcolata nello store non appena tutti e 4 i corner
+// sono stati visti almeno una volta — e rimane valida per sempre.
 function computeH(markers) {
-  const detectedCorners = {}
   for (const m of markers) {
     const data = markersStore.getMarker(m.id)
-    if (data?.category === MARKER_CATEGORIES.CORNER) detectedCorners[data.role] = { ...m, ...data }
+    if (data?.category === MARKER_CATEGORIES.CORNER && data.role) {
+      gameStore.updateCornerPosition(data.role, m.center)
+    }
   }
-
-  if (markersStore.allCornersAssigned) {
-    const H = buildHomographyFromCorners(detectedCorners, gameStore.gridCols, gameStore.gridRows)
-    if (H) { lastH = H; lastHTimestamp = Date.now() }
-  }
-
-  // Mantieni l'ultima H valida per H_TIMEOUT_MS
-  if (lastH && Date.now() - lastHTimestamp < H_TIMEOUT_MS) return lastH
-  return null
+  // L'omografia aggiornata è in gameStore.homography
+  return gameStore.homography
 }
 
 // ─── Disegno griglia proiettata ────────────────────────────────────────────
@@ -382,31 +374,44 @@ defineExpose({
     return { imageData, detector: det }
   }
 })
+// ─── Logica di gioco ───────────────────────────────────────────────────────
 function handleGameLogic(markers, H) {
+  // Marker sconosciuti → chiedi configurazione
   for (const m of markers) {
     if (!markersStore.isKnown(m.id)) { emit('unknown-marker', m); break }
   }
 
-  const detectedCorners = {}
-  for (const m of markers) {
-    const data = markersStore.getMarker(m.id)
-    if (data?.category === MARKER_CATEGORIES.CORNER) detectedCorners[data.role] = { ...m, ...data }
-  }
-
+  // Calcola posizione griglia per ogni pedina non-corner
+  // H viene da gameStore (persistente) — valido anche se i corner non sono nel frame
   const pieces = []
   for (const m of markers) {
     const data = markersStore.getMarker(m.id)
     if (!data || data.category === MARKER_CATEGORIES.CORNER) continue
+
     let col = null, row = null
     if (H) {
       const cell = pointToCell(H, m.center, gameStore.gridCols, gameStore.gridRows)
-      col = cell.col; row = cell.row
+      col = cell.col
+      row = cell.row
     }
-    pieces.push({ id: m.id, ...data, col, row, angle: m.angle, center: m.center, corners: m.corners })
+
+    pieces.push({
+      id: m.id, ...data,
+      col, row,
+      angle:   m.angle,
+      center:  m.center,
+      corners: m.corners,
+    })
   }
 
   gameStore.updatePieces(pieces)
-  emit('frame-processed', { markers, pieces, homography: H, videoW: video.videoWidth, videoH: video.videoHeight })
+  emit('frame-processed', {
+    markers,
+    pieces,
+    homography: H,
+    videoW: video.videoWidth,
+    videoH: video.videoHeight,
+  })
 }
 </script>
 

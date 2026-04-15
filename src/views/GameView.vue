@@ -19,10 +19,14 @@
     <!-- Status bar -->
     <div class="status-bar">
       <span v-if="!markersStore.allCornersAssigned" class="status-warning">
-        ⚠️ Angoli mancanti: {{ missingCorners.join(', ') }}
+        ⚠️ Angoli non configurati: vai in Configurazione
+      </span>
+      <span v-else-if="!gameStore.homographyReady" class="status-warning">
+        📍 Inquadra i 4 angoli ({{ gameStore.cornersAcquired }}/4 acquisiti)
       </span>
       <span v-else class="status-ok">
         ✓ {{ gameStore.gridCols }}×{{ gameStore.gridRows }} · {{ gameStore.pieces.length }} pedine
+        <button class="reset-h-btn" @click="gameStore.resetHomography()" title="Ricalibra griglia">↺</button>
       </span>
     </div>
 
@@ -141,7 +145,12 @@ function getCalibrationFrame() {
   padding: 0.4rem 1rem; font-size: 0.85rem; white-space: nowrap;
 }
 .status-warning { color: #ffd700; }
-.status-ok      { color: #7fff7f; }
+.status-ok      { color: #7fff7f; display: flex; align-items: center; gap: 0.5rem; }
+.reset-h-btn {
+  background: none; border: 1px solid rgba(127,255,127,0.4); border-radius: 6px;
+  color: #7fff7f; font-size: 0.85rem; padding: 0.1rem 0.4rem; cursor: pointer;
+  line-height: 1;
+}
 
 .fab {
   position: absolute; bottom: 24px; right: 20px; z-index: 10;
