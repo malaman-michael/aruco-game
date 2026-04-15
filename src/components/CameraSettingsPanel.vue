@@ -90,7 +90,7 @@
 
 <script setup>
 import { useCameraStore } from '../stores/cameraStore.js'
-import SliderRow from './SliderRow.vue'
+import SliderRow from './Sliderrow.vue'
 
 defineProps({ visible: { type: Boolean, default: false } })
 defineEmits(['close','calibrate'])
