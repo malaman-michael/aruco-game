@@ -1,55 +1,106 @@
 /**
  * homographyService.js
  *
- * Dato che i 4 marker d'angolo (NO, NE, SO, SE) sono rilevati nella camera,
- * calcola la trasformazione proiettiva (omografia) che mappa
- * pixel-camera → coordinate-griglia.
+ * Calcola l'omografia H (3×3) che mappa pixel-camera → coordinate-griglia
+ * usando i centri dei 4 marker angolo come punti di controllo.
  *
- * Coordinate griglia: col 0..gridCols, row 0..gridRows
- *   NO = (0, 0)        NE = (gridCols, 0)
- *   SO = (0, gridRows) SE = (gridCols, gridRows)
+ *   NO (0,0) ──────── NE (cols,0)
+ *     │                   │
+ *   SO (0,rows) ────── SE (cols,rows)
+ *
+ * Implementazione: DLT con eliminazione gaussiana diretta su sistema 8×8.
+ * Molto più stabile della SVD numerica per il caso esatto a 4 punti.
  */
 
-/**
- * Calcola la matrice di omografia 3x3 con il metodo DLT (Direct Linear Transform).
- * Fonte: Hartley & Zisserman, "Multiple View Geometry", Appendix A4.
- *
- * @param {Array<{x,y}>} srcPts  – 4 punti sorgente (pixel camera)
- * @param {Array<{x,y}>} dstPts  – 4 punti destinazione (griglia)
- * @returns {number[]} – matrice 3x3 come array flat [h00,h01,...,h22]
- */
+// ─── DLT diretto (4 punti → H esatta) ───────────────────────────────────────
+//
+// Per ogni coppia (src_i, dst_i) il DLT produce 2 equazioni lineari in h[0..8].
+// Fissando h[8]=1 otteniamo un sistema 8×8 risolvibile con Gauss.
+//
+// Le equazioni (con h[8]=1, dst = (u,v), src = (x,y)):
+//   -x·h0 - y·h1 - h2            + u·x·h6 + u·y·h7 = -u
+//             -x·h3 - y·h4 - h5  + v·x·h6 + v·y·h7 = -v
+
 export function computeHomography(srcPts, dstPts) {
-  // Costruisce il sistema lineare Ah = 0, 2 righe per punto
+  // Costruisce il sistema A (8×8) e il vettore b (8)
   const A = []
+  const b = []
+
   for (let i = 0; i < 4; i++) {
-    const { x: sx, y: sy } = srcPts[i]
-    const { x: dx, y: dy } = dstPts[i]
-    A.push([-sx, -sy, -1, 0, 0, 0, dx * sx, dx * sy, dx])
-    A.push([0, 0, 0, -sx, -sy, -1, dy * sx, dy * sy, dy])
+    const x = srcPts[i].x, y = srcPts[i].y
+    const u = dstPts[i].x, v = dstPts[i].y
+
+    A.push([-x, -y, -1,  0,  0,  0, u*x, u*y])
+    b.push(-u)
+
+    A.push([ 0,  0,  0, -x, -y, -1, v*x, v*y])
+    b.push(-v)
   }
-  // Risolve con SVD (implementazione minimale)
-  const h = solveSVD(A)
-  return h  // [h00..h22]
+
+  // Eliminazione gaussiana con pivoting parziale
+  const h8 = gaussSolve(A, b)   // [h0..h7]
+  if (!h8) {
+    console.warn('[homography] sistema singolare — corner collineari o coincidenti')
+    return null
+  }
+
+  return [...h8, 1]              // [h0..h7, h8=1]
 }
 
-/**
- * Applica l'omografia a un punto pixel → {col, row} nella griglia.
- *
- * @param {number[]} H  – matrice 3x3 flat
- * @param {{x:number,y:number}} pt  – punto pixel
- * @returns {{col:number, row:number}}
- */
+// ─── Gauss con pivoting parziale ─────────────────────────────────────────────
+function gaussSolve(A, b) {
+  const n = 8
+  // Copia per non modificare l'originale
+  const M = A.map((row, i) => [...row, b[i]])
+
+  for (let col = 0; col < n; col++) {
+    // Trova il pivot (riga con valore assoluto massimo nella colonna)
+    let maxRow = col
+    let maxVal = Math.abs(M[col][col])
+    for (let row = col + 1; row < n; row++) {
+      if (Math.abs(M[row][col]) > maxVal) {
+        maxVal = Math.abs(M[row][col])
+        maxRow = row
+      }
+    }
+
+    if (maxVal < 1e-10) return null   // sistema singolare
+
+    // Scambia righe
+    ;[M[col], M[maxRow]] = [M[maxRow], M[col]]
+
+    // Elimina sotto
+    for (let row = col + 1; row < n; row++) {
+      const f = M[row][col] / M[col][col]
+      for (let k = col; k <= n; k++) {
+        M[row][k] -= f * M[col][k]
+      }
+    }
+  }
+
+  // Back substitution
+  const x = new Array(n).fill(0)
+  for (let row = n - 1; row >= 0; row--) {
+    x[row] = M[row][n]
+    for (let k = row + 1; k < n; k++) {
+      x[row] -= M[row][k] * x[k]
+    }
+    x[row] /= M[row][row]
+  }
+
+  return x
+}
+
+// ─── Applica H: pixel → griglia ──────────────────────────────────────────────
 export function applyHomography(H, pt) {
   const { x, y } = pt
-  const w = H[6] * x + H[7] * y + H[8]
-  const col = (H[0] * x + H[1] * y + H[2]) / w
-  const row = (H[3] * x + H[4] * y + H[5]) / w
+  const w   = H[6]*x + H[7]*y + H[8]
+  const col = (H[0]*x + H[1]*y + H[2]) / w
+  const row = (H[3]*x + H[4]*y + H[5]) / w
   return { col, row }
 }
 
-/**
- * Ritorna { col, row } discreti (interi) clampati alla griglia.
- */
+// ─── Cella discreta clampata alla griglia ────────────────────────────────────
 export function pointToCell(H, pt, gridCols, gridRows) {
   const { col, row } = applyHomography(H, pt)
   return {
@@ -58,56 +109,18 @@ export function pointToCell(H, pt, gridCols, gridRows) {
   }
 }
 
-/**
- * Costruisce l'omografia dai 4 marker angolo rilevati.
- *
- * @param {object} detectedCorners  – { NO:{center}, NE:{center}, SO:{center}, SE:{center} }
- * @param {number} gridCols
- * @param {number} gridRows
- * @returns {number[]|null}  – matrice H oppure null se mancano corner
- */
+// ─── Costruisce H dai 4 corner marker ────────────────────────────────────────
 export function buildHomographyFromCorners(detectedCorners, gridCols, gridRows) {
   const { NO, NE, SO, SE } = detectedCorners
   if (!NO || !NE || !SO || !SE) return null
 
   const src = [NO.center, NE.center, SO.center, SE.center]
   const dst = [
-    { x: 0, y: 0 },
-    { x: gridCols, y: 0 },
-    { x: 0, y: gridRows },
-    { x: gridCols, y: gridRows },
+    { x: 0,        y: 0        },   // NO
+    { x: gridCols, y: 0        },   // NE
+    { x: 0,        y: gridRows },   // SO
+    { x: gridCols, y: gridRows },   // SE
   ]
+
   return computeHomography(src, dst)
-}
-
-// ─── SVD minimale (4 punti, 9 incognite) ─────────────────────────────────────
-// Usa power-iteration + deflation per trovare il vettore singolare minimo di A.
-function solveSVD(A) {
-  // ATA (9x9)
-  const n = 9
-  const ATA = Array.from({ length: n }, () => new Array(n).fill(0))
-  for (let i = 0; i < n; i++) {
-    for (let j = 0; j < n; j++) {
-      for (let r = 0; r < A.length; r++) {
-        ATA[i][j] += A[r][i] * A[r][j]
-      }
-    }
-  }
-
-  // Trova autovettore con autovalore minimo tramite power iteration inversa
-  // (metodo semplificato: itera su ATA con spostamento per convergere sul minimo)
-  let v = Array(n).fill(0).map((_, i) => (i === 8 ? 1 : 0))
-  for (let iter = 0; iter < 200; iter++) {
-    v = mvMul(ATA, v)
-    const norm = Math.sqrt(v.reduce((s, x) => s + x * x, 0))
-    v = v.map(x => x / norm)
-  }
-
-  // Normalizza in modo che h[8] = 1
-  const scale = v[8] !== 0 ? v[8] : 1
-  return v.map(x => x / scale)
-}
-
-function mvMul(M, v) {
-  return M.map(row => row.reduce((s, val, j) => s + val * v[j], 0))
 }

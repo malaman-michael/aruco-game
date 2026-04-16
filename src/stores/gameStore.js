@@ -54,7 +54,10 @@ export const useGameStore = defineStore('game', () => {
       SE: { center: cp.SE },
     }
     const H = buildHomographyFromCorners(corners, gridCols.value, gridRows.value)
-    if (H) homography.value = H
+    if (H) {
+      homography.value = H
+      console.log('[gameStore] Omografia calcolata ✓ griglia', gridCols.value, '×', gridRows.value)
+    }
   }
 
   /** Cancella le posizioni dei corner e l'omografia (utile se si riposiziona la plancia) */
