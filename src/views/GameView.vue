@@ -13,20 +13,45 @@
     <div class="hud-top">
       <button class="icon-btn" @click="$router.push('/')">✕</button>
       <span class="hud-title">ArUco Game</span>
-      <button class="icon-btn" @click="showSettings = true">⚙️</button>
+      <div class="hud-actions">
+        <!-- Assistente vocale ON/OFF -->
+        <button
+          class="icon-btn"
+          :class="{ 'icon-btn--active': voiceEnabled }"
+          :title="voiceEnabled ? 'Disattiva voce' : 'Attiva voce'"
+          @click="toggleVoice"
+        >🔊</button>
+
+        <!-- Lock aggiunta pedine -->
+        <button
+          class="icon-btn"
+          :class="{ 'icon-btn--locked': !gameStore.allowNewMarkers }"
+          :title="gameStore.allowNewMarkers ? 'Blocca aggiunta pedine' : 'Sblocca aggiunta pedine'"
+          @click="gameStore.toggleNewMarkers(); announceMarkerMode()"
+        >{{ gameStore.allowNewMarkers ? '🔓' : '🔒' }}</button>
+
+        <button class="icon-btn" @click="showSettings = true" title="Impostazioni">⚙️</button>
+      </div>
     </div>
 
     <!-- Status bar -->
     <div class="status-bar">
       <span v-if="!markersStore.allCornersAssigned" class="status-warning">
-        ⚠️ Angoli non configurati: vai in Configurazione
+        ⚠️ Angoli non configurati — vai in Configurazione
       </span>
-      <span v-else-if="!gameStore.homographyReady" class="status-warning">
-        📍 Inquadra i 4 angoli ({{ gameStore.cornersAcquired }}/4 acquisiti)
+      <span v-else-if="!gameStore.homographyReady" class="status-calibrating">
+        📍 Calibrazione: {{ gameStore.cornersAcquired }}/4 angoli
+        <span class="corner-dots">
+          <span v-for="pos in ['NO','NE','SO','SE']" :key="pos"
+            class="corner-dot" :class="{ acquired: !!gameStore.cornerPositions[pos] }"
+            :title="pos">{{ pos }}</span>
+        </span>
       </span>
       <span v-else class="status-ok">
-        ✓ {{ gameStore.gridCols }}×{{ gameStore.gridRows }} · {{ gameStore.pieces.length }} pedine
-        <button class="reset-h-btn" @click="gameStore.resetHomography()" title="Ricalibra griglia">↺</button>
+        ✓ {{ gameStore.gridCols }}×{{ gameStore.gridRows }}
+        · {{ gameStore.pieces.length }} pedine
+        · {{ gameStore.allowNewMarkers ? '🔓' : '🔒' }}
+        <button class="reset-h-btn" @click="onResetHomography" title="Ricalibra griglia">↺</button>
       </span>
     </div>
 
@@ -88,6 +113,7 @@ import CameraSettingsPanel from '../components/CameraSettingsPanel.vue'
 import CalibrationModal from '../components/CalibrationModal.vue'
 import { useMarkersStore, CORNER_ROLES } from '../stores/markersStore.js'
 import { useGameStore } from '../stores/gameStore.js'
+import { voice } from '../services/voiceService.js'
 
 const markersStore = useMarkersStore()
 const gameStore    = useGameStore()
@@ -98,13 +124,40 @@ const showCalibration = ref(false)
 const showPieceList   = ref(false)
 const dialogVisible   = ref(false)
 const unknownMarker   = ref(null)
+const voiceEnabled    = ref(false)
+const cameraViewRef   = ref(null)
 
-// Ref al componente CameraView per poter leggere il frame corrente
-const cameraViewRef = ref(null)
-
-onMounted(() => gameStore.startGame())
+onMounted(() => {
+  gameStore.startGame()
+  // Annuncio vocale iniziale sullo stato angoli (se voce attiva)
+  voice.announceCornerStatus(gameStore.cornersAcquired, gameStore.cornerPositions)
+})
 
 const missingCorners = computed(() => CORNER_ROLES.filter(r => !markersStore.corners[r]))
+
+function toggleVoice() {
+  voice.toggle()
+  voiceEnabled.value = voice.enabled
+  if (voice.enabled) {
+    voice.say('Assistente vocale attivato.', 'voice_on', 2)
+    // Annuncia subito lo stato corrente
+    setTimeout(() => voice.announceCornerStatus(
+      gameStore.cornersAcquired, gameStore.cornerPositions
+    ), 800)
+  }
+}
+
+function announceMarkerMode() {
+  voice.say(
+    gameStore.allowNewMarkers ? 'Aggiunta pedine abilitata.' : 'Aggiunta pedine bloccata.',
+    'marker_mode', 2
+  )
+}
+
+function onResetHomography() {
+  gameStore.resetHomography()
+  voice.say('Calibrazione azzerata. Inquadra i quattro angoli.', 'reset_h', 2)
+}
 
 function onUnknownMarker(marker) {
   if (dialogVisible.value) return
@@ -115,10 +168,6 @@ function onUnknownMarker(marker) {
 
 function onFrameProcessed() {}
 
-/**
- * Fornisce al CalibrationModal il frame corrente + il detector.
- * CameraView espone questi tramite defineExpose.
- */
 function getCalibrationFrame() {
   return cameraViewRef.value?.getCalibrationData?.() ?? { imageData: null, detector: null }
 }
@@ -134,18 +183,30 @@ function getCalibrationFrame() {
   padding: 0.5rem 1rem; z-index: 10;
 }
 .hud-title { color: #fff; font-weight: 700; font-size: 1.1rem; text-shadow: 0 1px 4px rgba(0,0,0,0.7); }
+.hud-actions { display: flex; gap: 0.3rem; }
 .icon-btn {
   background: rgba(0,0,0,0.5); border: none; color: #fff;
   font-size: 1.1rem; padding: 0.4rem 0.6rem; border-radius: 8px; cursor: pointer;
+  transition: background 0.15s;
 }
+.icon-btn--active { background: rgba(80,180,80,0.7); }
+.icon-btn--locked { background: rgba(180,60,60,0.7); }
 
 .status-bar {
   position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%);
   z-index: 10; background: rgba(0,0,0,0.6); border-radius: 20px;
   padding: 0.4rem 1rem; font-size: 0.85rem; white-space: nowrap;
 }
-.status-warning { color: #ffd700; }
-.status-ok      { color: #7fff7f; display: flex; align-items: center; gap: 0.5rem; }
+.status-warning    { color: #ffd700; }
+.status-calibrating { color: #88ccff; display: flex; align-items: center; gap: 0.6rem; }
+.status-ok         { color: #7fff7f; display: flex; align-items: center; gap: 0.5rem; }
+
+.corner-dots { display: flex; gap: 0.3rem; }
+.corner-dot {
+  font-size: 0.7rem; padding: 0.1rem 0.3rem; border-radius: 4px;
+  background: rgba(255,255,255,0.15); color: #aaa;
+}
+.corner-dot.acquired { background: rgba(100,200,100,0.4); color: #7fff7f; }
 .reset-h-btn {
   background: none; border: 1px solid rgba(127,255,127,0.4); border-radius: 6px;
   color: #7fff7f; font-size: 0.85rem; padding: 0.1rem 0.4rem; cursor: pointer;

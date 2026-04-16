@@ -100,6 +100,12 @@ export const useGameStore = defineStore('game', () => {
   function startGame() { isGameActive.value = true }
   function stopGame()  { isGameActive.value = false }
 
+  // ─── Modalità aggiunta pedine ─────────────────────────────────────────────
+  // Quando false, i marker sconosciuti vengono ignorati silenziosamente
+  // (niente dialog, niente falsi positivi durante il gioco)
+  const allowNewMarkers = ref(true)
+  function toggleNewMarkers() { allowNewMarkers.value = !allowNewMarkers.value }
+
   const players   = computed(() => pieces.value.filter(p => p.category === 'player'))
   const enemies   = computed(() => pieces.value.filter(p => p.category === 'enemy'))
   const furniture = computed(() => pieces.value.filter(p => p.category === 'furniture'))
@@ -111,6 +117,7 @@ export const useGameStore = defineStore('game', () => {
     pieces, isGameActive, lastFrameTs,
     players, enemies, furniture,
     cornerPositions, homography, cornersAcquired, homographyReady,
+    allowNewMarkers, toggleNewMarkers,
     updateCornerPosition, resetHomography,
     setGridSize, updatePieces,
     startGame, stopGame,

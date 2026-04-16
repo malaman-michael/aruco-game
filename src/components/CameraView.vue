@@ -13,6 +13,7 @@ import { useMarkersStore, MARKER_CATEGORIES } from '../stores/markersStore.js'
 import { useGameStore } from '../stores/gameStore.js'
 import { useCameraStore } from '../stores/cameraStore.js'
 import { buildHomographyFromCorners, pointToCell } from '../services/homographyService.js'
+import { voice } from '../services/voiceService.js'
 
 const props = defineProps({
   active: { type: Boolean, default: true },
@@ -183,13 +184,28 @@ function applyThreshold(ctx, w, h, thresh) {
 // L'omografia viene ricalcolata nello store non appena tutti e 4 i corner
 // sono stati visti almeno una volta — e rimane valida per sempre.
 function computeH(markers) {
+  const prevCount = gameStore.cornersAcquired
+
   for (const m of markers) {
     const data = markersStore.getMarker(m.id)
     if (data?.category === MARKER_CATEGORIES.CORNER && data.role) {
       gameStore.updateCornerPosition(data.role, m.center)
     }
   }
-  // L'omografia aggiornata è in gameStore.homography
+
+  // Annuncio vocale quando viene acquisito un nuovo corner
+  const newCount = gameStore.cornersAcquired
+  if (newCount > prevCount) {
+    // Trova quale corner è stato appena acquisito
+    const roles = ['NO', 'NE', 'SO', 'SE']
+    for (const role of roles) {
+      if (!gameStore.cornerPositions[role]) continue
+      // È nuovo se il conteggio è aumentato e questo role esiste ora
+      voice.announceCornerAcquired(role, newCount)
+      break
+    }
+  }
+
   return gameStore.homography
 }
 
@@ -375,14 +391,18 @@ defineExpose({
   }
 })
 // ─── Logica di gioco ───────────────────────────────────────────────────────
+// Traccia pedine già annunciate per evitare annunci ripetuti ogni frame
+const _announcedPieces = new Set()
+
 function handleGameLogic(markers, H) {
-  // Marker sconosciuti → chiedi configurazione
-  for (const m of markers) {
-    if (!markersStore.isKnown(m.id)) { emit('unknown-marker', m); break }
+  // Marker sconosciuti → chiedi configurazione SOLO se allowNewMarkers è attivo
+  if (gameStore.allowNewMarkers) {
+    for (const m of markers) {
+      if (!markersStore.isKnown(m.id)) { emit('unknown-marker', m); break }
+    }
   }
 
   // Calcola posizione griglia per ogni pedina non-corner
-  // H viene da gameStore (persistente) — valido anche se i corner non sono nel frame
   const pieces = []
   for (const m of markers) {
     const data = markersStore.getMarker(m.id)
@@ -402,6 +422,18 @@ function handleGameLogic(markers, H) {
       center:  m.center,
       corners: m.corners,
     })
+
+    // Annuncio vocale quando una pedina nota entra nel campo visivo
+    if (data && !_announcedPieces.has(m.id)) {
+      _announcedPieces.add(m.id)
+      voice.announcePiece(data.label, col, row)
+    }
+  }
+
+  // Rimuovi dall'insieme le pedine uscite dal frame
+  const visibleIds = new Set(markers.map(m => m.id))
+  for (const id of _announcedPieces) {
+    if (!visibleIds.has(id)) _announcedPieces.delete(id)
   }
 
   gameStore.updatePieces(pieces)
@@ -412,6 +444,7 @@ function handleGameLogic(markers, H) {
     videoW: video.videoWidth,
     videoH: video.videoHeight,
   })
+}
 }
 </script>
 
