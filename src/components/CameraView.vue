@@ -445,7 +445,7 @@ function handleGameLogic(markers, H) {
     videoH: video.videoHeight,
   })
 }
-}
+
 </script>
 
 <style scoped>
