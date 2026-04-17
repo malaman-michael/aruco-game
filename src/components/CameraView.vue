@@ -447,7 +447,6 @@ function handleGameLogic(markers, H) {
 }
 
 </script>
-
 <style scoped>
 .camera-wrapper {
   position: relative; width: 100%; height: 100%;
