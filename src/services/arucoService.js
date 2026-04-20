@@ -44,6 +44,34 @@ function getDetector() {
   return _detector
 }
 
+/**
+ * Approssima un angolo (in gradi) al punto cardinale più vicino.
+ * Restituisce un oggetto con:
+ * - degrees: 0, 90, 180, 270
+ * - symbol: 'N', 'E', 'S', 'O'
+ */
+export function approximateCardinalAngle(angleDeg) {
+  // Normalizza a [0, 360)
+  let a = ((angleDeg % 360) + 360) % 360
+
+  // Determina il quadrante approssimato
+  let degrees, symbol
+  if (a >= 315 || a < 45) {
+    degrees = 0
+    symbol = 'N'
+  } else if (a >= 45 && a < 135) {
+    degrees = 90
+    symbol = 'E'
+  } else if (a >= 135 && a < 225) {
+    degrees = 180
+    symbol = 'S'
+  } else { // 225 - 315
+    degrees = 270
+    symbol = 'O'
+  }
+  return { degrees, symbol }
+}
+
 export function createArucoService() {
   const detector = getDetector()
 

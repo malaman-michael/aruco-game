@@ -1,11 +1,9 @@
 <template>
-  <!-- SVG overlay posizionato sopra il feed camera, stesse dimensioni del video -->
   <svg
     class="game-overlay"
     :viewBox="`0 0 ${videoW} ${videoH}`"
     xmlns="http://www.w3.org/2000/svg"
   >
-    <!-- Griglia (solo se l'omografia è disponibile) -->
     <g v-if="homography" class="grid-layer">
       <line
         v-for="line in gridLines"
@@ -17,7 +15,6 @@
       />
     </g>
 
-    <!-- Marker corner: cerchio con etichetta NO/NE/SO/SE -->
     <g v-for="cm in visibleCorners" :key="'corner-' + cm.id" class="corner-marker">
       <circle
         :cx="cm.center.x" :cy="cm.center.y"
@@ -36,13 +33,11 @@
       >{{ cm.role }}</text>
     </g>
 
-    <!-- Pedine giocatori / nemici / mobili -->
     <g
       v-for="piece in pieces"
       :key="'piece-' + piece.id"
       :transform="`translate(${piece.center.x}, ${piece.center.y}) rotate(${piece.angle})`"
     >
-      <!-- Bounding box colorato per tipo -->
       <rect
         :width="markerSize(piece)" :height="markerSize(piece)"
         :x="-markerSize(piece)/2" :y="-markerSize(piece)/2"
@@ -52,14 +47,12 @@
         rx="5"
         opacity="0.75"
       />
-      <!-- Emoji / icona -->
       <text
         text-anchor="middle"
         :font-size="markerSize(piece) * 0.55"
         dominant-baseline="central"
         y="0"
       >{{ piece.emoji }}</text>
-      <!-- Label nome -->
       <text
         text-anchor="middle"
         :y="markerSize(piece)/2 + 14"
@@ -68,14 +61,15 @@
         font-weight="600"
         style="text-shadow: 0 1px 3px black"
       >{{ piece.label }}</text>
-      <!-- Coordinata griglia (debug) -->
       <text
         v-if="showCoords && piece.col !== null"
         text-anchor="middle"
         :y="-markerSize(piece)/2 - 6"
         font-size="10"
         fill="rgba(255,255,255,0.7)"
-      >{{ piece.col }},{{ piece.row }}</text>
+      >
+        {{ piece.col }},{{ piece.row }}{{ piece.rotationSymbol ? `, ${piece.rotationSymbol}` : '' }}
+      </text>
     </g>
   </svg>
 </template>
@@ -91,16 +85,14 @@ const props = defineProps({
   videoH: { type: Number, default: 720 },
   homography: { type: Array, default: null },
   showCoords: { type: Boolean, default: false },
-  markers: { type: Array, default: () => [] }, // marker raw dal detector
+  markers: { type: Array, default: () => [] },
 })
 
 const markersStore = useMarkersStore()
 const gameStore = useGameStore()
 
-// Pedine non-corner visibili nel frame
 const pieces = computed(() => gameStore.pieces)
 
-// Corner marker visibili nel frame corrente
 const visibleCorners = computed(() => {
   return props.markers
     .filter(m => {
@@ -113,7 +105,6 @@ const visibleCorners = computed(() => {
     })
 })
 
-// Linee della griglia proiettata sul canvas camera
 const gridLines = computed(() => {
   if (!props.homography) return []
   const H = props.homography
@@ -121,13 +112,11 @@ const gridLines = computed(() => {
   const cols = gameStore.gridCols
   const rows = gameStore.gridRows
 
-  // Linee verticali
   for (let c = 0; c <= cols; c++) {
     const p1 = gridToPixel(H, c, 0)
     const p2 = gridToPixel(H, c, rows)
     lines.push({ key: `v${c}`, x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y })
   }
-  // Linee orizzontali
   for (let r = 0; r <= rows; r++) {
     const p1 = gridToPixel(H, 0, r)
     const p2 = gridToPixel(H, cols, r)
@@ -136,16 +125,11 @@ const gridLines = computed(() => {
   return lines
 })
 
-/** Trasforma coordinate griglia → pixel camera (omografia inversa) */
 function gridToPixel(H, col, row) {
-  // Usa la pseudoinversa della omografia
-  // Per ora: approssima con una proiezione bilineare dai 4 corner
-  // (la vera inversa richiederebbe la matrice inversa di H)
   const invH = invertH(H)
   return applyHomography(invH, { x: col, y: row })
 }
 
-// Cache per l'inversa
 let _lastH = null
 let _invH = null
 

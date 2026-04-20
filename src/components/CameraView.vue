@@ -8,7 +8,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, watch } from 'vue'
-import { createArucoService } from '../services/arucoService.js'
+import { createArucoService, approximateCardinalAngle } from '../services/arucoService.js'
 import { useMarkersStore, MARKER_CATEGORIES } from '../stores/markersStore.js'
 import { useGameStore } from '../stores/gameStore.js'
 import { useCameraStore } from '../stores/cameraStore.js'
@@ -180,9 +180,6 @@ function applyThreshold(ctx, w, h, thresh) {
 }
 
 // ─── Omografia ─────────────────────────────────────────────────────────────
-// Ogni corner visibile nel frame aggiorna la sua posizione nello store.
-// L'omografia viene ricalcolata nello store non appena tutti e 4 i corner
-// sono stati visti almeno una volta — e rimane valida per sempre.
 function computeH(markers) {
   const prevCount = gameStore.cornersAcquired
 
@@ -193,14 +190,11 @@ function computeH(markers) {
     }
   }
 
-  // Annuncio vocale quando viene acquisito un nuovo corner
   const newCount = gameStore.cornersAcquired
   if (newCount > prevCount) {
-    // Trova quale corner è stato appena acquisito
     const roles = ['NO', 'NE', 'SO', 'SE']
     for (const role of roles) {
       if (!gameStore.cornerPositions[role]) continue
-      // È nuovo se il conteggio è aumentato e questo role esiste ora
       voice.announceCornerAcquired(role, newCount)
       break
     }
@@ -220,20 +214,17 @@ function drawGrid(ctx, H, w, h) {
   ctx.strokeStyle = `rgba(100, 200, 255, ${opacity})`
   ctx.lineWidth = 1
 
-  // Linee verticali
   for (let c = 0; c <= cols; c++) {
     const p1 = gridToPixel(invH, c, 0)
     const p2 = gridToPixel(invH, c, rows)
     ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke()
   }
-  // Linee orizzontali
   for (let r = 0; r <= rows; r++) {
     const p1 = gridToPixel(invH, 0, r)
     const p2 = gridToPixel(invH, cols, r)
     ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke()
   }
 
-  // Evidenzia celle occupate
   for (const piece of gameStore.pieces) {
     if (piece.col === null) continue
     const tl = gridToPixel(invH, piece.col,     piece.row)
@@ -249,16 +240,16 @@ function drawGrid(ctx, H, w, h) {
     ctx.closePath()
     ctx.fillStyle = color
     ctx.fill()
-    // Etichetta cella (col, row)
     const cx = (tl.x + tr.x + br.x + bl.x) / 4
     const cy = (tl.y + tr.y + br.y + bl.y) / 4
     ctx.font = 'bold 11px monospace'
     ctx.textAlign = 'center'
     ctx.fillStyle = 'rgba(255,255,255,0.9)'
-    ctx.fillText(`${piece.col},${piece.row}`, cx, cy + 4)
+    // Mostra anche la rotazione se disponibile
+    const rotText = piece.rotationSymbol ? `, ${piece.rotationSymbol}` : ''
+    ctx.fillText(`${piece.col},${piece.row}${rotText}`, cx, cy + 4)
   }
 
-  // Label angoli NO/NE/SO/SE
   const corners = { NO: [0,0], NE: [cols,0], SO: [0,rows], SE: [cols,rows] }
   for (const [label, [gc, gr]] of Object.entries(corners)) {
     if (!markersStore.corners[label]) continue
@@ -297,7 +288,7 @@ function drawMarkers(ctx, markers, H, videoW) {
   if (!cam.showIds && !cam.showCubes) return
   const fontSize = Math.max(16, videoW * 0.025)
 
-  markers.forEach(({ id, corners, center }) => {
+  markers.forEach(({ id, corners, center, angle }) => {
     const known    = markersStore.getMarker(id)
     const isCorner = known?.category === MARKER_CATEGORIES.CORNER
     const color    = isCorner                                         ? '#ffd700'
@@ -307,17 +298,14 @@ function drawMarkers(ctx, markers, H, videoW) {
                    : known.category === MARKER_CATEGORIES.FURNITURE  ? '#ffaa00'
                    :                                                    '#00ff88'
 
-    // Contorno quadrato
     ctx.beginPath()
     ctx.moveTo(corners[0].x, corners[0].y)
     corners.forEach(p => ctx.lineTo(p.x, p.y))
     ctx.closePath()
     ctx.strokeStyle = color; ctx.lineWidth = 3; ctx.stroke()
 
-    // Effetto cubo (faccia superiore)
     if (cam.showCubes) {
       const lift = Math.max(18, videoW * 0.022)
-      // Faccia top semitrasparente
       ctx.beginPath()
       ctx.moveTo(corners[0].x, corners[0].y - lift)
       ctx.lineTo(corners[1].x, corners[1].y - lift)
@@ -326,27 +314,22 @@ function drawMarkers(ctx, markers, H, videoW) {
       ctx.closePath()
       ctx.fillStyle = color + '33'; ctx.fill()
       ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.stroke()
-      // Pilastri verticali
       ctx.beginPath()
       ctx.moveTo(corners[0].x, corners[0].y)
       ctx.lineTo(corners[0].x, corners[0].y - lift)
       ctx.moveTo(corners[1].x, corners[1].y)
       ctx.lineTo(corners[1].x, corners[1].y - lift)
       ctx.stroke()
-
-      // Linea top del cubo
       ctx.beginPath()
       ctx.moveTo(corners[0].x, corners[0].y - lift)
       ctx.lineTo(corners[1].x, corners[1].y - lift)
       ctx.strokeStyle = color; ctx.lineWidth = 3; ctx.stroke()
     }
 
-    // Pallino TL (orientamento)
     ctx.beginPath()
     ctx.arc(corners[0].x, corners[0].y, 6, 0, Math.PI * 2)
     ctx.fillStyle = '#ffff00'; ctx.fill()
 
-    // Label ID + emoji + posizione griglia
     if (cam.showIds) {
       const lift   = cam.showCubes ? Math.max(18, videoW * 0.022) : 0
       const textY  = Math.min(...corners.map(c=>c.y)) - lift - 8
@@ -354,10 +337,11 @@ function drawMarkers(ctx, markers, H, videoW) {
       let label    = `#${id}`
       if (known?.emoji) label += ` ${known.emoji}`
 
-      // Posizione griglia se disponibile
       const piece = gameStore.pieces.find(p => p.id === id)
-      if (piece?.col !== null && piece?.col !== undefined)
-        label += `  (${piece.col},${piece.row})`
+      if (piece?.col !== null && piece?.col !== undefined) {
+        const rot = piece.rotationSymbol ? ` ${piece.rotationSymbol}` : ''
+        label += `  (${piece.col},${piece.row}${rot})`
+      }
 
       ctx.font = `bold ${fontSize}px monospace`
       ctx.textAlign = 'center'
@@ -375,34 +359,29 @@ function drawMarkers(ctx, markers, H, videoW) {
 defineExpose({
   getCalibrationData() {
     if (!video.videoWidth || !offCtx) return { imageData: null, detector: null }
-    // Cattura il frame corrente (senza filtri — la taratura li testa da sola)
     const tmp = new OffscreenCanvas(video.videoWidth, video.videoHeight)
     const c   = tmp.getContext('2d')
     c.drawImage(video, 0, 0)
     const imageData = c.getImageData(0, 0, video.videoWidth, video.videoHeight)
     const detector  = window.AR?.DICTIONARIES ? (() => {
-      // Restituisce il detector già costruito
       try { return arucoService?._detector ?? null } catch { return null }
     })() : null
-    // Il detector lo prendiamo da window.AR direttamente
     const AR = window.AR
     const det = AR ? new AR.Detector({ dictionaryName: Object.keys(AR.DICTIONARIES ?? {})[0] }) : null
     return { imageData, detector: det }
   }
 })
+
 // ─── Logica di gioco ───────────────────────────────────────────────────────
-// Traccia pedine già annunciate per evitare annunci ripetuti ogni frame
 const _announcedPieces = new Set()
 
 function handleGameLogic(markers, H) {
-  // Marker sconosciuti → chiedi configurazione SOLO se allowNewMarkers è attivo
   if (gameStore.allowNewMarkers) {
     for (const m of markers) {
       if (!markersStore.isKnown(m.id)) { emit('unknown-marker', m); break }
     }
   }
 
-  // Calcola posizione griglia per ogni pedina non-corner
   const pieces = []
   for (const m of markers) {
     const data = markersStore.getMarker(m.id)
@@ -415,22 +394,25 @@ function handleGameLogic(markers, H) {
       row = cell.row
     }
 
+    // Calcola rotazione approssimata
+    const { degrees: rotationDeg, symbol: rotationSymbol } = approximateCardinalAngle(m.angle)
+
     pieces.push({
       id: m.id, ...data,
       col, row,
       angle:   m.angle,
+      rotationDeg,
+      rotationSymbol,
       center:  m.center,
       corners: m.corners,
     })
 
-    // Annuncio vocale quando una pedina nota entra nel campo visivo
     if (data && !_announcedPieces.has(m.id)) {
       _announcedPieces.add(m.id)
       voice.announcePiece(data.label, col, row)
     }
   }
 
-  // Rimuovi dall'insieme le pedine uscite dal frame
   const visibleIds = new Set(markers.map(m => m.id))
   for (const id of _announcedPieces) {
     if (!visibleIds.has(id)) _announcedPieces.delete(id)
@@ -445,8 +427,8 @@ function handleGameLogic(markers, H) {
     videoH: video.videoHeight,
   })
 }
-
 </script>
+
 <style scoped>
 .camera-wrapper {
   position: relative; width: 100%; height: 100%;
