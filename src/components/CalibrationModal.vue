@@ -63,7 +63,7 @@ onMounted(async () => {
 
     try {
       arucoService = createArucoService()
-      console.log('[CameraView] ArUco detector pronto')
+      console.log('[CalibrationModal] ArUco detector pronto')
     } catch (e) {
       cameraError.value = `Errore ArUco: ${e.message}`
       return
@@ -93,10 +93,9 @@ function handleCanvasClick(event) {
   if (!canvas) return
 
   const rect = canvas.getBoundingClientRect()
-  const scaleX = canvas.width / rect.width   // rapporto tra dimensioni interne e CSS
+  const scaleX = canvas.width / rect.width
   const scaleY = canvas.height / rect.height
 
-  // Coordinate del click nel sistema di coordinate del canvas (pixel video)
   const clickX = (event.clientX - rect.left) * scaleX
   const clickY = (event.clientY - rect.top) * scaleY
 
@@ -106,7 +105,6 @@ function handleCanvasClick(event) {
     return
   }
 
-  // Trova il pezzo più vicino al click entro una soglia di 40 pixel
   const threshold = 40
   let closestPiece = null
   let minDist = Infinity
@@ -391,7 +389,6 @@ function drawMarkers(ctx, markers, H, videoW) {
         label += `  (${piece.col},${piece.row}${rot})`
       }
 
-      // Se il pezzo è selezionato, usa font doppio
       const isSelected = (selectedPieceId.value === id && !isCorner)
       const fontSize = isSelected ? baseFontSize * 2 : baseFontSize
 
@@ -415,31 +412,24 @@ function drawSelectionArrow(ctx, piece, H, videoW, videoH) {
   const rows = gameStore.gridRows
   const invH = invert3x3(H)
 
-  // Centro del marker in pixel
   const start = piece.center
-
-  // Direzione cardinale (0=N, 90=E, 180=S, 270=O)
   const deg = piece.rotationDeg
 
-  // Calcola il punto di destinazione sul bordo della griglia nella direzione indicata
   let endCol = piece.col
   let endRow = piece.row
 
-  // Approssimazione: sposta fino al bordo
-  if (deg === 0) {        // N
+  if (deg === 0) {
     endRow = 0
-  } else if (deg === 90) { // E
+  } else if (deg === 90) {
     endCol = cols
-  } else if (deg === 180) {// S
+  } else if (deg === 180) {
     endRow = rows
-  } else {                // O (270)
+  } else {
     endCol = 0
   }
 
-  // Converti le coordinate griglia in pixel
   const endPixel = gridToPixel(invH, endCol, endRow)
 
-  // Disegna una freccia spessa
   ctx.save()
   ctx.strokeStyle = '#ffff00'
   ctx.fillStyle = '#ffff00'
@@ -447,13 +437,11 @@ function drawSelectionArrow(ctx, piece, H, videoW, videoH) {
   ctx.shadowColor = '#000'
   ctx.shadowBlur = 10
 
-  // Linea principale
   ctx.beginPath()
   ctx.moveTo(start.x, start.y)
   ctx.lineTo(endPixel.x, endPixel.y)
   ctx.stroke()
 
-  // Punta della freccia (triangolo)
   const angle = Math.atan2(endPixel.y - start.y, endPixel.x - start.x)
   const arrowSize = 30
   const arrowX = endPixel.x - Math.cos(angle) * arrowSize * 0.5
