@@ -245,7 +245,6 @@ function drawGrid(ctx, H, w, h) {
     ctx.font = 'bold 11px monospace'
     ctx.textAlign = 'center'
     ctx.fillStyle = 'rgba(255,255,255,0.9)'
-    // Mostra anche la rotazione se disponibile
     const rotText = piece.rotationSymbol ? `, ${piece.rotationSymbol}` : ''
     ctx.fillText(`${piece.col},${piece.row}${rotText}`, cx, cy + 4)
   }
@@ -283,7 +282,7 @@ function invert3x3(m) {
   ]
 }
 
-// ─── Disegno marker ────────────────────────────────────────────────────────
+// ─── Disegno marker (CON FREECCIA DIREZIONALE) ─────────────────────────────────
 function drawMarkers(ctx, markers, H, videoW) {
   if (!cam.showIds && !cam.showCubes) return
   const fontSize = Math.max(16, videoW * 0.025)
@@ -298,12 +297,14 @@ function drawMarkers(ctx, markers, H, videoW) {
                    : known.category === MARKER_CATEGORIES.FURNITURE  ? '#ffaa00'
                    :                                                    '#00ff88'
 
+    // Contorno quadrato
     ctx.beginPath()
     ctx.moveTo(corners[0].x, corners[0].y)
     corners.forEach(p => ctx.lineTo(p.x, p.y))
     ctx.closePath()
     ctx.strokeStyle = color; ctx.lineWidth = 3; ctx.stroke()
 
+    // Effetto cubo (faccia superiore)
     if (cam.showCubes) {
       const lift = Math.max(18, videoW * 0.022)
       ctx.beginPath()
@@ -326,10 +327,33 @@ function drawMarkers(ctx, markers, H, videoW) {
       ctx.strokeStyle = color; ctx.lineWidth = 3; ctx.stroke()
     }
 
+    // Pallino TL (orientamento)
     ctx.beginPath()
     ctx.arc(corners[0].x, corners[0].y, 6, 0, Math.PI * 2)
     ctx.fillStyle = '#ffff00'; ctx.fill()
 
+    // ─── FRECCIA DIREZIONALE (per pedine non-corner) ─────────────────────────
+    if (!isCorner) {
+      const piece = gameStore.pieces.find(p => p.id === id)
+      if (piece && piece.rotationDeg !== undefined) {
+        ctx.save()
+        ctx.translate(center.x, center.y)
+        ctx.rotate((piece.rotationDeg * Math.PI) / 180)
+        ctx.beginPath()
+        ctx.moveTo(14, 0)
+        ctx.lineTo(-6, -8)
+        ctx.lineTo(-6, 8)
+        ctx.closePath()
+        ctx.fillStyle = '#FFA500'
+        ctx.shadowColor = '#000'
+        ctx.shadowBlur = 6
+        ctx.fill()
+        ctx.shadowBlur = 0
+        ctx.restore()
+      }
+    }
+
+    // Label ID + emoji + posizione griglia
     if (cam.showIds) {
       const lift   = cam.showCubes ? Math.max(18, videoW * 0.022) : 0
       const textY  = Math.min(...corners.map(c=>c.y)) - lift - 8
@@ -394,7 +418,6 @@ function handleGameLogic(markers, H) {
       row = cell.row
     }
 
-    // Calcola rotazione approssimata
     const { degrees: rotationDeg, symbol: rotationSymbol } = approximateCardinalAngle(m.angle)
 
     pieces.push({
