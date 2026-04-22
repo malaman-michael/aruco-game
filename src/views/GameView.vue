@@ -1,17 +1,35 @@
 <template>
   <div class="game-view">
-    <!-- Modalità Camera -->
-    <div v-if="viewMode === 'camera'" class="viewport" ref="viewportEl">
+    <!-- CameraView sempre attivo, visibile solo quando viewMode === 'camera' -->
+    <div v-show="viewMode === 'camera'" class="viewport" ref="viewportEl">
       <CameraView
         ref="cameraViewRef"
-        :active="isActive && viewMode === 'camera'"
+        :active="isActive"
         @unknown-marker="onUnknownMarker"
         @frame-processed="onFrameProcessed"
       />
     </div>
 
     <!-- Modalità Tabella Pedine -->
-    <div v-else class="table-view">
+    <div v-show="viewMode === 'table'" class="table-view">
+      <!-- Nuovo indicatore angoli visibili -->
+      <div class="corner-indicator">
+        <div class="corner-box">
+          <span class="corner-label">Angoli visibili</span>
+          <div class="corner-dots-indicator">
+            <div
+              v-for="role in ['NO', 'NE', 'SO', 'SE']"
+              :key="role"
+              class="indicator-dot"
+              :class="{ active: visibleCornersSet.has(role) }"
+              :title="role"
+            >
+              {{ role }}
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="table-header">
         <h2>📋 Pedine in gioco</h2>
         <span class="piece-count">{{ piecesList.length }} pedine rilevate</span>
@@ -166,8 +184,11 @@ const unknownMarker   = ref(null)
 const voiceEnabled    = ref(false)
 const cameraViewRef   = ref(null)
 
-// Nuovo stato per alternare tra camera e tabella
-const viewMode = ref('camera') // 'camera' o 'table'
+// Modalità vista: 'camera' o 'table'
+const viewMode = ref('camera')
+
+// Set degli angoli attualmente visibili (per indicatore in tabella)
+const visibleCornersSet = ref(new Set())
 
 // Lista delle sole pedine (esclusi corner) per la tabella
 const piecesList = computed(() => {
@@ -211,11 +232,24 @@ function onUnknownMarker(marker) {
   dialogVisible.value = true
 }
 
-function onFrameProcessed() {}
+// Aggiorna i corner visibili quando CameraView emette frame-processed
+function onFrameProcessed(payload) {
+  // payload contiene markers, pieces, homography, videoW, videoH
+  if (payload && payload.markers) {
+    const newVisible = new Set()
+    for (const m of payload.markers) {
+      const data = markersStore.getMarker(m.id)
+      if (data?.category === MARKER_CATEGORIES.CORNER && data.role) {
+        newVisible.add(data.role)
+      }
+    }
+    visibleCornersSet.value = newVisible
+  }
+}
 </script>
 
 <style scoped>
-/* Stili esistenti + nuovi per la tabella */
+/* Stili esistenti + nuovi per la tabella e indicatore angoli */
 .game-view {
   position: fixed;
   inset: 0;
@@ -413,6 +447,54 @@ function onFrameProcessed() {}
   color: #eee;
   padding: 1rem;
   overflow: hidden;
+  position: relative;
+}
+
+/* Nuovo indicatore angoli visibili in alto a sinistra */
+.corner-indicator {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  z-index: 5;
+}
+.corner-box {
+  background: rgba(26, 26, 46, 0.9);
+  border-radius: 12px;
+  padding: 0.6rem 1rem;
+  backdrop-filter: blur(4px);
+  border: 1px solid #3a3a6a;
+}
+.corner-label {
+  display: block;
+  font-size: 0.7rem;
+  color: #aaa;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.4rem;
+}
+.corner-dots-indicator {
+  display: flex;
+  gap: 0.5rem;
+}
+.indicator-dot {
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 8px;
+  background: #2a2a4a;
+  border: 2px solid #3a3a6a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: bold;
+  color: #888;
+  transition: all 0.2s;
+}
+.indicator-dot.active {
+  background: #ff4444;
+  border-color: #ff8888;
+  color: #fff;
+  box-shadow: 0 0 12px rgba(255, 68, 68, 0.5);
 }
 
 .table-header {
@@ -421,6 +503,7 @@ function onFrameProcessed() {}
   align-items: baseline;
   margin-bottom: 1rem;
   padding: 0 0.5rem;
+  margin-top: 2.5rem; /* Spazio per l'indicatore */
 }
 .table-header h2 {
   margin: 0;
@@ -473,7 +556,6 @@ function onFrameProcessed() {}
   border-bottom: none;
 }
 
-/* Colori per categoria */
 .pieces-table tr.player td:first-child {
   border-left: 4px solid #4a7cf5;
 }
