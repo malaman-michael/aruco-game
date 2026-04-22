@@ -1,10 +1,6 @@
 <template>
   <div class="camera-wrapper">
-    <canvas
-      ref="canvasEl"
-      class="camera-canvas"
-      @click="handleCanvasClick"
-    />
+    <canvas ref="canvasEl" class="camera-canvas" />
     <div v-if="cameraError" class="camera-error"><span>⚠️ {{ cameraError }}</span></div>
     <div v-else-if="!cameraReady" class="camera-placeholder"><span>📷 Avvio fotocamera...</span></div>
   </div>
@@ -46,9 +42,6 @@ let rafId = null
 let stream = null
 let ctx = null
 
-// Stato per il pezzo selezionato tramite click
-const selectedPieceId = ref(null)
-
 onMounted(async () => {
   try {
     stream = await navigator.mediaDevices.getUserMedia({
@@ -87,43 +80,6 @@ function loop() {
   })
 }
 
-// ─── Gestione click sul canvas ─────────────────────────────────────────────
-function handleCanvasClick(event) {
-  const canvas = canvasEl.value
-  if (!canvas) return
-
-  const rect = canvas.getBoundingClientRect()
-  const scaleX = canvas.width / rect.width   // rapporto tra dimensioni interne e CSS
-  const scaleY = canvas.height / rect.height
-
-  // Coordinate del click nel sistema di coordinate del canvas (pixel video)
-  const clickX = (event.clientX - rect.left) * scaleX
-  const clickY = (event.clientY - rect.top) * scaleY
-
-  const pieces = gameStore.pieces.filter(p => p.category !== MARKER_CATEGORIES.CORNER)
-  if (pieces.length === 0) {
-    selectedPieceId.value = null
-    return
-  }
-
-  // Trova il pezzo più vicino al click entro una soglia di 40 pixel
-  const threshold = 40
-  let closestPiece = null
-  let minDist = Infinity
-
-  for (const piece of pieces) {
-    const dx = piece.center.x - clickX
-    const dy = piece.center.y - clickY
-    const dist = Math.sqrt(dx*dx + dy*dy)
-    if (dist < threshold && dist < minDist) {
-      minDist = dist
-      closestPiece = piece
-    }
-  }
-
-  selectedPieceId.value = closestPiece ? closestPiece.id : null
-}
-
 // ─── Frame processing ──────────────────────────────────────────────────────
 function processFrame() {
   const w = video.videoWidth
@@ -154,17 +110,7 @@ function processFrame() {
   if (H && cam.showGrid) drawGrid(ctx, H, w, h)
   drawMarkers(ctx, markers, H, w)
 
-  // 6. Se c'è un pezzo selezionato e l'omografia è pronta, disegna la freccia di selezione
-  if (selectedPieceId.value && H) {
-    const selected = gameStore.pieces.find(p => p.id === selectedPieceId.value)
-    if (selected && selected.category !== MARKER_CATEGORIES.CORNER) {
-      drawSelectionArrow(ctx, selected, H, w, h)
-    } else {
-      selectedPieceId.value = null
-    }
-  }
-
-  // 7. Aggiorna store
+  // 6. Aggiorna store
   handleGameLogic(markers, H)
 }
 
@@ -175,16 +121,21 @@ function preprocessFrame(w, h) {
     || cam.sharpness > 0
   if (!needsProcessing) return false
 
+  // Disegna con filtri CSS nel canvas offscreen
   offCtx.filter = buildCSSFilter()
   offCtx.drawImage(video, 0, 0, w, h)
   offCtx.filter = 'none'
 
+  // Sharpness: unsharp mask semplice
   if (cam.sharpness > 0) {
     applySharpness(offCtx, w, h, cam.sharpness)
   }
+
+  // Threshold adattivo (binarizzazione)
   if (cam.threshold > 0) {
     applyThreshold(offCtx, w, h, cam.threshold)
   }
+
   return true
 }
 
@@ -294,6 +245,7 @@ function drawGrid(ctx, H, w, h) {
     ctx.font = 'bold 11px monospace'
     ctx.textAlign = 'center'
     ctx.fillStyle = 'rgba(255,255,255,0.9)'
+    // Mostra anche la rotazione se disponibile
     const rotText = piece.rotationSymbol ? `, ${piece.rotationSymbol}` : ''
     ctx.fillText(`${piece.col},${piece.row}${rotText}`, cx, cy + 4)
   }
@@ -334,9 +286,9 @@ function invert3x3(m) {
 // ─── Disegno marker ────────────────────────────────────────────────────────
 function drawMarkers(ctx, markers, H, videoW) {
   if (!cam.showIds && !cam.showCubes) return
-  const baseFontSize = Math.max(16, videoW * 0.025)
+  const fontSize = Math.max(16, videoW * 0.025)
 
-  markers.forEach(({ id, corners, center }) => {
+  markers.forEach(({ id, corners, center, angle }) => {
     const known    = markersStore.getMarker(id)
     const isCorner = known?.category === MARKER_CATEGORIES.CORNER
     const color    = isCorner                                         ? '#ffd700'
@@ -391,89 +343,16 @@ function drawMarkers(ctx, markers, H, videoW) {
         label += `  (${piece.col},${piece.row}${rot})`
       }
 
-      // Se il pezzo è selezionato, usa font doppio
-      const isSelected = (selectedPieceId.value === id && !isCorner)
-      const fontSize = isSelected ? baseFontSize * 2 : baseFontSize
-
       ctx.font = `bold ${fontSize}px monospace`
       ctx.textAlign = 'center'
-      ctx.lineWidth = isSelected ? 8 : 5
+      ctx.lineWidth = 5
       ctx.strokeStyle = 'rgba(0,0,0,0.85)'
       ctx.strokeText(label, center.x, textY)
-      ctx.fillStyle = isSelected ? '#ffff00' : color
+      ctx.fillStyle = color
       ctx.fillText(label, center.x, textY)
       ctx.textAlign = 'left'
     }
   })
-}
-
-// ─── Freccia di selezione ──────────────────────────────────────────────────
-function drawSelectionArrow(ctx, piece, H, videoW, videoH) {
-  if (!piece || piece.col === null || piece.row === null) return
-
-  const cols = gameStore.gridCols
-  const rows = gameStore.gridRows
-  const invH = invert3x3(H)
-
-  // Centro del marker in pixel
-  const start = piece.center
-
-  // Direzione cardinale (0=N, 90=E, 180=S, 270=O)
-  const deg = piece.rotationDeg
-
-  // Calcola il punto di destinazione sul bordo della griglia nella direzione indicata
-  let endCol = piece.col
-  let endRow = piece.row
-
-  // Approssimazione: sposta fino al bordo
-  if (deg === 0) {        // N
-    endRow = 0
-  } else if (deg === 90) { // E
-    endCol = cols
-  } else if (deg === 180) {// S
-    endRow = rows
-  } else {                // O (270)
-    endCol = 0
-  }
-
-  // Converti le coordinate griglia in pixel
-  const endPixel = gridToPixel(invH, endCol, endRow)
-
-  // Disegna una freccia spessa
-  ctx.save()
-  ctx.strokeStyle = '#ffff00'
-  ctx.fillStyle = '#ffff00'
-  ctx.lineWidth = 6
-  ctx.shadowColor = '#000'
-  ctx.shadowBlur = 10
-
-  // Linea principale
-  ctx.beginPath()
-  ctx.moveTo(start.x, start.y)
-  ctx.lineTo(endPixel.x, endPixel.y)
-  ctx.stroke()
-
-  // Punta della freccia (triangolo)
-  const angle = Math.atan2(endPixel.y - start.y, endPixel.x - start.x)
-  const arrowSize = 30
-  const arrowX = endPixel.x - Math.cos(angle) * arrowSize * 0.5
-  const arrowY = endPixel.y - Math.sin(angle) * arrowSize * 0.5
-
-  ctx.beginPath()
-  ctx.moveTo(arrowX, arrowY)
-  ctx.lineTo(
-    arrowX - Math.cos(angle - 0.8) * arrowSize,
-    arrowY - Math.sin(angle - 0.8) * arrowSize
-  )
-  ctx.lineTo(
-    arrowX - Math.cos(angle + 0.8) * arrowSize,
-    arrowY - Math.sin(angle + 0.8) * arrowSize
-  )
-  ctx.closePath()
-  ctx.fill()
-
-  ctx.shadowBlur = 0
-  ctx.restore()
 }
 
 // ─── Espone dati per la taratura automatica ───────────────────────────────────
@@ -515,6 +394,7 @@ function handleGameLogic(markers, H) {
       row = cell.row
     }
 
+    // Calcola rotazione approssimata
     const { degrees: rotationDeg, symbol: rotationSymbol } = approximateCardinalAngle(m.angle)
 
     pieces.push({
