@@ -6,14 +6,18 @@
       <p>Gioco da tavolo in realtà aumentata.<br>Punta la fotocamera sulla plancia.</p>
     </div>
 
-    <div class="btn-group">
-      <button class="btn-play" @click="$router.push('/game')">
-        ▶ Inizia gioco
-      </button>
-      <button class="btn-setup" @click="$router.push('/setup')">
-        ⚙️ Configurazione
-      </button>
-    </div>
+<div class="btn-group">
+  <button class="btn-play" @click="$router.push('/game')">
+    ▶ Inizia gioco
+  </button>
+  <button class="btn-setup" @click="$router.push('/setup')">
+    ⚙️ Configurazione
+  </button>
+  <!-- 👇 Nuovo pulsante -->
+  <button class="btn-map" @click="$router.push('/map-editor')">
+    🗺️ Editor Mappa
+  </button>
+</div>
 
     <div class="info-card">
       <p>
@@ -40,6 +44,18 @@ const allCornersAssigned = computed(() => markersStore.allCornersAssigned)
 </script>
 
 <style scoped>
+
+.btn-map {
+  background: #2a2a4a;
+  color: #aaa;
+  border: 2px solid #3a3a6a;
+  border-radius: 14px;
+  padding: 0.9rem;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+
 .home-view {
   min-height: 100vh;
   background: linear-gradient(160deg, #0f0f1e 0%, #1a1a3a 100%);
