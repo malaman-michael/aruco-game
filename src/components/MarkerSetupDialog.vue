@@ -287,4 +287,57 @@ h2 { margin: 0 0 0.2rem; font-size: 1.2rem; }
 }
 .btn-primary { background: #4a7cf5; color: #fff; }
 .btn-secondary { background: #2a2a4a; color: #aaa; border: 2px solid #3a3a6a; }
+
+
+.dialog {
+  width: 100%;
+  max-width: 100%;
+  border-radius: 20px 20px 0 0;
+  padding: 1.2rem 1rem;
+  max-height: 85vh;
+}
+
+@media (min-width: 480px) {
+  .dialog {
+    max-width: 480px;
+    border-radius: 20px;
+  }
+}
+
+.categories {
+  grid-template-columns: 1fr;
+  gap: 0.5rem;
+}
+
+@media (min-width: 400px) {
+  .categories {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.type-list {
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 400px) {
+  .type-list {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.corner-grid {
+  max-width: 100%;
+}
+
+.confirm-btns {
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+@media (min-width: 360px) {
+  .confirm-btns {
+    flex-direction: row;
+  }
+}
+
 </style>

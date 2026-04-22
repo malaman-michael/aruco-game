@@ -414,4 +414,101 @@ h1 {
   cursor: pointer;
   margin-top: 1rem;
 }
+
+/* Aggiunte responsive */
+.editor-layout {
+  flex-direction: column;
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .editor-layout {
+    flex-direction: row;
+  }
+}
+
+.sidebar {
+  width: 100%;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+@media (min-width: 768px) {
+  .sidebar {
+    width: 260px;
+    max-height: none;
+  }
+}
+
+.map-header {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .map-header {
+    flex-direction: row;
+    align-items: center;
+  }
+}
+
+.map-name-input {
+  width: 100%;
+}
+
+@media (min-width: 640px) {
+  .map-name-input {
+    width: 250px;
+  }
+}
+
+.size-controls {
+  flex-wrap: wrap;
+}
+
+.grid-container {
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 0.5rem;
+}
+
+.grid-cell {
+  width: 40px;
+  height: 40px;
+}
+
+@media (min-width: 640px) {
+  .grid-cell {
+    width: 48px;
+    height: 48px;
+  }
+}
+
+.cell-emoji {
+  font-size: 1.2rem;
+}
+
+@media (min-width: 640px) {
+  .cell-emoji {
+    font-size: 1.5rem;
+  }
+}
+
+.tool-palette {
+  justify-content: flex-start;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+  -webkit-overflow-scrolling: touch;
+  flex-wrap: nowrap;
+}
+
+@media (min-width: 640px) {
+  .tool-palette {
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+}
+
+
 </style>

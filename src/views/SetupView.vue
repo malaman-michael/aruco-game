@@ -993,4 +993,118 @@ input[type='number'] {
     grid-column: span 1;
   }
 }
+
+.setup-header {
+  flex-wrap: wrap;
+  padding: 0.8rem 1rem;
+}
+
+h1 {
+  font-size: clamp(1.2rem, 6vw, 1.8rem);
+}
+
+.tabs {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  white-space: nowrap;
+  padding: 0 0.5rem;
+}
+
+.tab {
+  padding: 0.5rem 0.8rem;
+  font-size: 0.9rem;
+}
+
+.tab-content {
+  padding: 0.8rem;
+}
+
+.card {
+  padding: 1rem;
+}
+
+.grid-inputs {
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.grid-inputs label {
+  width: auto;
+}
+
+input[type='number'] {
+  width: 100%;
+  max-width: 100px;
+}
+
+.filters {
+  flex-wrap: wrap;
+}
+
+.filter-select, .filter-input {
+  width: 100%;
+}
+
+@media (min-width: 640px) {
+  .filters {
+    flex-wrap: nowrap;
+  }
+  .filter-select {
+    width: auto;
+  }
+}
+
+.marker-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.marker-table {
+  min-width: 700px; /* scroll su mobile */
+}
+
+/* Form aggiunta marker */
+.form-grid {
+  grid-template-columns: 1fr;
+  gap: 0.8rem;
+}
+
+@media (min-width: 640px) {
+  .form-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .form-field.full-width {
+    grid-column: span 2;
+  }
+}
+
+.form-actions {
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+@media (min-width: 480px) {
+  .form-actions {
+    flex-direction: row;
+  }
+}
+
+.btn-primary, .btn-secondary, .btn-danger {
+  padding: 0.6rem 1rem;
+  font-size: 0.9rem;
+  width: 100%;
+}
+
+@media (min-width: 480px) {
+  .btn-primary, .btn-secondary, .btn-danger {
+    width: auto;
+  }
+}
+
+/* Corner grid display */
+.corner-grid-display {
+  max-width: 100%;
+}
+
+
 </style>

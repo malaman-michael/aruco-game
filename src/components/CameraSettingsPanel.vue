@@ -162,4 +162,52 @@ function applyPreset(name) {
 
 .slide-up-enter-active, .slide-up-leave-active { transition: transform 0.25s ease; }
 .slide-up-enter-from, .slide-up-leave-to { transform: translateY(100%); }
+
+
+.settings-panel {
+  width: 100%;
+  max-width: 100%;
+  border-radius: 20px 20px 0 0;
+  padding: 1rem 0.8rem 1.5rem;
+}
+
+@media (min-width: 480px) {
+  .settings-panel {
+    max-width: 480px;
+    border-radius: 20px;
+    margin-bottom: 20px;
+  }
+}
+
+.settings-backdrop {
+  align-items: flex-end;
+}
+
+@media (min-width: 480px) {
+  .settings-backdrop {
+    align-items: center;
+  }
+}
+
+.panel-header {
+  padding: 0 0.2rem;
+}
+
+.section {
+  margin-bottom: 1rem;
+}
+
+.toggle-row {
+  padding: 0.4rem 0;
+}
+
+.btn-calibrate, .reset-btn {
+  padding: 0.7rem;
+  font-size: 0.95rem;
+}
+
+.preset-row {
+  flex-wrap: wrap;
+}
+
 </style>

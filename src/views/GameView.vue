@@ -618,4 +618,165 @@ function onFrameProcessed(payload) {
 .btn-back:hover {
   background: #3a3a6a;
 }
+
+
+
+.hud-top {
+  position: absolute;
+  top: env(safe-area-inset-top, 8px);
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.8rem;
+  z-index: 10;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.hud-title {
+  font-size: clamp(1rem, 5vw, 1.3rem);
+}
+
+.hud-actions {
+  display: flex;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.icon-btn {
+  background: rgba(0,0,0,0.5);
+  border: none;
+  color: #fff;
+  font-size: clamp(1rem, 5vw, 1.3rem);
+  padding: 0.3rem 0.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  min-width: 40px;
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.status-bar {
+  position: absolute;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  background: rgba(0,0,0,0.6);
+  border-radius: 20px;
+  padding: 0.3rem 0.8rem;
+  font-size: clamp(0.7rem, 3vw, 0.9rem);
+  white-space: nowrap;
+  max-width: 95vw;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.corner-dots {
+  display: inline-flex;
+  gap: 0.2rem;
+}
+
+.fab {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  z-index: 10;
+  background: #4a7cf5;
+  color: #fff;
+  border: none;
+  border-radius: 50px;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  min-width: 60px;
+  min-height: 48px;
+}
+
+.piece-panel {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  background: #1a1a2e;
+  border-radius: 16px 16px 0 0;
+  padding: 1rem;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+/* Tabella in modalità table */
+.table-view {
+  padding: 0.5rem;
+}
+
+.table-header {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-top: 4rem; /* spazio per indicatore angoli */
+}
+
+.table-header h2 {
+  font-size: clamp(1.2rem, 6vw, 1.8rem);
+}
+
+.table-container {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 12px;
+}
+
+.pieces-table {
+  min-width: 500px; /* forza scroll su schermi piccoli */
+  font-size: 0.9rem;
+}
+
+/* Indicatore angoli responsive */
+.corner-indicator {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  z-index: 5;
+}
+
+.corner-box {
+  padding: 0.4rem 0.6rem;
+}
+
+.corner-dots-indicator {
+  gap: 0.3rem;
+}
+
+.indicator-dot {
+  width: 2rem;
+  height: 2rem;
+  font-size: 0.7rem;
+}
+
+/* Su desktop, la tabella può espandersi */
+@media (min-width: 768px) {
+  .table-container {
+    overflow-x: visible;
+  }
+  .pieces-table {
+    min-width: auto;
+  }
+  .table-header {
+    flex-direction: row;
+    justify-content: space-between;
+    margin-top: 2.5rem;
+  }
+  .hud-top {
+    padding: 0.5rem 1.5rem;
+  }
+}
+
 </style>
