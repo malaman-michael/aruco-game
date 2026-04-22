@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { v4 as uuidv4 } from 'uuid'
 
-// Tipi di cella disponibili
 export const CELL_TYPES = {
   EMPTY: 'empty',
   WALL: 'wall',
@@ -10,7 +10,6 @@ export const CELL_TYPES = {
   PLAYER_SPAWN: 'player_spawn',
 }
 
-// Etichette ed emoji per UI
 export const CELL_TYPE_INFO = {
   [CELL_TYPES.EMPTY]: { label: 'Vuoto', emoji: '⬜', color: '#2a2a4a' },
   [CELL_TYPES.WALL]: { label: 'Muro', emoji: '🧱', color: '#6a4a2a' },
@@ -19,96 +18,133 @@ export const CELL_TYPE_INFO = {
   [CELL_TYPES.PLAYER_SPAWN]: { label: 'Giocatore', emoji: '🧙', color: '#2a4a6a' },
 }
 
-const STORAGE_KEY = 'aruco-map-data'
+const STORAGE_KEY = 'aruco-maps-list'
 
 export const useMapStore = defineStore('map', () => {
-  // Dimensioni griglia
-  const cols = ref(10)
-  const rows = ref(10)
+  const maps = ref([])
+  const currentMap = ref(null)
 
-  // Matrice di celle: array di array, ogni cella è una stringa (tipo)
-  const grid = ref([])
+  function loadMaps() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY)
+      if (raw) {
+        maps.value = JSON.parse(raw)
+      } else {
+        maps.value = []
+      }
+    } catch {
+      maps.value = []
+    }
+  }
 
-  // Inizializza o ridimensiona la griglia
-  function initGrid(newCols = cols.value, newRows = rows.value) {
+  function saveMapsToStorage() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(maps.value))
+  }
+
+  function createNewMap(name, cols = 10, rows = 10) {
+    const newGrid = []
+    for (let r = 0; r < rows; r++) {
+      const row = []
+      for (let c = 0; c < cols; c++) {
+        row.push(CELL_TYPES.EMPTY)
+      }
+      newGrid.push(row)
+    }
+    const map = {
+      id: uuidv4(),
+      name,
+      cols,
+      rows,
+      grid: newGrid,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }
+    maps.value.push(map)
+    saveMapsToStorage()
+    currentMap.value = map
+    return map
+  }
+
+  function loadMap(mapId) {
+    const map = maps.value.find(m => m.id === mapId)
+    if (map) {
+      currentMap.value = JSON.parse(JSON.stringify(map))
+    }
+    return currentMap.value
+  }
+
+  function saveCurrentMap(name) {
+    if (!currentMap.value) return null
+    const now = new Date().toISOString()
+    const mapData = {
+      ...currentMap.value,
+      name: name || currentMap.value.name,
+      updatedAt: now,
+    }
+    const existingIndex = maps.value.findIndex(m => m.id === mapData.id)
+    if (existingIndex !== -1) {
+      maps.value[existingIndex] = mapData
+    } else {
+      mapData.createdAt = mapData.createdAt || now
+      maps.value.push(mapData)
+    }
+    saveMapsToStorage()
+    currentMap.value = mapData
+    return mapData
+  }
+
+  function deleteMap(mapId) {
+    maps.value = maps.value.filter(m => m.id !== mapId)
+    if (currentMap.value?.id === mapId) {
+      currentMap.value = null
+    }
+    saveMapsToStorage()
+  }
+
+  function setCell(col, row, type) {
+    if (!currentMap.value) return
+    if (col >= 0 && col < currentMap.value.cols && row >= 0 && row < currentMap.value.rows) {
+      currentMap.value.grid[row][col] = type
+    }
+  }
+
+  function getCell(col, row) {
+    if (!currentMap.value) return CELL_TYPES.EMPTY
+    return currentMap.value.grid[row]?.[col] || CELL_TYPES.EMPTY
+  }
+
+  function resizeCurrentMap(newCols, newRows) {
+    if (!currentMap.value) return
+    const oldGrid = currentMap.value.grid
     const newGrid = []
     for (let r = 0; r < newRows; r++) {
       const row = []
       for (let c = 0; c < newCols; c++) {
-        // Mantieni i vecchi valori se possibile
-        if (grid.value[r] && grid.value[r][c] !== undefined) {
-          row.push(grid.value[r][c])
+        if (r < oldGrid.length && c < oldGrid[0].length) {
+          row.push(oldGrid[r][c])
         } else {
           row.push(CELL_TYPES.EMPTY)
         }
       }
       newGrid.push(row)
     }
-    grid.value = newGrid
+    currentMap.value.grid = newGrid
+    currentMap.value.cols = newCols
+    currentMap.value.rows = newRows
+    currentMap.value.updatedAt = new Date().toISOString()
   }
 
-  // Imposta dimensioni e reinizializza
-  function setSize(newCols, newRows) {
-    cols.value = newCols
-    rows.value = newRows
-    initGrid(newCols, newRows)
-    saveToStorage()
-  }
-
-  // Cambia tipo di una cella
-  function setCell(col, row, type) {
-    if (col >= 0 && col < cols.value && row >= 0 && row < rows.value) {
-      grid.value[row][col] = type
-      saveToStorage()
-    }
-  }
-
-  // Ottieni tipo cella
-  function getCell(col, row) {
-    return grid.value[row]?.[col] || CELL_TYPES.EMPTY
-  }
-
-  // Pulisci tutta la mappa
-  function clearMap() {
-    initGrid(cols.value, rows.value)
-    saveToStorage()
-  }
-
-  // Persistenza
-  function saveToStorage() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      cols: cols.value,
-      rows: rows.value,
-      grid: grid.value,
-    }))
-  }
-
-  function loadFromStorage() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY)
-      if (raw) {
-        const data = JSON.parse(raw)
-        cols.value = data.cols || 10
-        rows.value = data.rows || 10
-        grid.value = data.grid || []
-        // Assicurati che le dimensioni corrispondano
-        if (grid.value.length !== rows.value || (grid.value[0] && grid.value[0].length !== cols.value)) {
-          initGrid(cols.value, rows.value)
-        }
-      } else {
-        initGrid(cols.value, rows.value)
-      }
-    } catch {
-      initGrid(cols.value, rows.value)
-    }
-  }
-
-  // Carica all'avvio
-  loadFromStorage()
+  loadMaps()
 
   return {
-    cols, rows, grid,
-    setSize, setCell, getCell, clearMap,
-    saveToStorage,
+    maps,
+    currentMap,
+    createNewMap,
+    loadMap,
+    saveCurrentMap,
+    deleteMap,
+    setCell,
+    getCell,
+    resizeCurrentMap,
   }
 })

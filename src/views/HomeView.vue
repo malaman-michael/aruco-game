@@ -17,6 +17,7 @@
   <button class="btn-map" @click="$router.push('/map-editor')">
     🗺️ Editor Mappa
   </button>
+
 </div>
 
     <div class="info-card">
