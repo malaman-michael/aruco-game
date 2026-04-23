@@ -7,8 +7,11 @@
     </div>
 
 <div class="btn-group">
-  <button class="btn-play" @click="$router.push('/game')">
-    ▶ Inizia gioco
+    <button class="btn-play" @click="$router.push('/gameOpenGrid')">
+    🏞️ Inizia gioco in campo aperto
+  </button>
+  <button class="btn-play" @click="$router.push('/gameWithMap')">
+    🗺️ Inizia gioco con mappa
   </button>
   <button class="btn-setup" @click="$router.push('/setup')">
     ⚙️ Configurazione

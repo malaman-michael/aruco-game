@@ -6,6 +6,9 @@
       <h1>Editor Mappe</h1>
       <div class="header-actions">
         <button class="icon-btn" @click="saveCurrentMapHandler" title="Salva mappa corrente">💾</button>
+        <!-- NUOVI PULSANTI EXPORT/IMPORT -->
+        <button class="icon-btn" @click="exportAllMaps" title="Esporta tutte le mappe in JSON">📤</button>
+        <button class="icon-btn" @click="triggerFileImport" title="Importa mappe da file JSON">📥</button>
       </div>
     </div>
 
@@ -101,6 +104,15 @@
         <button class="btn-primary" @click="createNewMapHandler">➕ Crea nuova mappa</button>
       </div>
     </div>
+
+    <!-- Input file nascosto per l'importazione JSON -->
+    <input
+      type="file"
+      ref="fileInput"
+      accept=".json"
+      style="display: none"
+      @change="onFileSelected"
+    />
   </div>
 </template>
 
@@ -115,6 +127,9 @@ const tempCols = ref(10)
 const tempRows = ref(10)
 const selectedType = ref(CELL_TYPES.WALL)
 const currentMapId = ref(null)
+
+// Riferimento all'input file nascosto
+const fileInput = ref(null)
 
 const currentMap = computed(() => mapStore.currentMap)
 
@@ -167,10 +182,139 @@ function setCellHandler(col, row, forcedType = null) {
 function getCellColor(type) {
   return CELL_TYPE_INFO[type]?.color || '#2a2a4a'
 }
+
+// ========== NUOVE FUNZIONI EXPORT / IMPORT ==========
+
+/**
+ * Esporta tutte le mappe in un file JSON
+ */
+function exportAllMaps() {
+  if (!mapStore.maps.length) {
+    alert('Nessuna mappa da esportare.')
+    return
+  }
+
+  // Prepara i dati da esportare (aggiungiamo versione per future compatibilità)
+  const exportData = {
+    version: '1.0',
+    maps: mapStore.maps,
+    exportedAt: new Date().toISOString()
+  }
+
+  const dataStr = JSON.stringify(exportData, null, 2)
+  const blob = new Blob([dataStr], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `map-editor-export-${new Date().toISOString().slice(0, 19)}.json`
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+}
+
+/**
+ * Apre il file picker per importare un file JSON
+ */
+function triggerFileImport() {
+  fileInput.value.click()
+}
+
+/**
+ * Gestisce il file selezionato, lo valida e importa le mappe
+ */
+async function onFileSelected(event) {
+  const file = event.target.files[0]
+  if (!file) return
+
+  // Reset dell'input per permettere di ricaricare lo stesso file
+  fileInput.value.value = ''
+
+  const confirmed = confirm(
+    '⚠️ ATTENZIONE: l\'importazione sovrascriverà tutte le mappe attualmente presenti. Continuare?'
+  )
+  if (!confirmed) return
+
+  try {
+    const text = await file.text()
+    const data = JSON.parse(text)
+
+    // Validazione base
+    if (!data.maps || !Array.isArray(data.maps)) {
+      throw new Error('File JSON non valido: manca l\'array "maps".')
+    }
+
+    // Opzionale: controllo versione (versione 1.0 supportata)
+    if (data.version && data.version !== '1.0') {
+      if (!confirm(`Il file è della versione ${data.version}. Potrebbe non essere completamente compatibile. Importare comunque?`)) {
+        return
+      }
+    }
+
+    // Validazione dettagliata di ogni mappa
+    const validMaps = []
+    for (const map of data.maps) {
+      if (!isValidMap(map)) {
+        console.warn('Mappa ignorata (dati non validi):', map)
+        continue
+      }
+      validMaps.push(map)
+    }
+
+    if (validMaps.length === 0) {
+      throw new Error('Nessuna mappa valida trovata nel file.')
+    }
+
+    // Sostituiamo tutto lo stato delle mappe nello store
+    // Usiamo $patch per aggiornare lo store in modo reattivo
+    mapStore.$patch({
+      maps: validMaps,
+      currentMap: null   // resetta la mappa corrente
+    })
+
+    // Se ci sono mappe, carichiamo la prima impostandola come corrente
+    if (validMaps.length > 0) {
+      mapStore.loadMap(validMaps[0].id)
+    }
+
+    alert(`Importazione completata! Importate ${validMaps.length} mappe.`)
+
+  } catch (err) {
+    console.error(err)
+    alert(`Errore durante l'importazione: ${err.message}`)
+  }
+}
+
+/**
+ * Controlla che un oggetto mappa abbia la struttura necessaria
+ */
+function isValidMap(map) {
+  if (!map || typeof map !== 'object') return false
+  if (!map.id || typeof map.id !== 'string' && typeof map.id !== 'number') return false
+  if (!map.name || typeof map.name !== 'string') return false
+  if (typeof map.cols !== 'number' || map.cols < 1 || map.cols > 20) return false
+  if (typeof map.rows !== 'number' || map.rows < 1 || map.rows > 20) return false
+  if (!Array.isArray(map.grid) || map.grid.length !== map.rows) return false
+
+  // Controlla ogni riga e cella
+  for (let r = 0; r < map.rows; r++) {
+    const row = map.grid[r]
+    if (!Array.isArray(row) || row.length !== map.cols) return false
+    for (let c = 0; c < map.cols; c++) {
+      const cell = row[c]
+      // Controlla che ogni cella sia un tipo valido (esistente in CELL_TYPE_INFO)
+      if (!(cell in CELL_TYPE_INFO)) return false
+    }
+  }
+  return true
+}
+
+// ========== FINE FUNZIONI EXPORT/IMPORT ==========
+
 </script>
 
 <style scoped>
-/* (includere gli stili del messaggio precedente) */
+/* (mantieni gli stili esistenti, nessuna modifica necessaria qui) */
 .map-editor {
   min-height: 100vh;
   background: #0f0f1e;
@@ -509,6 +653,4 @@ h1 {
     overflow-x: visible;
   }
 }
-
-
 </style>
