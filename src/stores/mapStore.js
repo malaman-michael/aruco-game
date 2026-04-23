@@ -1,150 +1,147 @@
+// stores/mapStore.js
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { v4 as uuidv4 } from 'uuid'
 
+// Tipi base di cella (senza dettagli)
 export const CELL_TYPES = {
   EMPTY: 'empty',
   WALL: 'wall',
-  DOOR: 'door',
-  MONSTER_SPAWN: 'monster_spawn',
-  PLAYER_SPAWN: 'player_spawn',
+  PLAYER: 'player',
+  ENEMY: 'enemy',
+  FURNITURE: 'furniture',
 }
 
+// Info visive per ogni tipo base
 export const CELL_TYPE_INFO = {
   [CELL_TYPES.EMPTY]: { label: 'Vuoto', emoji: '⬜', color: '#2a2a4a' },
-  [CELL_TYPES.WALL]: { label: 'Muro', emoji: '🧱', color: '#6a4a2a' },
-  [CELL_TYPES.DOOR]: { label: 'Porta', emoji: '🚪', color: '#4a3a1a' },
-  [CELL_TYPES.MONSTER_SPAWN]: { label: 'Mostro', emoji: '👹', color: '#6a2a2a' },
-  [CELL_TYPES.PLAYER_SPAWN]: { label: 'Giocatore', emoji: '🧙', color: '#2a4a6a' },
+  [CELL_TYPES.WALL]: { label: 'Muro', emoji: '🧱', color: '#4a4a6a' },
+  [CELL_TYPES.PLAYER]: { label: 'Giocatore', emoji: '🧙', color: '#2a5a7a' },
+  [CELL_TYPES.ENEMY]: { label: 'Nemico', emoji: '👹', color: '#7a2a2a' },
+  [CELL_TYPES.FURNITURE]: { label: 'Arredo', emoji: '📦', color: '#5a4a2a' },
 }
 
-const STORAGE_KEY = 'aruco-maps-list'
+// Struttura di una cella: { type: string, details?: object }
+// details può contenere: category, role, typeId, label, emoji
+
+const STORAGE_KEY_MAPS = 'aruco-game-maps'
 
 export const useMapStore = defineStore('map', () => {
   const maps = ref([])
-  const currentMap = ref(null)
+  const currentMapId = ref(null)
 
-  function loadMaps() {
+  const currentMap = computed(() => {
+    if (!currentMapId.value) return null
+    return maps.value.find(m => m.id === currentMapId.value) || null
+  })
+
+  // Carica mappe da localStorage
+  function loadMapsFromStorage() {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY)
+      const raw = localStorage.getItem(STORAGE_KEY_MAPS)
       if (raw) {
-        maps.value = JSON.parse(raw)
+        const parsed = JSON.parse(raw)
+        // Migrazione: converte vecchie griglie numeriche in formato { type }
+        maps.value = parsed.map(map => ({
+          ...map,
+          grid: map.grid.map(row =>
+            row.map(cell => {
+              if (typeof cell === 'number' || typeof cell === 'string') {
+                // Vecchio formato: solo il tipo
+                return { type: cell, details: null }
+              }
+              return cell // già nuovo formato
+            })
+          )
+        }))
       } else {
-        maps.value = []
+        // Mappa demo
+        maps.value = [{
+          id: 'demo',
+          name: 'Demo',
+          cols: 10,
+          rows: 10,
+          grid: Array(10).fill().map(() => Array(10).fill().map(() => ({ type: CELL_TYPES.EMPTY, details: null })))
+        }]
+        currentMapId.value = 'demo'
       }
-    } catch {
+    } catch (e) {
+      console.error(e)
       maps.value = []
     }
   }
 
   function saveMapsToStorage() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(maps.value))
+    localStorage.setItem(STORAGE_KEY_MAPS, JSON.stringify(maps.value))
   }
 
-  function createNewMap(name, cols = 10, rows = 10) {
-    const newGrid = []
-    for (let r = 0; r < rows; r++) {
-      const row = []
-      for (let c = 0; c < cols; c++) {
-        row.push(CELL_TYPES.EMPTY)
-      }
-      newGrid.push(row)
-    }
-    const map = {
-      id: uuidv4(),
-      name,
-      cols,
-      rows,
-      grid: newGrid,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    }
-    maps.value.push(map)
-    saveMapsToStorage()
-    currentMap.value = map
-    return map
-  }
-
-  function loadMap(mapId) {
-    const map = maps.value.find(m => m.id === mapId)
-    if (map) {
-      currentMap.value = JSON.parse(JSON.stringify(map))
-    }
-    return currentMap.value
-  }
-
-  function saveCurrentMap(name) {
-    if (!currentMap.value) return null
-    const now = new Date().toISOString()
-    const mapData = {
-      ...currentMap.value,
-      name: name || currentMap.value.name,
-      updatedAt: now,
-    }
-    const existingIndex = maps.value.findIndex(m => m.id === mapData.id)
-    if (existingIndex !== -1) {
-      maps.value[existingIndex] = mapData
-    } else {
-      mapData.createdAt = mapData.createdAt || now
-      maps.value.push(mapData)
-    }
-    saveMapsToStorage()
-    currentMap.value = mapData
-    return mapData
-  }
-
-  function deleteMap(mapId) {
-    maps.value = maps.value.filter(m => m.id !== mapId)
-    if (currentMap.value?.id === mapId) {
-      currentMap.value = null
-    }
+  function createNewMap(name, cols, rows) {
+    const id = Date.now().toString()
+    const grid = Array(rows).fill().map(() =>
+      Array(cols).fill().map(() => ({ type: CELL_TYPES.EMPTY, details: null }))
+    )
+    maps.value.push({ id, name, cols, rows, grid })
+    currentMapId.value = id
     saveMapsToStorage()
   }
 
-  function setCell(col, row, type) {
+  function loadMap(id) {
+    currentMapId.value = id
+  }
+
+  function saveCurrentMap(newName) {
     if (!currentMap.value) return
-    if (col >= 0 && col < currentMap.value.cols && row >= 0 && row < currentMap.value.rows) {
-      currentMap.value.grid[row][col] = type
-    }
+    currentMap.value.name = newName
+    saveMapsToStorage()
   }
 
-  function getCell(col, row) {
-    if (!currentMap.value) return CELL_TYPES.EMPTY
-    return currentMap.value.grid[row]?.[col] || CELL_TYPES.EMPTY
+  function deleteMap(id) {
+    const index = maps.value.findIndex(m => m.id === id)
+    if (index !== -1) {
+      maps.value.splice(index, 1)
+      if (currentMapId.value === id) {
+        currentMapId.value = maps.value[0]?.id || null
+      }
+      saveMapsToStorage()
+    }
   }
 
   function resizeCurrentMap(newCols, newRows) {
     if (!currentMap.value) return
     const oldGrid = currentMap.value.grid
-    const newGrid = []
-    for (let r = 0; r < newRows; r++) {
-      const row = []
-      for (let c = 0; c < newCols; c++) {
+    const newGrid = Array(newRows).fill().map((_, r) =>
+      Array(newCols).fill().map((_, c) => {
         if (r < oldGrid.length && c < oldGrid[0].length) {
-          row.push(oldGrid[r][c])
-        } else {
-          row.push(CELL_TYPES.EMPTY)
+          return { ...oldGrid[r][c] }
         }
-      }
-      newGrid.push(row)
-    }
+        return { type: CELL_TYPES.EMPTY, details: null }
+      })
+    )
     currentMap.value.grid = newGrid
     currentMap.value.cols = newCols
     currentMap.value.rows = newRows
-    currentMap.value.updatedAt = new Date().toISOString()
+    saveMapsToStorage()
   }
 
-  loadMaps()
+  function setCell(col, row, type, details = null) {
+    if (!currentMap.value) return
+    if (col >= 0 && col < currentMap.value.cols && row >= 0 && row < currentMap.value.rows) {
+      currentMap.value.grid[row][col] = { type, details }
+      saveMapsToStorage()
+    }
+  }
+
+  // Inizializza
+  loadMapsFromStorage()
 
   return {
     maps,
+    currentMapId,
     currentMap,
     createNewMap,
     loadMap,
     saveCurrentMap,
     deleteMap,
-    setCell,
-    getCell,
     resizeCurrentMap,
+    setCell,
   }
 })
