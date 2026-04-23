@@ -7,10 +7,10 @@
     </div>
 
 <div class="btn-group">
-    <button class="btn-play" @click="$router.push('/gameOpenGrid')">
+    <button class="btn-play-wo-map" @click="$router.push('/gameOpenGrid')">
     🏞️ Inizia gioco in campo aperto
   </button>
-  <button class="btn-play" @click="$router.push('/gameWithMap')">
+  <button class="btn-play-map" @click="$router.push('/gameWithMap')">
     🗺️ Inizia gioco con mappa
   </button>
   <button class="btn-setup" @click="$router.push('/setup')">
@@ -85,7 +85,18 @@ p { color: #aaa; line-height: 1.6; }
   max-width: 300px;
 }
 
-.btn-play {
+.btn-play-map {
+  background: #4a7cf5;
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  padding: 1rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-play-wo-map {
   background: #4a7cf5;
   color: #fff;
   border: none;
@@ -141,7 +152,7 @@ p { color: #aaa; line-height: 1.6; font-size: clamp(0.9rem, 4vw, 1.1rem); }
   max-width: 320px;
 }
 
-.btn-play, .btn-setup, .btn-map {
+.btn-play-map,.btn-play-wo-map, .btn-setup, .btn-map {
   border-radius: 14px;
   padding: 1rem;
   font-size: 1rem;
@@ -150,8 +161,12 @@ p { color: #aaa; line-height: 1.6; font-size: clamp(0.9rem, 4vw, 1.1rem); }
   border: none;
   transition: background 0.2s;
 }
-
-.btn-play {
+.btn-play-wo-map {
+  background: #4a7cf5;
+  color: #fff;
+  font-weight: 600;
+}
+.btn-play-map {
   background: #4a7cf5;
   color: #fff;
   font-weight: 600;
@@ -179,7 +194,7 @@ p { color: #aaa; line-height: 1.6; font-size: clamp(0.9rem, 4vw, 1.1rem); }
     flex-direction: row;
     max-width: 500px;
   }
-  .btn-play, .btn-setup, .btn-map {
+  .btn-play-map,.btn-play-wo-map, .btn-setup, .btn-map {
     flex: 1;
   }
 }
