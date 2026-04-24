@@ -122,13 +122,20 @@ export const useMapStore = defineStore('map', () => {
     saveMapsToStorage()
   }
 
-  function setCell(col, row, type, details = null) {
-    if (!currentMap.value) return
-    if (col >= 0 && col < currentMap.value.cols && row >= 0 && row < currentMap.value.rows) {
-      currentMap.value.grid[row][col] = { type, details }
-      saveMapsToStorage()
-    }
+// mapStore.js - dentro defineStore
+function setCell(col, row, type, details = null) {
+  if (!currentMap.value) return
+  if (col >= 0 && col < currentMap.value.cols && row >= 0 && row < currentMap.value.rows) {
+    // Clona la griglia e la riga specifica
+    const newGrid = [...currentMap.value.grid]
+    newGrid[row] = [...newGrid[row]]
+    newGrid[row][col] = { type, details }
+    
+    // Sostituisci la griglia corrente
+    currentMap.value.grid = newGrid
+    saveMapsToStorage()
   }
+}
 
   // Inizializza
   loadMapsFromStorage()
