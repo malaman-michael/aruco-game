@@ -1,0 +1,134 @@
+{
+  "version": "1.0",
+  "maps": [
+    {
+      "id": "1745512345678",
+      "name": "Dungeon di Prova",
+      "cols": 10,
+      "rows": 10,
+      "grid": [
+        [
+          { "type": "wall", "details": null },
+          { "type": "wall", "details": null },
+          { "type": "wall", "details": null },
+          { "type": "wall", "details": null },
+          { "type": "wall", "details": null },
+          { "type": "wall", "details": null },
+          { "type": "wall", "details": null },
+          { "type": "wall", "details": null },
+          { "type": "wall", "details": null },
+          { "type": "wall", "details": null }
+        ],
+        [
+          { "type": "wall", "details": null },
+          { "type": "empty", "details": null },
+          { "type": "empty", "details": null },
+          { "type": "empty", "details": null },
+          { "type": "wall", "details": null },
+          { "type": "empty", "details": null },
+          { "type": "empty", "details": null },
+          { "type": "empty", "details": null },
+          { "type": "empty", "details": null },
+          { "type": "wall", "details": null }
+        ],
+        [
+          { "type": "wall", "details": null },
+          { "type": "empty", "details": null },
+          { "type": "player", "details": { "category": "player", "typeId": "warrior", "label": "Guerriero", "emoji": "⚔️" } },
+          { "type": "empty", "details": null },
+          { "type": "wall", "details": null },
+          { "type": "furniture", "details": { "category": "furniture", "typeId": "door_closed", "label": "Porta chiusa", "emoji": "🔒" } },
+          { "type": "empty", "details": null },
+          { "type": "empty", "details": null },
+          { "type": "empty", "details": null },
+          { "type": "wall", "details": null }
+        ],
+        [
+          { "type": "wall", "details": null },
+          { "type": "empty", "details": null },
+          { "type": "empty", "details": null },
+          { "type": "empty", "details": null },
+          { "type": "wall", "details": null },
+          { "type": "empty", "details": null },
+          { "type": "empty", "details": null },
+          { "type": "empty", "details": null },
+          { "type": "empty", "details": null },
+          { "type": "wall", "details": null }
+        ],
+        [
+          { "type": "wall", "details": null },
+          { "type": "wall", "details": null },
+          { "type": "wall", "details": null },
+          { "type": "wall", "details": null },
+          { "type": "wall", "details": null },
+          { "type": "empty", "details": null },
+          { "type": "empty", "details": null },
+          { "type": "empty", "details": null },
+          { "type": "empty", "details": null },
+          { "type": "wall", "details": null }
+        ],
+        [
+          { "type": "wall", "details": null },
+          { "type": "empty", "details": null },
+          { "type": "empty", "details": null },
+          { "type": "empty", "details": null },
+          { "type": "empty", "details": null },
+          { "type": "empty", "details": null },
+          { "type": "enemy", "details": { "category": "enemy", "typeId": "skeleton", "label": "Scheletro", "emoji": "💀" } },
+          { "type": "empty", "details": null },
+          { "type": "empty", "details": null },
+          { "type": "wall", "details": null }
+        ],
+        [
+          { "type": "wall", "details": null },
+          { "type": "empty", "details": null },
+          { "type": "empty", "details": null },
+          { "type": "empty", "details": null },
+          { "type": "wall", "details": null },
+          { "type": "empty", "details": null },
+          { "type": "empty", "details": null },
+          { "type": "enemy", "details": { "category": "enemy", "typeId": "orc", "label": "Orco", "emoji": "👹" } },
+          { "type": "empty", "details": null },
+          { "type": "wall", "details": null }
+        ],
+        [
+          { "type": "wall", "details": null },
+          { "type": "empty", "details": null },
+          { "type": "empty", "details": null },
+          { "type": "empty", "details": null },
+          { "type": "wall", "details": null },
+          { "type": "empty", "details": null },
+          { "type": "empty", "details": null },
+          { "type": "empty", "details": null },
+          { "type": "empty", "details": null },
+          { "type": "wall", "details": null }
+        ],
+        [
+          { "type": "wall", "details": null },
+          { "type": "empty", "details": null },
+          { "type": "empty", "details": null },
+          { "type": "empty", "details": null },
+          { "type": "empty", "details": null },
+          { "type": "furniture", "details": { "category": "furniture", "typeId": "chest", "label": "Forziere", "emoji": "📦" } },
+          { "type": "empty", "details": null },
+          { "type": "empty", "details": null },
+          { "type": "empty", "details": null },
+          { "type": "wall", "details": null }
+        ],
+        [
+          { "type": "wall", "details": null },
+          { "type": "wall", "details": null },
+          { "type": "wall", "details": null },
+          { "type": "wall", "details": null },
+          { "type": "wall", "details": null },
+          { "type": "wall", "details": null },
+          { "type": "wall", "details": null },
+          { "type": "wall", "details": null },
+          { "type": "wall", "details": null },
+          { "type": "wall", "details": null }
+        ]
+      ]
+    }
+  ],
+  "exportedAt": "2026-04-24T15:30:00.000Z"
+}
