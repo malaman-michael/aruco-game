@@ -60,7 +60,7 @@
           </div>
         </div>
 
-        <!-- Palette strumenti (tipi base) -->
+        <!-- Palette strumenti (tipi base statici) -->
         <div class="tool-palette">
           <div
             v-for="(info, type) in CELL_TYPE_INFO"
@@ -74,7 +74,7 @@
           </div>
         </div>
 
-        <!-- Sotto-palette per sottotipi (solo per PLAYER, ENEMY, FURNITURE) -->
+        <!-- Sotto-palette per sottotipi (solo per FURNITURE e TRAP) -->
         <div v-if="hasSubtypes" class="subtype-palette">
           <div class="subtype-header">
             <span>Scegli tipo specifico:</span>
@@ -136,17 +136,9 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { useMapStore, CELL_TYPES, CELL_TYPE_INFO } from '../stores/mapStore.js'
-import { 
-  useMarkersStore, 
-  MARKER_CATEGORIES, 
-  PLAYER_TYPES, 
-  ENEMY_TYPES, 
-  FURNITURE_TYPES 
-} from '../stores/markersStore.js'
+import { useMapStore, CELL_TYPES, CELL_TYPE_INFO, FURNITURE_STATIC_TYPES, TRAP_STATIC_TYPES } from '../stores/mapStore.js'
 
 const mapStore = useMapStore()
-const markersStore = useMarkersStore() // non usato direttamente ma importato per coerenza
 
 const mapName = ref('')
 const tempCols = ref(10)
@@ -160,20 +152,18 @@ const fileInput = ref(null)
 
 const currentMap = computed(() => mapStore.currentMap)
 
-// Determina se il tipo corrente ha sottotipi
+// Determina se il tipo corrente ha sottotipi (solo FURNITURE e TRAP)
 const hasSubtypes = computed(() => {
-  return [CELL_TYPES.PLAYER, CELL_TYPES.ENEMY, CELL_TYPES.FURNITURE].includes(selectedType.value)
+  return [CELL_TYPES.FURNITURE, CELL_TYPES.TRAP].includes(selectedType.value)
 })
 
 // Restituisce la lista di sottotipi per il tipo corrente
 const currentSubtypes = computed(() => {
   switch (selectedType.value) {
-    case CELL_TYPES.PLAYER:
-      return PLAYER_TYPES
-    case CELL_TYPES.ENEMY:
-      return ENEMY_TYPES
     case CELL_TYPES.FURNITURE:
-      return FURNITURE_TYPES
+      return FURNITURE_STATIC_TYPES
+    case CELL_TYPES.TRAP:
+      return TRAP_STATIC_TYPES
     default:
       return []
   }
@@ -251,23 +241,7 @@ function setCellHandler(col, row, forcedType = null, forcedDetails = null) {
     type = selectedType.value
     // Se il tipo ha sottotipi e ne abbiamo selezionato uno, costruisci i dettagli
     if (hasSubtypes.value && selectedSubtype.value) {
-      // Determina la categoria in base al tipo base
-      let category
-      switch (type) {
-        case CELL_TYPES.PLAYER:
-          category = MARKER_CATEGORIES.PLAYER
-          break
-        case CELL_TYPES.ENEMY:
-          category = MARKER_CATEGORIES.ENEMY
-          break
-        case CELL_TYPES.FURNITURE:
-          category = MARKER_CATEGORIES.FURNITURE
-          break
-        default:
-          category = null
-      }
       details = {
-        category: category,
         typeId: selectedSubtype.value.id,
         label: selectedSubtype.value.label,
         emoji: selectedSubtype.value.emoji
@@ -352,10 +326,13 @@ async function onFileSelected(event) {
       throw new Error('Nessuna mappa valida trovata nel file.')
     }
 
+    // Sostituisci le mappe
     mapStore.$patch({
       maps: validMaps,
-      currentMap: null
+      currentMapId: null
     })
+    // Forza salvataggio (se necessario, ma $patch non triggera automaticamente save? Chiamiamo save)
+    mapStore.saveMapsToStorage()
 
     if (validMaps.length > 0) {
       mapStore.loadMap(validMaps[0].id)
@@ -389,13 +366,10 @@ function isValidMap(map) {
   }
   return true
 }
-
-// ========== FINE FUNZIONI EXPORT/IMPORT ==========
-
 </script>
 
 <style scoped>
-/* Stili esistenti... */
+/* Stili esistenti... (invariati) */
 .map-editor {
   min-height: 100vh;
   background: #0f0f1e;
@@ -590,7 +564,7 @@ h1 {
   color: #aaa;
   margin-top: 0.2rem;
 }
-/* Nuovi stili per la sotto-palette */
+/* Sotto-palette */
 .subtype-palette {
   background: #1a1a2e;
   border-radius: 12px;
@@ -681,112 +655,36 @@ h1 {
   cursor: pointer;
   margin-top: 1rem;
 }
-
-/* Responsive */
-.editor-layout {
-  flex-direction: column;
-  gap: 1rem;
-}
-
-@media (min-width: 768px) {
+@media (max-width: 768px) {
   .editor-layout {
-    flex-direction: row;
+    flex-direction: column;
   }
-}
-
-.sidebar {
-  width: 100%;
-  max-height: 200px;
-  overflow-y: auto;
-}
-
-@media (min-width: 768px) {
   .sidebar {
-    width: 260px;
-    max-height: none;
+    width: 100%;
+    max-height: 200px;
   }
-}
-
-.map-header {
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 1rem;
-}
-
-@media (min-width: 640px) {
   .map-header {
-    flex-direction: row;
-    align-items: center;
+    flex-direction: column;
+    align-items: flex-start;
   }
-}
-
-.map-name-input {
-  width: 100%;
-}
-
-@media (min-width: 640px) {
   .map-name-input {
-    width: 250px;
+    width: 100%;
+  }
+  .grid-cell {
+    width: 40px;
+    height: 40px;
+  }
+  .cell-emoji {
+    font-size: 1.2rem;
   }
 }
-
-.size-controls {
-  flex-wrap: wrap;
-}
-
-.grid-container {
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
-  padding: 0.5rem;
-}
-
-.grid-cell {
-  width: 40px;
-  height: 40px;
-}
-
-@media (min-width: 640px) {
+@media (min-width: 768px) {
   .grid-cell {
     width: 48px;
     height: 48px;
   }
-}
-
-.cell-emoji {
-  font-size: 1.2rem;
-}
-
-@media (min-width: 640px) {
   .cell-emoji {
     font-size: 1.5rem;
-  }
-}
-
-.tool-palette {
-  justify-content: flex-start;
-  overflow-x: auto;
-  padding-bottom: 0.5rem;
-  -webkit-overflow-scrolling: touch;
-  flex-wrap: nowrap;
-}
-
-@media (min-width: 640px) {
-  .tool-palette {
-    flex-wrap: wrap;
-    overflow-x: visible;
-  }
-}
-
-.subtype-list {
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  padding-bottom: 0.5rem;
-}
-
-@media (min-width: 640px) {
-  .subtype-list {
-    flex-wrap: wrap;
-    overflow-x: visible;
   }
 }
 </style>

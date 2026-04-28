@@ -2,26 +2,58 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 
-// Tipi base di cella (senza dettagli)
+// Tipi base di cella (statici)
 export const CELL_TYPES = {
   EMPTY: 'empty',
   WALL: 'wall',
-  PLAYER: 'player',
-  ENEMY: 'enemy',
+  DOOR_CLOSED: 'door_closed',
+  DOOR_OPEN: 'door_open',
+  DOOR_SECRET: 'door_secret',
+  STAIRS: 'stairs',
   FURNITURE: 'furniture',
+  TRAP: 'trap',
 }
+
+// Sottotipi per i mobili (fissi) – basati sulla lista fornita
+export const FURNITURE_STATIC_TYPES = [
+  { id: 'table', label: 'Tavolo', emoji: '🪑' },
+  { id: 'bookcase', label: 'Libreria', emoji: '📚' },
+  { id: 'cabinet', label: 'Armadio', emoji: '🗄️' },
+  { id: 'fireplace', label: 'Camino', emoji: '🔥' },
+  { id: 'tomb', label: 'Sarcofago', emoji: '⚰️' },
+  { id: 'chest', label: 'Scrigno', emoji: '📦' },
+  { id: 'alchemist_bench', label: 'Bancone Alchimista', emoji: '🧪' },
+  { id: 'sorcerer_desk', label: 'Bancone Mago', emoji: '🔮' },
+  { id: 'throne', label: 'Trono', emoji: '👑' },
+  { id: 'torture_table', label: 'Tavolo Tortura', emoji: '⛓️' },
+  { id: 'weapon_rack', label: 'Rastrelliera Armi', emoji: '⚔️' },
+]
+
+// Sottotipi per le trappole (statiche, ma possono essere rimosse/attivate)
+export const TRAP_STATIC_TYPES = [
+  { id: 'pit', label: 'Voragine', emoji: '🕳️' },
+  { id: 'falling_block', label: 'Blocco di Roccia', emoji: '🪨' },
+  { id: 'spear', label: 'Lancia', emoji: '🔱' },
+  { id: 'poison_dart', label: 'Dardo Avvelenato', emoji: '🏹' },
+  { id: 'crossfire', label: 'Fuoco Incrociato', emoji: '🔥' },
+  { id: 'wandering_monster', label: 'Mostro Errante', emoji: '👾' },
+  { id: 'poison_gas', label: 'Gas Velenoso', emoji: '☠️' },
+  { id: 'swinging_blade', label: 'Lama Oscillante', emoji: '⚔️' },
+  { id: 'exploding_lock', label: 'Blocco Esplosivo', emoji: '💥' },
+  { id: 'giant_boulder', label: 'Macigno Gigante', emoji: '🪨' },
+]
 
 // Info visive per ogni tipo base
 export const CELL_TYPE_INFO = {
   [CELL_TYPES.EMPTY]: { label: 'Vuoto', emoji: '⬜', color: '#2a2a4a' },
   [CELL_TYPES.WALL]: { label: 'Muro', emoji: '🧱', color: '#4a4a6a' },
-  [CELL_TYPES.PLAYER]: { label: 'Giocatore', emoji: '🧙', color: '#2a5a7a' },
-  [CELL_TYPES.ENEMY]: { label: 'Nemico', emoji: '👹', color: '#7a2a2a' },
-  [CELL_TYPES.FURNITURE]: { label: 'Arredo', emoji: '📦', color: '#5a4a2a' },
+  [CELL_TYPES.DOOR_CLOSED]: { label: 'Porta chiusa', emoji: '🚪', color: '#8B4513' },
+  [CELL_TYPES.DOOR_OPEN]: { label: 'Porta aperta', emoji: '🚪', color: '#A0522D' },
+  [CELL_TYPES.DOOR_SECRET]: { label: 'Porta segreta', emoji: '🚪', color: '#556B2F' },
+  [CELL_TYPES.STAIRS]: { label: 'Scale', emoji: '🪜', color: '#C0C0C0' },
+  [CELL_TYPES.FURNITURE]: { label: 'Mobile', emoji: '🪑', color: '#8B5A2B' },
+  [CELL_TYPES.TRAP]: { label: 'Trappola', emoji: '⚠️', color: '#8B0000' },
 }
-
-// Struttura di una cella: { type: string, details?: object }
-// details può contenere: category, role, typeId, label, emoji
 
 const STORAGE_KEY_MAPS = 'aruco-game-maps'
 
@@ -34,27 +66,26 @@ export const useMapStore = defineStore('map', () => {
     return maps.value.find(m => m.id === currentMapId.value) || null
   })
 
-  // Carica mappe da localStorage
   function loadMapsFromStorage() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY_MAPS)
       if (raw) {
-        const parsed = JSON.parse(raw)
-        // Migrazione: converte vecchie griglie numeriche in formato { type }
-        maps.value = parsed.map(map => ({
+        let parsed = JSON.parse(raw)
+        // Migrazione per vecchi formati (se necessario)
+        parsed = parsed.map(map => ({
           ...map,
           grid: map.grid.map(row =>
             row.map(cell => {
               if (typeof cell === 'number' || typeof cell === 'string') {
-                // Vecchio formato: solo il tipo
                 return { type: cell, details: null }
               }
-              return cell // già nuovo formato
+              return cell
             })
           )
         }))
+        maps.value = parsed
       } else {
-        // Mappa demo
+        // Mappa demo vuota
         maps.value = [{
           id: 'demo',
           name: 'Demo',
@@ -122,24 +153,18 @@ export const useMapStore = defineStore('map', () => {
     saveMapsToStorage()
   }
 
-// mapStore.js - dentro defineStore
-function setCell(col, row, type, details = null) {
-  if (!currentMap.value) return
-  if (col >= 0 && col < currentMap.value.cols && row >= 0 && row < currentMap.value.rows) {
-    // Clona la griglia e la riga specifica
-    const newGrid = [...currentMap.value.grid]
-    newGrid[row] = [...newGrid[row]]
-    newGrid[row][col] = { type, details }
-    
-    // Sostituisci la griglia corrente
-    currentMap.value.grid = newGrid
-    saveMapsToStorage()
+  function setCell(col, row, type, details = null) {
+    if (!currentMap.value) return
+    if (col >= 0 && col < currentMap.value.cols && row >= 0 && row < currentMap.value.rows) {
+      const newGrid = [...currentMap.value.grid]
+      newGrid[row] = [...newGrid[row]]
+      newGrid[row][col] = { type, details }
+      currentMap.value.grid = newGrid
+      saveMapsToStorage()
+    }
   }
-}
 
-  // Inizializza
   loadMapsFromStorage()
-
   return {
     maps,
     currentMapId,

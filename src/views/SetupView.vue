@@ -84,7 +84,6 @@
               <option value="corner">📍 Angolo</option>
               <option value="player">🧙 Giocatore</option>
               <option value="enemy">💀 Nemico</option>
-              <option value="furniture">🚪 Mobile</option>
             </select>
           </div>
           <div class="form-field">
@@ -114,7 +113,6 @@
           <option value="corner">📍 Angolo</option>
           <option value="player">🧙 Giocatore</option>
           <option value="enemy">💀 Nemico</option>
-          <option value="furniture">🚪 Mobile</option>
         </select>
         <input v-model="filterSearch" class="filter-input" placeholder="Cerca ID o nome…" />
       </div>
@@ -257,7 +255,6 @@ import {
   CORNER_ROLES,
   PLAYER_TYPES,
   ENEMY_TYPES,
-  FURNITURE_TYPES,
 } from '../stores/markersStore.js'
 import { useGameStore } from '../stores/gameStore.js'
 import { useCameraStore } from '../stores/cameraStore.js'
@@ -306,7 +303,6 @@ const CAT_LABELS = {
   corner: 'Angolo',
   player: 'Giocatore',
   enemy: 'Nemico',
-  furniture: 'Mobile',
 }
 function catLabel(cat) {
   return CAT_LABELS[cat] ?? cat
@@ -316,7 +312,6 @@ const ALL_SUBTYPES = {
   corner: CORNER_ROLES.map((r) => ({ id: r, label: r, emoji: '📍' })),
   player: PLAYER_TYPES,
   enemy: ENEMY_TYPES,
-  furniture: FURNITURE_TYPES,
 }
 
 function subtypeOptions(cat) {
@@ -763,9 +758,6 @@ input[type='number'] {
 .row-enemy td:first-child {
   border-left: 3px solid #e54040;
 }
-.row-furniture td:first-child {
-  border-left: 3px solid #b87820;
-}
 
 .col-id {
   font-family: monospace;
@@ -813,10 +805,6 @@ input[type='number'] {
 .type-badge.enemy {
   background: #3a1a1a;
   color: #ff8888;
-}
-.type-badge.furniture {
-  background: #3a2a1a;
-  color: #ffb060;
 }
 
 .edit-input,
@@ -993,118 +981,4 @@ input[type='number'] {
     grid-column: span 1;
   }
 }
-
-.setup-header {
-  flex-wrap: wrap;
-  padding: 0.8rem 1rem;
-}
-
-h1 {
-  font-size: clamp(1.2rem, 6vw, 1.8rem);
-}
-
-.tabs {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  white-space: nowrap;
-  padding: 0 0.5rem;
-}
-
-.tab {
-  padding: 0.5rem 0.8rem;
-  font-size: 0.9rem;
-}
-
-.tab-content {
-  padding: 0.8rem;
-}
-
-.card {
-  padding: 1rem;
-}
-
-.grid-inputs {
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-.grid-inputs label {
-  width: auto;
-}
-
-input[type='number'] {
-  width: 100%;
-  max-width: 100px;
-}
-
-.filters {
-  flex-wrap: wrap;
-}
-
-.filter-select, .filter-input {
-  width: 100%;
-}
-
-@media (min-width: 640px) {
-  .filters {
-    flex-wrap: nowrap;
-  }
-  .filter-select {
-    width: auto;
-  }
-}
-
-.marker-table-wrap {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-.marker-table {
-  min-width: 700px; /* scroll su mobile */
-}
-
-/* Form aggiunta marker */
-.form-grid {
-  grid-template-columns: 1fr;
-  gap: 0.8rem;
-}
-
-@media (min-width: 640px) {
-  .form-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-  .form-field.full-width {
-    grid-column: span 2;
-  }
-}
-
-.form-actions {
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-@media (min-width: 480px) {
-  .form-actions {
-    flex-direction: row;
-  }
-}
-
-.btn-primary, .btn-secondary, .btn-danger {
-  padding: 0.6rem 1rem;
-  font-size: 0.9rem;
-  width: 100%;
-}
-
-@media (min-width: 480px) {
-  .btn-primary, .btn-secondary, .btn-danger {
-    width: auto;
-  }
-}
-
-/* Corner grid display */
-.corner-grid-display {
-  max-width: 100%;
-}
-
-
 </style>

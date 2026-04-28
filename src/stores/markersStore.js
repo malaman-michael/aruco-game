@@ -1,12 +1,11 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 
-// Tipi di marker disponibili
 export const MARKER_CATEGORIES = {
   CORNER: 'corner',
   PLAYER: 'player',
   ENEMY: 'enemy',
-  FURNITURE: 'furniture',
+  // FURNITURE rimosso
 }
 
 export const CORNER_ROLES = ['NO', 'NE', 'SO', 'SE']
@@ -29,21 +28,12 @@ export const ENEMY_TYPES = [
   { id: 'dragon', label: 'Drago', emoji: '🐉' },
 ]
 
-export const FURNITURE_TYPES = [
-  { id: 'door_open', label: 'Porta aperta', emoji: '🚪' },
-  { id: 'door_closed', label: 'Porta chiusa', emoji: '🔒' },
-  { id: 'chest', label: 'Forziere', emoji: '📦' },
-  { id: 'trap', label: 'Trappola', emoji: '⚠️' },
-  { id: 'altar', label: 'Altare', emoji: '🏛️' },
-]
-
+// I mobili e le trappole vengono spostati in mapStore (tipi statici)
 const STORAGE_KEY = 'aruco-game-markers'
 
 export const useMarkersStore = defineStore('markers', () => {
-  // Map: markerId (number) → { category, role, typeId, label, emoji }
   const registry = ref(loadFromStorage())
 
-  // Marker angoli (4 corner) con la loro posizione assegnata (NO/NE/SO/SE)
   const corners = computed(() => {
     const result = {}
     for (const [id, data] of Object.entries(registry.value)) {
@@ -54,9 +44,7 @@ export const useMarkersStore = defineStore('markers', () => {
     return result
   })
 
-  const allCornersAssigned = computed(() => {
-    return CORNER_ROLES.every(r => corners.value[r])
-  })
+  const allCornersAssigned = computed(() => CORNER_ROLES.every(r => corners.value[r]))
 
   function isKnown(markerId) {
     return markerId in registry.value
@@ -88,7 +76,20 @@ export const useMarkersStore = defineStore('markers', () => {
   function loadFromStorage() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY)
-      return raw ? JSON.parse(raw) : {}
+      if (raw) {
+        const parsed = JSON.parse(raw)
+        // Migrazione: rimuovi eventuali marker di tipo furniture
+        let changed = false
+        for (const [id, data] of Object.entries(parsed)) {
+          if (data.category === 'furniture') {
+            delete parsed[id]
+            changed = true
+          }
+        }
+        if (changed) saveToStorage()
+        return parsed
+      }
+      return {}
     } catch {
       return {}
     }
