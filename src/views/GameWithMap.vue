@@ -1,6 +1,5 @@
 <template>
   <div class="game-view">
-    <!-- CameraView sempre attivo, visibile solo quando viewMode === 'camera' -->
     <div v-show="viewMode === 'camera'" class="viewport" ref="viewportEl">
       <CameraView
         ref="cameraViewRef"
@@ -9,7 +8,6 @@
         @frame-processed="onFrameProcessed"
         @homography-updated="onHomographyUpdated"
       />
-      <!-- Canvas overlay mappa -->
       <canvas
         v-if="selectedMapId && showMapOverlay"
         ref="overlayCanvas"
@@ -298,7 +296,6 @@ const markersStore = useMarkersStore()
 const gameStore    = useGameStore()
 const mapStore     = useMapStore()
 
-// Stato esistente
 const isActive        = ref(true)
 const showSettings    = ref(false)
 const showPieceList   = ref(false)
@@ -309,7 +306,6 @@ const cameraViewRef   = ref(null)
 const viewMode        = ref('camera')
 const visibleCornersSet = ref(new Set())
 
-// Stato overlay mappa
 const overlayCanvas   = ref(null)
 const selectedMapId   = ref(null)
 const showMapOverlay  = ref(true)
@@ -318,7 +314,6 @@ const showMapPicker   = ref(false)
 let animationFrameId  = null
 let resizeObserver    = null
 
-// Helper per visualizzazione griglia (con gestione di cella undefined)
 function getCellEmoji(cell) {
   if (!cell) return '⬜'
   if (cell.details?.emoji) return cell.details.emoji
@@ -331,7 +326,6 @@ function getCellDisplay(cell) {
   return CELL_TYPE_INFO[cell.type]?.label || cell.type || 'vuoto'
 }
 
-// Computed per la tabella statica
 const selectedMapName = computed(() => {
   if (!selectedMapId.value) return 'nessuna'
   return mapStore.maps.find(m => m.id === selectedMapId.value)?.name || 'sconosciuta'
@@ -366,7 +360,6 @@ const staticCellsList = computed(() => {
   return cells
 })
 
-// Helper: inversa matrice (per proiezione mappa)
 function invertHomography(H) {
   const [a, b, c, d, e, f, g, h, i] = H
   const det = a*(e*i - f*h) - b*(d*i - f*g) + c*(d*h - e*g)
@@ -383,13 +376,6 @@ function invertHomography(H) {
     (b*g - a*h) * invDet,
     (a*e - b*d) * invDet
   ]
-}
-
-function projectWorldToPixel(x, y, invH) {
-  const denom = invH[6] * x + invH[7] * y + invH[8]
-  const u = (invH[0] * x + invH[1] * y + invH[2]) / denom
-  const v = (invH[3] * x + invH[4] * y + invH[5]) / denom
-  return { u, v }
 }
 
 function updateCanvasSize() {
@@ -433,8 +419,13 @@ function drawMapOverlay() {
   const invH = invertHomography(homography)
   if (!invH) return
 
-  const stepX = 1 / gridCols
-  const stepY = 1 / gridRows
+  const gridToPixel = (col, row) => {
+    const wx = invH[0] * col + invH[1] * row + invH[2]
+    const wy = invH[3] * col + invH[4] * row + invH[5]
+    const ww = invH[6] * col + invH[7] * row + invH[8]
+    return { x: wx / ww, y: wy / ww }
+  }
+
   const grid = map.grid
 
   for (let row = 0; row < gridRows; row++) {
@@ -442,42 +433,41 @@ function drawMapOverlay() {
       const cell = grid[row]?.[col] || { type: CELL_TYPES.EMPTY, details: null }
       const type = cell.type
       const info = CELL_TYPE_INFO[type] || CELL_TYPE_INFO.empty
-      const emoji = cell.details?.emoji || info.emoji
+      const emoji = getCellEmoji(cell)
       const bgColor = info.color || '#2a2a4a'
 
-      const x0 = col * stepX
-      const y0 = row * stepY
-      const x1 = x0 + stepX
-      const y1 = y0 + stepY
+      const p0 = gridToPixel(col, row)
+      const p1 = gridToPixel(col + 1, row)
+      const p2 = gridToPixel(col + 1, row + 1)
+      const p3 = gridToPixel(col, row + 1)
 
-      const p0 = projectWorldToPixel(x0, y0, invH)
-      const p1 = projectWorldToPixel(x1, y0, invH)
-      const p2 = projectWorldToPixel(x1, y1, invH)
-      const p3 = projectWorldToPixel(x0, y1, invH)
+      if (isNaN(p0.x) || isNaN(p0.y)) continue
 
-      const centerX = x0 + stepX/2
-      const centerY = y0 + stepY/2
-      const pCenter = projectWorldToPixel(centerX, centerY, invH)
+      const center = gridToPixel(col + 0.5, row + 0.5)
+      if (isNaN(center.x) || isNaN(center.y)) continue
 
       ctx.beginPath()
-      ctx.moveTo(p0.u, p0.v)
-      ctx.lineTo(p1.u, p1.v)
-      ctx.lineTo(p2.u, p2.v)
-      ctx.lineTo(p3.u, p3.v)
+      ctx.moveTo(p0.x, p0.y)
+      ctx.lineTo(p1.x, p1.y)
+      ctx.lineTo(p2.x, p2.y)
+      ctx.lineTo(p3.x, p3.y)
       ctx.closePath()
       ctx.fillStyle = bgColor
       ctx.fill()
       ctx.strokeStyle = '#3a3a6a'
-      ctx.lineWidth = 1
+      ctx.lineWidth = 1.5
       ctx.stroke()
 
-      const widthCell = Math.hypot(p1.u - p0.u, p1.v - p0.v)
-      const fontSize = Math.min(32, Math.max(12, widthCell * 0.6))
-      ctx.font = `${fontSize}px "Segoe UI Emoji", "Apple Color Emoji", sans-serif`
+      const width = Math.hypot(p1.x - p0.x, p1.y - p0.y)
+      const height = Math.hypot(p3.x - p0.x, p3.y - p0.y)
+      const cellSize = Math.min(width, height)
+      let fontSize = cellSize * 0.5
+      fontSize = Math.min(48, Math.max(12, fontSize))
+      ctx.font = `${fontSize}px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif`
       ctx.textAlign = 'center'
       ctx.textBaseline = 'middle'
       ctx.fillStyle = '#ffffff'
-      ctx.fillText(emoji, pCenter.u, pCenter.v)
+      ctx.fillText(emoji, center.x, center.y)
     }
   }
 }
@@ -521,11 +511,9 @@ function onHomographyUpdated() {
   requestRedraw()
 }
 
-// Funzioni per il controllo vocale e marker
-// MODIFICA: escludiamo anche eventuali marker di tipo 'furniture' (ora solo statici)
-const piecesList = computed(() => 
-  gameStore.pieces.filter(p => 
-    p.category !== MARKER_CATEGORIES.CORNER && 
+const piecesList = computed(() =>
+  gameStore.pieces.filter(p =>
+    p.category !== MARKER_CATEGORIES.CORNER &&
     p.category !== 'furniture'
   )
 )
@@ -573,7 +561,6 @@ function onFrameProcessed(payload) {
   }
 }
 
-// Watcher
 watch(() => gameStore.homography, () => {
   if (gameStore.homographyReady) requestRedraw()
 }, { deep: true })
@@ -605,7 +592,7 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* ===== STILI ORIGINALI (invariati) ===== */
+/* ===== STILI ORIGINALI (identici a prima) ===== */
 .game-view {
   position: fixed;
   inset: 0;
@@ -1046,6 +1033,7 @@ onUnmounted(() => {
   height: 100%;
   pointer-events: none;
   z-index: 5;
+  object-fit: cover;  /* Allinea la canvas al video */
 }
 .map-picker-btn {
   background: rgba(0,0,0,0.6);
