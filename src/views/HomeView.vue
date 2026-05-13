@@ -7,6 +7,12 @@
     </div>
 
 <div class="btn-group">
+  <button class="btn-gesture" @click="$router.push('/gesture-recognition')">
+  🖐️ Riconoscimento gesti
+</button>
+  <button class="btn-assistant" @click="$router.push('/placement-assistant')">
+  🎧 Guida al posizionamento (non vedenti)
+</button>
     <button class="btn-play-wo-map" @click="$router.push('/gameOpenGrid')">
     🏞️ Inizia gioco in campo aperto
   </button>
@@ -48,6 +54,16 @@ const allCornersAssigned = computed(() => markersStore.allCornersAssigned)
 </script>
 
 <style scoped>
+.btn-gesture {
+  background: linear-gradient(135deg, #7c5ef5, #4a2faf);
+  color: white;
+  border: none;
+  border-radius: 14px;
+  padding: 1rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
 /* LAYOUT */
 .home-view {
   min-height: 100vh;

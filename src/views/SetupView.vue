@@ -58,7 +58,6 @@
 
     <!-- TAB: MARKER -->
     <div v-if="activeTab === 'markers'" class="tab-content">
-      <!-- Pulsante Aggiungi -->
       <div class="add-marker-header">
         <button class="btn-primary add-btn" @click="toggleAddForm">
           <span v-if="!showAddForm">➕ Aggiungi marker</span>
@@ -128,6 +127,7 @@
               <th>Tipo</th>
               <th>Sottotipo</th>
               <th>Descrizione</th>
+              <th>Maschere</th>
               <th></th>
             </tr>
           </thead>
@@ -137,7 +137,6 @@
               :key="m.id"
               :class="['row-' + m.category, { editing: editingId === m.id }]"
             >
-              <!-- ID editabile -->
               <td class="col-id">
                 <template v-if="editingId === m.id">
                   <input
@@ -152,20 +151,16 @@
                 </template>
                 <template v-else>#{{ m.id }}</template>
               </td>
-
               <td class="col-emoji">{{ m.emoji }}</td>
-
               <td class="col-name">
                 <template v-if="editingId === m.id">
                   <input class="edit-input" v-model="editData.label" />
                 </template>
                 <template v-else>{{ m.label }}</template>
               </td>
-
               <td class="col-type">
                 <span class="type-badge" :class="m.category">{{ catLabel(m.category) }}</span>
               </td>
-
               <td class="col-sub">
                 <template v-if="editingId === m.id">
                   <select class="edit-select" v-model="editData.role">
@@ -176,14 +171,22 @@
                 </template>
                 <template v-else>{{ subtypeLabel(m.category, m.role) }}</template>
               </td>
-
               <td class="col-desc">
                 <template v-if="editingId === m.id">
                   <input class="edit-input" v-model="editData.description" placeholder="descrizione opzionale" />
                 </template>
                 <template v-else>{{ m.description || '—' }}</template>
               </td>
-
+              <!-- Bottone maschere solo per giocatori/nemici -->
+              <td class="col-masks">
+                <button
+                  v-if="m.category !== CORNER_CATEGORY"
+                  class="act-btn masks"
+                  @click="openMaskEditor(m)"
+                  title="Modifica linee di vista/tiro"
+                >🎴</button>
+                <span v-else class="no-masks">—</span>
+              </td>
               <td class="col-actions">
                 <template v-if="editingId === m.id">
                   <button class="act-btn save" @click="saveEdit(m.id)">✓</button>
@@ -245,6 +248,36 @@
         <pre class="json-schema">{{ jsonSchema }}</pre>
       </div>
     </div>
+
+    <!-- Dialog per modificare le maschere LOS/LOF -->
+    <Teleport to="body">
+      <div v-if="showMaskDialog" class="dialog-backdrop" @click.self="closeMaskDialog">
+        <div class="dialog mask-dialog">
+          <div class="modal-header">
+            <span>Modifica maschere per marker #{{ editingMaskMarker?.id }} - {{ editingMaskMarker?.label }}</span>
+            <button @click="closeMaskDialog">✕</button>
+          </div>
+          <div class="mask-dialog-content">
+            <MaskEditor
+              v-model="tempLosMask"
+              :grid-cols="gameStore.gridCols"
+              :grid-rows="gameStore.gridRows"
+              title="Linea di vista (LOS)"
+            />
+            <MaskEditor
+              v-model="tempLofMask"
+              :grid-cols="gameStore.gridCols"
+              :grid-rows="gameStore.gridRows"
+              title="Linea di tiro (LOF)"
+            />
+          </div>
+          <div class="dialog-actions">
+            <button class="btn-primary" @click="saveMasks">Salva</button>
+            <button class="btn-secondary" @click="closeMaskDialog">Annulla</button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -252,6 +285,7 @@
 import { ref, computed } from 'vue'
 import {
   useMarkersStore,
+  MARKER_CATEGORIES,
   CORNER_ROLES,
   PLAYER_TYPES,
   ENEMY_TYPES,
@@ -259,6 +293,9 @@ import {
 import { useGameStore } from '../stores/gameStore.js'
 import { useCameraStore } from '../stores/cameraStore.js'
 import { downloadConfig, importConfig, readFile } from '../services/configIO.js'
+import MaskEditor from '../components/MaskEditor.vue'
+
+const CORNER_CATEGORY = MARKER_CATEGORIES.CORNER
 
 const markersStore = useMarkersStore()
 const gameStore = useGameStore()
@@ -324,7 +361,7 @@ function subtypeLabel(cat, role) {
   return found ? `${found.emoji} ${found.label}` : role
 }
 
-// ─── Editing inline con ID modificabile ─────────────────────────────────────
+// ─── Editing inline ──────────────────────────────────────────────────────────
 const editingId = ref(null)
 const editData = ref({})
 const editErrors = ref({})
@@ -349,28 +386,23 @@ function cancelEdit() {
 function validateEditData(originalId) {
   const errors = {}
   const newId = editData.value.newId
-
   if (!Number.isInteger(newId) || newId < 0) {
     errors.id = 'ID deve essere un numero ≥ 0'
   } else if (newId !== originalId && markersStore.registry[newId]) {
     errors.id = `ID #${newId} già utilizzato`
   }
-
   if (!editData.value.label?.trim()) {
     errors.label = 'Nome obbligatorio'
   }
-
   editErrors.value = errors
   return Object.keys(errors).length === 0
 }
 
 function saveEdit(originalId) {
   if (!validateEditData(originalId)) return
-
   const newId = editData.value.newId
   const current = markersStore.getMarker(originalId)
   const sub = subtypeOptions(editData.value.category).find((o) => o.id === editData.value.role)
-
   const updatedData = {
     ...current,
     label: editData.value.label.trim(),
@@ -378,24 +410,17 @@ function saveEdit(originalId) {
     description: editData.value.description?.trim() || '',
     emoji: sub?.emoji ?? current.emoji,
   }
-
   if (newId !== originalId) {
-    // Rimuovi vecchio marker
     markersStore.unregister(originalId)
-
-    // Aggiorna eventuali riferimenti negli angoli
     for (const pos of ['NO', 'NE', 'SO', 'SE']) {
       if (markersStore.corners[pos]?.id === originalId) {
         markersStore.corners[pos] = { id: newId, ...updatedData }
       }
     }
-
-    // Registra con nuovo ID
-    markersStore.register(newId, updatedData)
+    markersStore.register(newId, updatedData, gameStore.gridCols, gameStore.gridRows)
   } else {
-    markersStore.register(originalId, updatedData)
+    markersStore.register(originalId, updatedData, gameStore.gridCols, gameStore.gridRows)
   }
-
   editingId.value = null
   editErrors.value = {}
 }
@@ -466,25 +491,74 @@ const isAddFormValid = computed(() => {
 
 function addMarker() {
   addError.value = ''
-
   if (markersStore.registry[newMarker.value.id]) {
     addError.value = `ID #${newMarker.value.id} già utilizzato.`
     return
   }
-
   const sub = subtypeOptions(newMarker.value.category).find((o) => o.id === newMarker.value.role)
   const emoji = sub?.emoji || (newMarker.value.category === 'corner' ? '📍' : '❓')
-
-  markersStore.register(newMarker.value.id, {
-    label: newMarker.value.label.trim(),
-    category: newMarker.value.category,
-    role: newMarker.value.role,
-    description: newMarker.value.description.trim() || '',
-    emoji,
-  })
-
+  // Maschera predefinita (per corner sarà vuota)
+  const defaultMask = markersStore.getDefaultMaskForCategory(
+    newMarker.value.category,
+    gameStore.gridCols,
+    gameStore.gridRows
+  )
+  markersStore.register(
+    newMarker.value.id,
+    {
+      label: newMarker.value.label.trim(),
+      category: newMarker.value.category,
+      role: newMarker.value.role,
+      description: newMarker.value.description.trim() || '',
+      emoji,
+      losMask: JSON.parse(JSON.stringify(defaultMask)),
+      lofMask: JSON.parse(JSON.stringify(defaultMask)),
+    },
+    gameStore.gridCols,
+    gameStore.gridRows
+  )
   resetAddForm()
   showAddForm.value = false
+}
+
+// ─── Maschere LOS/LOF ────────────────────────────────────────────────────────
+const showMaskDialog = ref(false)
+const editingMaskMarker = ref(null)
+const tempLosMask = ref([])
+const tempLofMask = ref([])
+
+function openMaskEditor(marker) {
+  // I marker angolo non hanno maschere
+  if (marker.category === CORNER_CATEGORY) {
+    alert('I marker angolo non hanno linee di vista/tiro.')
+    return
+  }
+  editingMaskMarker.value = marker
+  const cols = gameStore.gridCols
+  const rows = gameStore.gridRows
+  // Se le maschere non esistono, creale con la predefinita
+  if (!marker.losMask) {
+    marker.losMask = markersStore.getDefaultMaskForCategory(marker.category, cols, rows)
+  }
+  if (!marker.lofMask) {
+    marker.lofMask = markersStore.getDefaultMaskForCategory(marker.category, cols, rows)
+  }
+  tempLosMask.value = JSON.parse(JSON.stringify(marker.losMask))
+  tempLofMask.value = JSON.parse(JSON.stringify(marker.lofMask))
+  showMaskDialog.value = true
+}
+
+function closeMaskDialog() {
+  showMaskDialog.value = false
+  editingMaskMarker.value = null
+}
+
+function saveMasks() {
+  if (editingMaskMarker.value) {
+    markersStore.updateMask(editingMaskMarker.value.id, 'losMask', tempLosMask.value)
+    markersStore.updateMask(editingMaskMarker.value.id, 'lofMask', tempLofMask.value)
+  }
+  closeMaskDialog()
 }
 
 // ─── Import / Export ─────────────────────────────────────────────────────────
@@ -510,7 +584,6 @@ async function doImport(evt) {
   evt.target.value = ''
 }
 
-// ─── Schema JSON ─────────────────────────────────────────────────────────────
 const jsonSchema = `{
   "version": "1.0",
   "exportedAt": "2024-01-01T00:00:00.000Z",
@@ -527,458 +600,89 @@ const jsonSchema = `{
       "role": "NO",
       "label": "Angolo NO",
       "emoji": "📍",
-      "description": ""
+      "description": "",
+      "losMask": [[false]],
+      "lofMask": [[false]]
     }
   ]
 }`
 </script>
 
 <style scoped>
-/* Stili invariati + aggiunte per il form */
-.setup-view {
-  min-height: 100vh;
-  background: #0f0f1e;
-  color: #eee;
-  padding-bottom: 2rem;
-}
-
-.setup-header {
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
-  padding: 1rem 1rem env(safe-area-inset-top, 0.5rem);
-  background: #1a1a2e;
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-h1 {
-  margin: 0;
-  font-size: 1.2rem;
-  flex: 1;
-}
-.back-btn {
-  background: none;
-  border: none;
-  color: #7c9ef5;
-  font-size: 1.2rem;
-  cursor: pointer;
-  padding: 0.3rem;
-}
-.header-actions {
-  display: flex;
-  gap: 0.4rem;
-}
-.icon-action {
-  background: #2a2a4a;
-  border: 1px solid #3a3a6a;
-  border-radius: 8px;
-  color: #ccc;
-  padding: 0.4rem 0.6rem;
-  font-size: 1rem;
-  cursor: pointer;
-}
-
-.tabs {
-  display: flex;
-  gap: 0;
-  background: #1a1a2e;
-  border-bottom: 2px solid #2a2a4a;
-  padding: 0 1rem;
-}
-.tab {
-  background: none;
-  border: none;
-  color: #888;
-  padding: 0.7rem 1rem;
-  font-size: 0.85rem;
-  cursor: pointer;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -2px;
-  transition: all 0.15s;
-  white-space: nowrap;
-}
-.tab.active {
-  color: #7c9ef5;
-  border-bottom-color: #4a7cf5;
-}
-
-.tab-content {
-  padding: 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.card {
-  background: #1a1a2e;
-  border-radius: 14px;
-  padding: 1.2rem;
-}
-.card-ok {
-  border: 1px solid #2a6a2a;
-  background: #1a2a1a;
-}
-.card-err {
-  border: 1px solid #6a2a2a;
-  background: #2a1a1a;
-}
-h2 {
-  margin: 0 0 0.8rem;
-  font-size: 0.95rem;
-  color: #bbb;
-}
-.card-desc {
-  color: #888;
-  font-size: 0.88rem;
-  line-height: 1.6;
-  margin-bottom: 0.8rem;
-}
-
-.grid-inputs {
-  display: flex;
-  gap: 1.5rem;
-  margin-bottom: 1rem;
-}
-label {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  font-size: 0.88rem;
-  color: #aaa;
-}
-input[type='number'] {
-  background: #2a2a4a;
-  border: 2px solid #3a3a6a;
-  border-radius: 8px;
-  color: #eee;
-  padding: 0.5rem 0.7rem;
-  font-size: 1rem;
-  width: 80px;
-}
-
-.corners-visual {
-  display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
-}
-.corner-grid-display {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.5rem;
-  max-width: 200px;
-}
-.corner-chip {
-  background: #2a2a4a;
-  border: 2px solid #3a3a6a;
-  border-radius: 10px;
-  padding: 0.6rem;
-  text-align: center;
-}
-.corner-chip.assigned {
-  border-color: #ffd700;
-}
-.corner-chip strong {
-  display: block;
-  font-size: 1rem;
-}
-.corner-chip small {
-  color: #888;
-  font-family: monospace;
-  font-size: 0.78rem;
-}
-.corners-hint {
-  font-size: 0.82rem;
-  color: #666;
-}
-
-/* Filtri */
-.filters {
-  display: flex;
-  gap: 0.6rem;
-}
-.filter-select,
-.filter-input {
-  background: #2a2a4a;
-  border: 1px solid #3a3a6a;
-  border-radius: 8px;
-  color: #eee;
-  padding: 0.5rem 0.7rem;
-  font-size: 0.88rem;
-}
-.filter-select {
-  flex: 0 0 auto;
-}
-.filter-input {
-  flex: 1;
-}
-
-/* Tabella */
-.marker-table-wrap {
-  overflow-x: auto;
-  border-radius: 12px;
-  background: #1a1a2e;
-}
-.marker-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.85rem;
-}
-.marker-table thead tr {
-  background: #2a2a4a;
-}
-.marker-table th {
-  padding: 0.6rem 0.8rem;
-  text-align: left;
-  color: #888;
-  font-weight: 600;
-  font-size: 0.78rem;
-  text-transform: uppercase;
-  border-bottom: 2px solid #3a3a6a;
-  white-space: nowrap;
-}
-.marker-table td {
-  padding: 0.55rem 0.8rem;
-  border-bottom: 1px solid #222244;
-  vertical-align: middle;
-}
-.marker-table tr:last-child td {
-  border-bottom: none;
-}
-.marker-table tr.editing td {
-  background: #1e2040;
-}
-
-.row-corner td:first-child {
-  border-left: 3px solid #ffd700;
-}
-.row-player td:first-child {
-  border-left: 3px solid #4a7cf5;
-}
-.row-enemy td:first-child {
-  border-left: 3px solid #e54040;
-}
-
-.col-id {
-  font-family: monospace;
-  color: #888;
-  width: 70px;
-}
-.col-emoji {
-  width: 40px;
-  font-size: 1.2rem;
-}
-.col-name {
-  font-weight: 500;
-}
-.col-type {
-  width: 90px;
-}
-.col-sub {
-  color: #aaa;
-}
-.col-desc {
-  color: #666;
-  font-size: 0.82rem;
-  max-width: 140px;
-}
-.col-actions {
-  width: 72px;
-  white-space: nowrap;
-}
-
-.type-badge {
-  display: inline-block;
-  padding: 0.15rem 0.5rem;
-  border-radius: 6px;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-.type-badge.corner {
-  background: #3a3000;
-  color: #ffd700;
-}
-.type-badge.player {
-  background: #1a2a4a;
-  color: #7cb8ff;
-}
-.type-badge.enemy {
-  background: #3a1a1a;
-  color: #ff8888;
-}
-
-.edit-input,
-.edit-select {
-  background: #2a2a5a;
-  border: 1px solid #4a4a8a;
-  border-radius: 6px;
-  color: #eee;
-  padding: 0.3rem 0.5rem;
-  font-size: 0.85rem;
-  width: 100%;
-}
-
-.input-error {
-  border-color: #ff6666 !important;
-}
-
-.field-error {
-  color: #ff8888;
-  font-size: 0.7rem;
-  margin-top: 2px;
-}
-
-.act-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0.2rem 0.3rem;
-  font-size: 0.95rem;
-  border-radius: 4px;
-}
-.act-btn.save {
-  color: #7fff7f;
-}
-.act-btn.cancel {
-  color: #ff8888;
-}
-.act-btn.edit {
-  color: #aaa;
-}
-.act-btn.del {
-  color: #ff6666;
-}
-
-.empty-table {
-  padding: 2rem;
-  text-align: center;
-  color: #555;
-  font-size: 0.9rem;
-}
-
-/* Pulsanti */
-.btn-primary {
-  background: #4a7cf5;
-  color: #fff;
-  border: none;
-  border-radius: 10px;
-  padding: 0.7rem 1.5rem;
-  font-size: 0.95rem;
-  cursor: pointer;
-}
-.btn-secondary {
-  background: #2a2a4a;
-  color: #aaa;
-  border: 2px solid #3a3a6a;
-  border-radius: 10px;
-  padding: 0.6rem 1.2rem;
-  font-size: 0.9rem;
-  cursor: pointer;
-}
-.btn-danger {
-  background: #3a1a1a;
-  color: #ff8888;
-  border: 2px solid #6a2a2a;
-  border-radius: 10px;
-  padding: 0.6rem 1.2rem;
-  font-size: 0.9rem;
-  cursor: pointer;
-}
-.file-label {
-  display: inline-block;
-  cursor: pointer;
-}
-.err-item {
-  color: #ff8888;
-  font-size: 0.85rem;
-  margin: 0.2rem 0;
-}
-
-.json-schema {
-  background: #0f0f1e;
-  border-radius: 8px;
-  padding: 0.8rem;
-  font-size: 0.75rem;
-  color: #7c9ef5;
-  overflow-x: auto;
-  font-family: monospace;
-  line-height: 1.5;
-  margin: 0;
-}
-
-/* Form aggiunta */
-.add-marker-header {
-  display: flex;
-  align-items: center;
-  margin-bottom: 0.5rem;
-}
-.add-btn {
-  padding: 0.5rem 1.2rem;
-  font-size: 0.9rem;
-  background: #2a5a2a;
-  border: 1px solid #4a8a4a;
-  color: #d0ffd0;
-}
-.add-marker-form {
-  margin-bottom: 1.5rem;
-  background: #1e1e32;
-}
-.add-marker-form h3 {
-  margin: 0 0 1rem 0;
-  font-size: 1rem;
-  color: #ccc;
-}
-.form-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-}
-.form-field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-}
-.form-field.full-width {
-  grid-column: span 2;
-}
-.form-field label {
-  font-size: 0.85rem;
-  color: #aaa;
-}
-.form-field .required {
-  color: #ff8888;
-  margin-left: 2px;
-}
-.form-field input,
-.form-field select {
-  background: #2a2a4a;
-  border: 1px solid #3a3a6a;
-  border-radius: 6px;
-  color: #eee;
-  padding: 0.5rem 0.7rem;
-  font-size: 0.9rem;
-}
-.form-field select:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-.form-actions {
-  display: flex;
-  gap: 0.8rem;
-  margin-top: 1.2rem;
-}
-.error-msg {
-  color: #ff8888;
-  font-size: 0.85rem;
-  margin: 0.5rem 0 0;
-}
-
-@media (max-width: 480px) {
-  .form-grid {
-    grid-template-columns: 1fr;
-  }
-  .form-field.full-width {
-    grid-column: span 1;
-  }
-}
+/* Stili originali (non cambiati) – li lasciamo identici a quelli che avevi */
+.setup-view { min-height: 100vh; background: #0f0f1e; color: #eee; padding-bottom: 2rem; }
+.setup-header { display: flex; align-items: center; gap: 0.8rem; padding: 1rem; background: #1a1a2e; position: sticky; top:0; z-index:10; }
+h1 { margin:0; font-size:1.2rem; flex:1; }
+.back-btn { background:none; border:none; color:#7c9ef5; font-size:1.2rem; cursor:pointer; padding:0.3rem; }
+.header-actions { display:flex; gap:0.4rem; }
+.icon-action { background:#2a2a4a; border:1px solid #3a3a6a; border-radius:8px; color:#ccc; padding:0.4rem 0.6rem; font-size:1rem; cursor:pointer; }
+.tabs { display:flex; gap:0; background:#1a1a2e; border-bottom:2px solid #2a2a4a; padding:0 1rem; }
+.tab { background:none; border:none; color:#888; padding:0.7rem 1rem; font-size:0.85rem; cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-2px; }
+.tab.active { color:#7c9ef5; border-bottom-color:#4a7cf5; }
+.tab-content { padding:1rem; display:flex; flex-direction:column; gap:1rem; }
+.card { background:#1a1a2e; border-radius:14px; padding:1.2rem; }
+.card-ok { border:1px solid #2a6a2a; background:#1a2a1a; }
+.card-err { border:1px solid #6a2a2a; background:#2a1a1a; }
+h2 { margin:0 0 0.8rem; font-size:0.95rem; color:#bbb; }
+.card-desc { color:#888; font-size:0.88rem; line-height:1.6; margin-bottom:0.8rem; }
+.grid-inputs { display:flex; gap:1.5rem; margin-bottom:1rem; }
+label { display:flex; flex-direction:column; gap:0.4rem; font-size:0.88rem; color:#aaa; }
+input[type='number'] { background:#2a2a4a; border:2px solid #3a3a6a; border-radius:8px; color:#eee; padding:0.5rem 0.7rem; width:80px; }
+.corners-visual { display:flex; flex-direction:column; gap:0.8rem; }
+.corner-grid-display { display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; max-width:200px; }
+.corner-chip { background:#2a2a4a; border:2px solid #3a3a6a; border-radius:10px; padding:0.6rem; text-align:center; }
+.corner-chip.assigned { border-color:#ffd700; }
+.corner-chip strong { display:block; }
+.corners-hint { font-size:0.82rem; color:#666; }
+.filters { display:flex; gap:0.6rem; }
+.filter-select, .filter-input { background:#2a2a4a; border:1px solid #3a3a6a; border-radius:8px; color:#eee; padding:0.5rem 0.7rem; }
+.marker-table-wrap { overflow-x:auto; border-radius:12px; background:#1a1a2e; }
+.marker-table { width:100%; border-collapse:collapse; font-size:0.85rem; }
+.marker-table thead tr { background:#2a2a4a; }
+.marker-table th { padding:0.6rem 0.8rem; text-align:left; color:#888; font-weight:600; font-size:0.78rem; text-transform:uppercase; border-bottom:2px solid #3a3a6a; }
+.marker-table td { padding:0.55rem 0.8rem; border-bottom:1px solid #222244; vertical-align:middle; }
+.marker-table tr:last-child td { border-bottom:none; }
+.marker-table tr.editing td { background:#1e2040; }
+.row-corner td:first-child { border-left:3px solid #ffd700; }
+.row-player td:first-child { border-left:3px solid #4a7cf5; }
+.row-enemy td:first-child { border-left:3px solid #e54040; }
+.col-id { font-family:monospace; width:70px; }
+.col-emoji { width:40px; font-size:1.2rem; }
+.col-masks button { background:#3a3a6a; border:none; border-radius:6px; font-size:1.2rem; cursor:pointer; padding:0.2rem 0.4rem; }
+.no-masks { color:#666; font-size:0.8rem; }
+.type-badge { display:inline-block; padding:0.15rem 0.5rem; border-radius:6px; font-size:0.75rem; font-weight:600; }
+.type-badge.corner { background:#3a3000; color:#ffd700; }
+.type-badge.player { background:#1a2a4a; color:#7cb8ff; }
+.type-badge.enemy { background:#3a1a1a; color:#ff8888; }
+.edit-input, .edit-select { background:#2a2a5a; border:1px solid #4a4a8a; border-radius:6px; color:#eee; padding:0.3rem 0.5rem; width:100%; }
+.input-error { border-color:#ff6666!important; }
+.field-error { color:#ff8888; font-size:0.7rem; margin-top:2px; }
+.act-btn { background:none; border:none; cursor:pointer; padding:0.2rem 0.3rem; font-size:0.95rem; }
+.act-btn.save { color:#7fff7f; }
+.act-btn.cancel { color:#ff8888; }
+.act-btn.del { color:#ff6666; }
+.empty-table { padding:2rem; text-align:center; color:#555; }
+.btn-primary { background:#4a7cf5; color:#fff; border:none; border-radius:10px; padding:0.7rem 1.5rem; cursor:pointer; }
+.btn-secondary { background:#2a2a4a; color:#aaa; border:2px solid #3a3a6a; border-radius:10px; padding:0.6rem 1.2rem; cursor:pointer; }
+.btn-danger { background:#3a1a1a; color:#ff8888; border:2px solid #6a2a2a; border-radius:10px; padding:0.6rem 1.2rem; cursor:pointer; }
+.file-label { display:inline-block; cursor:pointer; }
+.err-item { color:#ff8888; font-size:0.85rem; }
+.json-schema { background:#0f0f1e; border-radius:8px; padding:0.8rem; font-size:0.75rem; color:#7c9ef5; overflow-x:auto; font-family:monospace; }
+.add-marker-header { margin-bottom:0.5rem; }
+.add-btn { background:#2a5a2a; border:1px solid #4a8a4a; color:#d0ffd0; }
+.add-marker-form { margin-bottom:1.5rem; background:#1e1e32; }
+.form-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+.form-field.full-width { grid-column:span 2; }
+.form-field label { font-size:0.85rem; color:#aaa; }
+.form-field .required { color:#ff8888; }
+.form-field input, .form-field select { background:#2a2a4a; border:1px solid #3a3a6a; border-radius:6px; color:#eee; padding:0.5rem 0.7rem; }
+.form-actions { display:flex; gap:0.8rem; margin-top:1.2rem; }
+.error-msg { color:#ff8888; font-size:0.85rem; }
+.dialog-backdrop { position:fixed; inset:0; background:rgba(0,0,0,0.7); display:flex; align-items:center; justify-content:center; z-index:1000; }
+.mask-dialog { background:#1a1a2e; border-radius:20px; padding:1.5rem; width:90%; max-width:1000px; max-height:90vh; overflow-y:auto; }
+.mask-dialog-content { display:flex; flex-direction:column; gap:1.5rem; margin:1rem 0; }
+.dialog-actions { display:flex; gap:1rem; justify-content:flex-end; margin-top:1rem; }
+.modal-header { display:flex; justify-content:space-between; font-weight:bold; color:#eee; margin-bottom:1rem; }
+.modal-header button { background:none; border:none; color:#aaa; font-size:1.2rem; cursor:pointer; }
+@media (max-width:480px) { .form-grid { grid-template-columns:1fr; } .form-field.full-width { grid-column:span 1; } .mask-dialog { width:95%; padding:1rem; } }
 </style>

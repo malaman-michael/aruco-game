@@ -1,0 +1,11 @@
+Model Information:
+* title:	Lewis Chess Set
+* source:	https://sketchfab.com/3d-models/lewis-chess-set-eddbebab12424c8aa610a21b9b7e19e5
+* author:	The British Museum (https://sketchfab.com/britishmuseum)
+
+Model License:
+* license type:	CC-BY-NC-4.0 (http://creativecommons.org/licenses/by-nc/4.0/)
+* requirements:	Author must be credited. No commercial use.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Lewis Chess Set" (https://sketchfab.com/3d-models/lewis-chess-set-eddbebab12424c8aa610a21b9b7e19e5) by The British Museum (https://sketchfab.com/britishmuseum) licensed under CC-BY-NC-4.0 (http://creativecommons.org/licenses/by-nc/4.0/)

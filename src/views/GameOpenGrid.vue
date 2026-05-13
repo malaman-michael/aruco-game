@@ -38,10 +38,12 @@
         <table class="pieces-table">
           <thead>
             <tr>
-              <th>ID</th>
-              <th>Nome</th>
-              <th>Posizione</th>
-              <th>Orientamento</th>
+              <th scope="col">ID</th>
+              <th scope="col">Nome</th>
+              <th scope="col">Posizione</th>
+              <th scope="col">Orientamento</th>
+              <th scope="col">Linea di vista</th>
+              <th scope="col">Linea di tiro</th>
             </tr>
           </thead>
           <tbody>
@@ -57,9 +59,15 @@
               <td class="col-dir">
                 {{ piece.rotationSymbol || '—' }}
               </td>
+              <td class="col-los">
+                {{ getLosTargets(piece, piecesList).join(', ') || '—' }}
+              </td>
+              <td class="col-lof">
+                {{ getLofTargets(piece, piecesList).join(', ') || '—' }}
+              </td>
             </tr>
             <tr v-if="piecesList.length === 0">
-              <td colspan="4" class="empty-table">Nessuna pedina visibile</td>
+              <td colspan="6" class="empty-table">Nessuna pedina visibile</td>
             </tr>
           </tbody>
         </table>
@@ -190,13 +198,63 @@ const viewMode = ref('camera')
 // Set degli angoli attualmente visibili (per indicatore in tabella)
 const visibleCornersSet = ref(new Set())
 
-// Lista delle sole pedine (esclusi corner e furniture per retrocompatibilità)
+// Lista delle sole pedine (esclusi corner e furniture)
 const piecesList = computed(() => {
   return gameStore.pieces.filter(p => 
     p.category !== MARKER_CATEGORIES.CORNER && 
-    p.category !== 'furniture'  // esclude eventuali vecchi marker mobili
+    p.category !== 'furniture'
   )
 })
+
+// ---- Funzioni per linea di vista e linea di tiro (basate sulla maschera, senza ostacoli di mappa) ----
+function getLosTargets(piece, allPieces) {
+  const markerData = markersStore.getMarker(piece.id)
+  if (!markerData || !markerData.losMask) return []
+  const mask = markerData.losMask
+  const cols = gameStore.gridCols
+  const rows = gameStore.gridRows
+  const centerRow = rows
+  const centerCol = cols
+  const targets = []
+  for (const other of allPieces) {
+    if (other.id === piece.id) continue
+    const dx = other.col - piece.col
+    const dy = other.row - piece.row
+    const maskRow = centerRow + dy
+    const maskCol = centerCol + dx
+    if (maskRow >= 0 && maskRow < mask.length && maskCol >= 0 && maskCol < mask[0].length) {
+      if (mask[maskRow][maskCol]) {
+        targets.push(other.id)
+      }
+    }
+  }
+  return targets
+}
+
+function getLofTargets(piece, allPieces) {
+  const markerData = markersStore.getMarker(piece.id)
+  if (!markerData || !markerData.lofMask) return []
+  const mask = markerData.lofMask
+  const cols = gameStore.gridCols
+  const rows = gameStore.gridRows
+  const centerRow = rows
+  const centerCol = cols
+  const targets = []
+  for (const other of allPieces) {
+    if (other.id === piece.id) continue
+    const dx = other.col - piece.col
+    const dy = other.row - piece.row
+    const maskRow = centerRow + dy
+    const maskCol = centerCol + dx
+    if (maskRow >= 0 && maskRow < mask.length && maskCol >= 0 && maskCol < mask[0].length) {
+      if (mask[maskRow][maskCol]) {
+        targets.push(other.id)
+      }
+    }
+  }
+  return targets
+}
+// --------------------------------------------------
 
 onMounted(() => {
   gameStore.startGame()
@@ -235,9 +293,7 @@ function onUnknownMarker(marker) {
   dialogVisible.value = true
 }
 
-// Aggiorna i corner visibili quando CameraView emette frame-processed
 function onFrameProcessed(payload) {
-  // payload contiene markers, pieces, homography, videoW, videoH
   if (payload && payload.markers) {
     const newVisible = new Set()
     for (const m of payload.markers) {
@@ -252,8 +308,6 @@ function onFrameProcessed(payload) {
 </script>
 
 <style scoped>
-/* Stili originali invariati (omessi per brevità, ma identici al tuo file) */
-/* ... mantieni lo stesso stile che avevi ... */
 .game-view { position: fixed; inset: 0; background: #000; display: flex; flex-direction: column; overflow: hidden; }
 .viewport { flex: 1; position: relative; overflow: hidden; }
 .hud-top { position: absolute; top: env(safe-area-inset-top, 12px); left: 0; right: 0; display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 1rem; z-index: 10; }
@@ -310,6 +364,7 @@ function onFrameProcessed(payload) {
 .col-name .piece-emoji { font-size: 1.4rem; width: 1.8rem; text-align: center; }
 .col-pos { font-family: monospace; color: #7cb8ff; width: 120px; }
 .col-dir { font-weight: bold; color: #ffd700; width: 80px; }
+.col-los, .col-lof { min-width: 100px; font-family: monospace; color: #7fff7f; }
 .empty-table { text-align: center; color: #666; padding: 3rem !important; font-style: italic; }
 .table-footer { margin-top: 1rem; display: flex; justify-content: center; }
 .btn-back { background: #2a2a4a; border: 2px solid #3a3a6a; border-radius: 12px; color: #ccc; padding: 0.8rem 2rem; font-size: 1rem; cursor: pointer; transition: background 0.15s; }

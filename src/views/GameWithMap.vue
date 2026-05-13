@@ -49,6 +49,8 @@
               <th scope="col">Nome</th>
               <th scope="col">Posizione</th>
               <th scope="col">Orientamento</th>
+              <th scope="col">Linea di vista</th>
+              <th scope="col">Linea di tiro</th>
             </tr>
           </thead>
           <tbody>
@@ -64,9 +66,15 @@
               <td class="col-dir">
                 {{ piece.rotationSymbol || '—' }}
               </td>
+              <td class="col-los">
+                {{ getLosTargets(piece, piecesList).join(', ') || '—' }}
+              </td>
+              <td class="col-lof">
+                {{ getLofTargets(piece, piecesList).join(', ') || '—' }}
+              </td>
             </tr>
             <tr v-if="piecesList.length === 0">
-              <td colspan="4" class="empty-table">Nessuna pedina visibile</td>
+              <td colspan="6" class="empty-table">Nessuna pedina visibile</td>
             </tr>
           </tbody>
         </table>
@@ -291,6 +299,7 @@ import { useMarkersStore, CORNER_ROLES, MARKER_CATEGORIES } from '../stores/mark
 import { useGameStore } from '../stores/gameStore.js'
 import { useMapStore, CELL_TYPES, CELL_TYPE_INFO } from '../stores/mapStore.js'
 import { voice } from '../services/voiceService.js'
+import { hasLineOfSight, getReachableCells, getShootableCells } from '../services/lineOfSight.js'
 
 const markersStore = useMarkersStore()
 const gameStore    = useGameStore()
@@ -517,6 +526,89 @@ const piecesList = computed(() =>
     p.category !== 'furniture'
   )
 )
+
+// ---- Funzioni per linea di vista e linea di tiro con ostacoli (mappa e altre pedine) ----
+function getLosTargets(piece, allPieces) {
+  const markerData = markersStore.getMarker(piece.id)
+  if (!markerData?.losMask) return []
+  const mapGrid = currentStaticMap.value?.grid
+  const blockerTypes = ['wall', 'door_closed']
+  const cols = gameStore.gridCols
+  const rows = gameStore.gridRows
+
+  const reachableCells = getReachableCells(
+    markerData.losMask,
+    mapGrid,
+    piece.col,
+    piece.row,
+    cols,
+    rows,
+    blockerTypes
+  )
+  const targets = []
+  for (const other of allPieces) {
+    if (other.id === piece.id) continue
+    if (reachableCells.some(cell => cell.col === other.col && cell.row === other.row)) {
+      targets.push(other.id)
+    }
+  }
+  return targets
+}
+
+function getLofTargets(piece, allPieces) {
+  const markerData = markersStore.getMarker(piece.id)
+  if (!markerData?.lofMask) return []
+  const mapGrid = currentStaticMap.value?.grid
+  const blockerTypes = ['wall', 'door_closed']
+  const cols = gameStore.gridCols
+  const rows = gameStore.gridRows
+
+  const shootableCells = getShootableCells(
+    markerData.lofMask,
+    mapGrid,
+    piece.col,
+    piece.row,
+    cols,
+    rows,
+    blockerTypes
+  )
+  // Prepara una mappa delle pedine (esclusa la nostra) per veloce accesso
+  const occupied = new Set()
+  allPieces.forEach(p => {
+    if (p.id !== piece.id && p.col !== null && p.row !== null) {
+      occupied.add(`${p.col},${p.row}`)
+    }
+  })
+
+  const targets = []
+  for (const other of allPieces) {
+    if (other.id === piece.id) continue
+    const isInMask = shootableCells.some(cell => cell.col === other.col && cell.row === other.row)
+    if (!isInMask) continue
+
+    // Controlla se esiste un'altra pedina sulla linea tra piece e other
+    let blocked = false
+    const dx = other.col - piece.col
+    const dy = other.row - piece.row
+    const stepX = Math.sign(dx)
+    const stepY = Math.sign(dy)
+    let x = piece.col + stepX
+    let y = piece.row + stepY
+    while (x !== other.col || y !== other.row) {
+      if (occupied.has(`${x},${y}`)) {
+        blocked = true
+        break
+      }
+      x += stepX
+      y += stepY
+    }
+    if (!blocked) {
+      targets.push(other.id)
+    }
+  }
+  return targets
+}
+// -------------------------------------------------
 
 function toggleVoice() {
   voice.toggle()
@@ -918,6 +1010,11 @@ onUnmounted(() => {
   color: #ffd700;
   width: 80px;
 }
+.col-los, .col-lof {
+  min-width: 100px;
+  font-family: monospace;
+  color: #7fff7f;
+}
 .empty-table {
   text-align: center;
   color: #666;
@@ -1033,7 +1130,7 @@ onUnmounted(() => {
   height: 100%;
   pointer-events: none;
   z-index: 5;
-  object-fit: cover;  /* Allinea la canvas al video */
+  object-fit: cover;
 }
 .map-picker-btn {
   background: rgba(0,0,0,0.6);
