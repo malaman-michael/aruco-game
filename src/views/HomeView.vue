@@ -29,6 +29,9 @@
   <button class="btn-map" @click="$router.push('/map-editor')">
     🗺️ Editor Mappa
   </button>
+  <button class="btn-move" @click="$router.push('/voice-movement')">
+  🎤 Muovi il quadrato con la voce
+ </button>
 
 </div>
 
@@ -57,6 +60,15 @@ const allCornersAssigned = computed(() => markersStore.allCornersAssigned)
 </script>
 
 <style scoped>
+.btn-move {
+  background: linear-gradient(135deg, #DFDDFF, #DFDDFF);
+  color: white;
+  border-radius: 14px;
+  padding: 1rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
 .btn-assistant{
   background: linear-gradient(135deg, #f94316, #f94316);
   color: white;
