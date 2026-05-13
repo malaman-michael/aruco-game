@@ -7,21 +7,16 @@
       </div>
 
       <div class="instructions">
-        <p>🗣️ <strong>Comandi vocali supportati:</strong></p>
+        <p>🎤 <strong>Microfono sempre attivo!</strong> Parla chiaro e pronuncia comandi come:</p>
         <p><em>su, giù, destra, sinistra</em> (anche in inglese: up, down, right, left)</p>
-        <p>Puoi anche dire un numero prima della direzione: <em>"3 destra"</em>, <em>"2 su"</em>, <em>"4 sinistra"</em></p>
-        <p>🔊 Dopo ogni movimento, la voce confermerà la nuova posizione.</p>
+        <p>Puoi anche dire un numero: <em>"3 destra"</em>, <em>"destra 3"</em>, <em>"due su"</em></p>
+        <p>🔊 Il sistema ignorerà automaticamente i rumori di fondo.</p>
         <p>📍 Il quadrato rosso parte <strong>in basso a destra</strong> (cella 9,9).</p>
       </div>
 
       <div class="controls">
-        <button 
-          @click="startListening" 
-          :disabled="isListening" 
-          class="btn-listen"
-          :class="{ listening: isListening }"
-        >
-          🎙️ {{ isListening ? 'Ascolto in corso...' : 'Attiva microfono' }}
+        <button @click="toggleListening" class="btn-listen" :class="{ listening: isListening }">
+          🎙️ {{ isListening ? 'Microfono attivo' : 'Microfono disattivato' }}
         </button>
         <button @click="resetPosition" class="btn-reset">⟳ Reset posizione</button>
       </div>
@@ -32,19 +27,12 @@
 
       <!-- Griglia 10x10 -->
       <div class="grid">
-        <div 
-          v-for="row in 10" 
-          :key="'row-' + row"
-          class="grid-row"
-        >
+        <div v-for="row in 10" :key="'row-' + row" class="grid-row">
           <div 
             v-for="col in 10" 
             :key="'cell-' + row + '-' + col"
             class="grid-cell"
-            :class="{ 
-              active: (row-1) === position.row && (col-1) === position.col,
-              'bottom-right': (row-1) === 9 && (col-1) === 9
-            }"
+            :class="{ active: (row-1) === position.row && (col-1) === position.col }"
           >
             <span v-if="(row-1) === position.row && (col-1) === position.col" class="emoji">🔴</span>
           </div>
@@ -62,34 +50,33 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 
-// Posizione iniziale: basso a destra (riga 9, colonna 9, indici 0-9)
 const position = ref({ row: 9, col: 9 })
 const isListening = ref(false)
 const feedback = ref('')
 const feedbackError = ref(false)
-
 let recognition = null
+let shouldRestart = true  // flag per riavviare automaticamente
 
-// Mappa direzioni (supporta italiano e inglese)
+// Mappa direzioni
 const directionMap = {
-  'su': { dr: -1, dc: 0 },
-  'up': { dr: -1, dc: 0 },
-  'giù': { dr: 1, dc: 0 },
-  'down': { dr: 1, dc: 0 },
-  'destra': { dr: 0, dc: 1 },
-  'right': { dr: 0, dc: 1 },
-  'sinistra': { dr: 0, dc: -1 },
-  'left': { dr: 0, dc: -1 },
+  'su': { dr: -1, dc: 0 }, 'up': { dr: -1, dc: 0 },
+  'giù': { dr: 1, dc: 0 }, 'down': { dr: 1, dc: 0 },
+  'destra': { dr: 0, dc: 1 }, 'right': { dr: 0, dc: 1 },
+  'sinistra': { dr: 0, dc: -1 }, 'left': { dr: 0, dc: -1 },
 }
 
-// Converti colonna in lettera (A=0)
+// Parole numeriche italiane
+const numberWords = {
+  'uno': 1, 'due': 2, 'tre': 3, 'quattro': 4, 'cinque': 5,
+  'sei': 6, 'sette': 7, 'otto': 8, 'nove': 9, 'dieci': 10
+}
+
 function colToLetter(col) {
   return String.fromCharCode(65 + col)
 }
 
-// Legge ad alta voce la posizione
 function speakPosition() {
-  const message = `Posizione: colonna ${position.col + 1}, riga ${position.row + 1}`
+  const message = `Posizione: colonna ${position.value.col + 1}, riga ${position.value.row + 1}`
   if (window.speechSynthesis) {
     const utterance = new SpeechSynthesisUtterance(message)
     utterance.lang = 'it-IT'
@@ -98,137 +85,178 @@ function speakPosition() {
   }
 }
 
-// Applica uno spostamento (delta righe, delta colonne)
-function move(deltaRow, deltaCol) {
-  let newRow = position.value.row + deltaRow
-  let newCol = position.value.col + deltaCol
-  // Limita alla griglia 0-9
-  newRow = Math.max(0, Math.min(9, newRow))
-  newCol = Math.max(0, Math.min(9, newCol))
-  if (newRow !== position.value.row || newCol !== position.value.col) {
-    position.value = { row: newRow, col: newCol }
-    feedback.value = `Spostato a colonna ${newCol+1}, riga ${newRow+1}`
-    feedbackError.value = false
-    speakPosition()
-  } else {
-    feedback.value = 'Movimento non valido: fuori dalla griglia!'
-    feedbackError.value = true
-  }
+function parseNumberToken(token) {
+  if (!token) return null
+  let num = parseInt(token, 10)
+  if (!isNaN(num)) return num
+  return numberWords[token.toLowerCase()] || null
 }
 
-// Esegue un comando testuale es. "2 destra", "su"
 function executeCommand(commandText) {
   const lower = commandText.toLowerCase().trim()
-  // Cerca un numero all'inizio (opzionale)
-  let numberMatch = lower.match(/^(\d+)\s+(.+)/)
+  if (!lower) return false
+
+  const tokens = lower.split(/\s+/)
   let steps = 1
-  let directionWord = lower
-  if (numberMatch) {
-    steps = parseInt(numberMatch[1], 10)
-    directionWord = numberMatch[2]
+  let directionWord = null
+
+  for (const token of tokens) {
+    if (directionMap[token]) {
+      directionWord = token
+      break
+    }
   }
-  // Gestisci anche casi come "destra 3" (numero dopo)
-  let reverseMatch = lower.match(/(.+)\s+(\d+)$/)
-  if (!numberMatch && reverseMatch) {
-    steps = parseInt(reverseMatch[2], 10)
-    directionWord = reverseMatch[1]
+  if (!directionWord) return false  // ignora silenziosamente se non è un comando valido
+
+  for (const token of tokens) {
+    if (token !== directionWord) {
+      const num = parseNumberToken(token)
+      if (num !== null) {
+        steps = num
+        break
+      }
+    }
   }
+
   const delta = directionMap[directionWord]
-  if (!delta) {
-    feedback.value = `Direzione "${directionWord}" non riconosciuta. Usa su, giù, destra, sinistra.`
-    feedbackError.value = true
-    return false
-  }
+  let newRow = position.value.row
+  let newCol = position.value.col
+  let moved = false
+
   for (let i = 0; i < steps; i++) {
-    move(delta.dr, delta.dc)
+    const nextRow = newRow + delta.dr
+    const nextCol = newCol + delta.dc
+    if (nextRow < 0 || nextRow > 9 || nextCol < 0 || nextCol > 9) {
+      feedback.value = `⚠️ Uscita dalla griglia al passo ${i+1}`
+      feedbackError.value = true
+      return false
+    }
+    newRow = nextRow
+    newCol = nextCol
+    moved = true
+  }
+
+  if (moved) {
+    position.value = { row: newRow, col: newCol }
+    feedback.value = `✅ Spostato a colonna ${newCol+1}, riga ${newRow+1}`
+    feedbackError.value = false
+    speakPosition()
   }
   return true
 }
 
-// Resetta la posizione a (9,9)
 function resetPosition() {
   position.value = { row: 9, col: 9 }
-  feedback.value = 'Posizione resettata a basso a destra (colonna 10, riga 10)'
+  feedback.value = 'Posizione resettata a basso a destra'
   feedbackError.value = false
   speakPosition()
 }
 
-// Inizializza il riconoscimento vocale
+// Riavvia il riconoscimento dopo una pausa (se non è già in ascolto)
+function restartRecognition() {
+  if (!shouldRestart) return
+  if (!recognition || isListening.value) return
+  try {
+    recognition.start()
+  } catch (e) {
+    console.warn('Restart recognition error:', e)
+  }
+}
+
 function initSpeechRecognition() {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
   if (!SpeechRecognition) {
-    feedback.value = '⚠️ Il tuo browser non supporta il riconoscimento vocale. Prova Chrome, Edge o Safari.'
+    feedback.value = '⚠️ Browser non supporta il riconoscimento vocale.'
     feedbackError.value = true
     return null
   }
   const rec = new SpeechRecognition()
-  rec.continuous = false
-  rec.interimResults = false
+  rec.continuous = true          // ascolto continuo
+  rec.interimResults = false     // solo risultati finali
   rec.lang = 'it-IT'
   rec.maxAlternatives = 1
 
   rec.onstart = () => {
     isListening.value = true
-    feedback.value = '🎤 Ascolto... pronuncia un comando'
+    feedback.value = '🎤 Microfono attivo, ascolto comandi...'
     feedbackError.value = false
   }
 
   rec.onend = () => {
     isListening.value = false
-    if (feedback.value === '🎤 Ascolto... pronuncia un comando') {
-      feedback.value = 'Nessun comando rilevato. Riprova.'
-      feedbackError.value = true
+    if (shouldRestart) {
+      // Riavvia automaticamente dopo 0.5 secondi
+      setTimeout(() => restartRecognition(), 500)
     }
   }
 
   rec.onerror = (event) => {
-    console.error('Speech error', event.error)
+    console.warn('SpeechRecognition error:', event.error)
+    if (event.error === 'no-speech') {
+      // Nessuna voce – ignora, non mostrare errore
+      return
+    }
     isListening.value = false
-    let msg = 'Errore di riconoscimento.'
-    if (event.error === 'not-allowed') msg = 'Permesso microfono negato. Concedi l\'accesso e riprova.'
-    else if (event.error === 'no-speech') msg = 'Nessun discorso rilevato. Riprova.'
+    let msg = 'Errore microfono.'
+    if (event.error === 'not-allowed') msg = 'Permesso microfono negato.'
     else if (event.error === 'audio-capture') msg = 'Microfono non trovato.'
     feedback.value = msg
     feedbackError.value = true
+    // Tentativo di riavvio dopo 2 secondi
+    setTimeout(() => restartRecognition(), 2000)
   }
 
   rec.onresult = (event) => {
-    const transcript = event.results[0][0].transcript.toLowerCase().trim()
-    console.log('Comando vocale:', transcript)
+    const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase().trim()
+    console.log('🗣️ Riconosciuto:', transcript)
     executeCommand(transcript)
-    // Riavvia l'ascolto dopo un secondo (opzionale, per comandi consecutivi senza ripremere)
-    setTimeout(() => {
-      if (!isListening.value) startListening()
-    }, 1000)
   }
 
   return rec
 }
 
-function startListening() {
+function toggleListening() {
   if (!recognition) {
     recognition = initSpeechRecognition()
     if (!recognition) return
   }
-  try {
-    recognition.start()
-  } catch (e) {
-    console.warn(e)
+  if (isListening.value) {
+    shouldRestart = false
+    try { recognition.stop() } catch(e) {}
+    isListening.value = false
+    feedback.value = 'Microfono disattivato. Premi per riattivare.'
+  } else {
+    shouldRestart = true
+    try { recognition.start() } catch(e) {}
   }
 }
 
 onMounted(() => {
   recognition = initSpeechRecognition()
+  if (recognition) {
+    // Richiede permesso e avvia automaticamente
+    navigator.mediaDevices.getUserMedia({ audio: true })
+      .then(() => {
+        recognition.start()
+      })
+      .catch(err => {
+        console.error('Permesso microfono negato', err)
+        feedback.value = 'Permesso microfono negato. Attivalo dalle impostazioni.'
+        feedbackError.value = true
+      })
+  }
 })
 
 onUnmounted(() => {
+  shouldRestart = false
   if (recognition) {
-    try { recognition.abort() } catch(e) {}
+    try { recognition.stop() } catch(e) {}
   }
 })
 </script>
 
 <style scoped>
+/* Stili identici alla versione precedente (nessuna modifica) */
 .voice-movement-view {
   min-height: 100vh;
   background: linear-gradient(145deg, #0f0f1e 0%, #1a1a2e 100%);
