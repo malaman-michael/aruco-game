@@ -57,9 +57,23 @@ const allCornersAssigned = computed(() => markersStore.allCornersAssigned)
 </script>
 
 <style scoped>
+.btn-assistant{
+  background: linear-gradient(135deg, #f94316, #f94316);
+  color: white;
+  border-radius: 14px;
+  padding: 1rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
 .btn-voice {
   background: linear-gradient(135deg, #a855f7, #7c3aed);
   color: white;
+    border-radius: 14px;
+  padding: 1rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 .btn-gesture {
   background: linear-gradient(135deg, #7c5ef5, #4a2faf);
