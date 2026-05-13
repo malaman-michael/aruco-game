@@ -7,6 +7,9 @@
     </div>
 
 <div class="btn-group">
+  <button class="btn-voice" @click="$router.push('/voice-color')">
+  🎤 Cambia colore con la voce
+</button>
   <button class="btn-gesture" @click="$router.push('/gesture-recognition')">
   🖐️ Riconoscimento gesti
 </button>
@@ -54,6 +57,10 @@ const allCornersAssigned = computed(() => markersStore.allCornersAssigned)
 </script>
 
 <style scoped>
+.btn-voice {
+  background: linear-gradient(135deg, #a855f7, #7c3aed);
+  color: white;
+}
 .btn-gesture {
   background: linear-gradient(135deg, #7c5ef5, #4a2faf);
   color: white;
