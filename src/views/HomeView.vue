@@ -6,34 +6,35 @@
       <p>Gioco da tavolo in realtà aumentata.<br>Punta la fotocamera sulla plancia.</p>
     </div>
 
-<div class="btn-group">
-  <button class="btn-voice" @click="$router.push('/voice-color')">
-  🎤 Cambia colore con la voce
-</button>
-  <button class="btn-gesture" @click="$router.push('/gesture-recognition')">
-  🖐️ Riconoscimento gesti
-</button>
-  <button class="btn-assistant" @click="$router.push('/placement-assistant')">
-  🎧 Guida al posizionamento (non vedenti)
-</button>
-    <button class="btn-play-wo-map" @click="$router.push('/gameOpenGrid')">
-    🏞️ Inizia gioco in campo aperto
-  </button>
-  <button class="btn-play-map" @click="$router.push('/gameWithMap')">
-    🗺️ Inizia gioco con mappa
-  </button>
-  <button class="btn-setup" @click="$router.push('/setup')">
-    ⚙️ Configurazione
-  </button>
-  <!-- 👇 Nuovo pulsante -->
-  <button class="btn-map" @click="$router.push('/map-editor')">
-    🗺️ Editor Mappa
-  </button>
-  <button class="btn-move" @click="$router.push('/voice-movement')">
-  🎤 Muovi il quadrato con la voce
- </button>
-
-</div>
+    <div class="btn-group">
+      <button class="btn-primary btn-play-wo-map" @click="$router.push('/gameOpenGrid')">
+        🏞️ Campo aperto
+      </button>
+      <button class="btn-primary btn-play-map" @click="$router.push('/gameWithMap')">
+        🗺️ Con mappa
+      </button>
+      <button class="btn-secondary btn-setup" @click="$router.push('/setup')">
+        ⚙️ Configurazione
+      </button>
+      <button class="btn-secondary btn-map" @click="$router.push('/map-editor')">
+        🗺️ Editor Mappa
+      </button>
+      <button class="btn-accent btn-voice" @click="$router.push('/voice-color')">
+        🎤 Cambia colore con la voce
+      </button>
+      <button class="btn-accent btn-gesture" @click="$router.push('/gesture-recognition')">
+        🖐️ Riconoscimento gesti
+      </button>
+      <button class="btn-accent btn-assistant" @click="$router.push('/placement-assistant')">
+        🎧 Guida al posizionamento
+      </button>
+      <button class="btn-accent btn-move" @click="$router.push('/voice-movement')">
+        🎤 Muovi quadrato con voce
+      </button>
+      <button class="btn-accent btn-pieces" @click="$router.push('/voice-pieces')">
+        🎲 Muovi pedine con voce
+      </button>
+    </div>
 
     <div class="info-card">
       <p>
@@ -60,44 +61,7 @@ const allCornersAssigned = computed(() => markersStore.allCornersAssigned)
 </script>
 
 <style scoped>
-.btn-move {
-  background: linear-gradient(135deg, #DFDDFF, #DFDDFF);
-  color: white;
-  border-radius: 14px;
-  padding: 1rem;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-.btn-assistant{
-  background: linear-gradient(135deg, #f94316, #f94316);
-  color: white;
-  border-radius: 14px;
-  padding: 1rem;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-.btn-voice {
-  background: linear-gradient(135deg, #a855f7, #7c3aed);
-  color: white;
-    border-radius: 14px;
-  padding: 1rem;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-.btn-gesture {
-  background: linear-gradient(135deg, #7c5ef5, #4a2faf);
-  color: white;
-  border: none;
-  border-radius: 14px;
-  padding: 1rem;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-/* LAYOUT */
+/* ===== LAYOUT PRINCIPALE ===== */
 .home-view {
   min-height: 100vh;
   background: linear-gradient(160deg, #0f0f1e 0%, #1a1a3a 100%);
@@ -116,7 +80,7 @@ const allCornersAssigned = computed(() => markersStore.allCornersAssigned)
 
 .hero-icon {
   font-size: clamp(3rem, 15vw, 5rem);
-  margin-bottom: 0.5rem;
+  margin-bottom: 2.5rem;
 }
 
 h1 {
@@ -131,70 +95,82 @@ p {
   font-size: clamp(0.9rem, 4vw, 1.1rem);
 }
 
-/* BOTTONI */
+/* ===== GRIGLIA BOTTONI RESPONSIVE ===== */
 .btn-group {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 0.8rem;
   width: 100%;
-  max-width: 320px;
+  max-width: 900px;
+  margin: 0 auto;
 }
 
-/* BASE COMUNE */
-.btn-play-map,
-.btn-play-wo-map,
-.btn-setup,
-.btn-map {
+/* Stile base per tutti i bottoni */
+.btn-group button {
   border-radius: 14px;
-  padding: 1rem;
+  padding: 0.8rem 1.2rem;
   font-size: 1rem;
   cursor: pointer;
   text-align: center;
   border: none;
   transition: all 0.2s ease;
+  flex: 1 1 auto;
+  min-width: 140px;
+  white-space: nowrap;
+  font-weight: 500;
 }
 
-/* 🟢 CAMPO APERTO */
+/* Colori per categoria */
+.btn-primary {
+  color: #fff;
+  font-weight: 600;
+}
 .btn-play-wo-map {
   background: linear-gradient(135deg, #34d399, #059669);
-  color: #fff;
-  font-weight: 600;
 }
-
-/* 🔵 CON MAPPA */
 .btn-play-map {
   background: linear-gradient(135deg, #4a7cf5, #1e40af);
-  color: #fff;
-  font-weight: 600;
 }
 
-/* ⚙️ CONFIG */
-.btn-setup {
+.btn-secondary {
   background: #2a2a4a;
   color: #aaa;
   border: 2px solid #3a3a6a;
 }
-
-/* 🟠 EDITOR MAPPA */
-.btn-map {
-  background: linear-gradient(135deg, #f59e0b, #b45309);
-  color: #fff;
-}
-
-/* HOVER */
-.btn-play-map:hover,
-.btn-play-wo-map:hover,
-.btn-map:hover {
-  transform: translateY(-2px);
-  filter: brightness(1.1);
-}
-
-.btn-setup:hover {
+.btn-secondary:hover {
   background: #3a3a6a;
   color: #fff;
 }
 
-/* INFO CARD */
+.btn-accent {
+  color: #fff;
+  font-weight: 500;
+}
+.btn-voice {
+  background: linear-gradient(135deg, #a855f7, #7c3aed);
+}
+.btn-gesture {
+  background: linear-gradient(135deg, #7c5ef5, #4a2faf);
+}
+.btn-assistant {
+  background: linear-gradient(135deg, #f94316, #c53010);
+}
+.btn-move {
+  background: linear-gradient(135deg, #3b82f6, #1e40af);
+}
+.btn-pieces {
+  background: linear-gradient(135deg, #10b981, #047857);
+}
+
+/* Hover generico */
+.btn-group button:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.05);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+}
+
+/* ===== INFO CARD ===== */
 .info-card {
   background: #1a1a2e;
   border-radius: 12px;
@@ -210,18 +186,50 @@ p {
   margin-top: 0.4rem;
 }
 
-/* DESKTOP */
+/* ===== RESPONSIVITÀ ===== */
+/* Tablet (larghezza > 640px) */
 @media (min-width: 640px) {
   .btn-group {
-    flex-direction: row;
-    max-width: 500px;
+    gap: 1rem;
   }
+  .btn-group button {
+    padding: 0.9rem 1.4rem;
+    font-size: 1rem;
+    min-width: 160px;
+  }
+}
 
-  .btn-play-map,
-  .btn-play-wo-map,
-  .btn-setup,
-  .btn-map {
-    flex: 1;
+/* Desktop (larghezza > 1024px) */
+@media (min-width: 1024px) {
+  .btn-group {
+    max-width: 1000px;
+    gap: 1rem;
+  }
+  .btn-group button {
+    flex: 0 1 auto;
+    min-width: 180px;
+    padding: 1rem 1.5rem;
+    font-size: 1.05rem;
+  }
+}
+
+/* Schermi molto grandi (oltre 1400px) */
+@media (min-width: 1400px) {
+  .btn-group {
+    max-width: 1200px;
+  }
+  .btn-group button {
+    min-width: 200px;
+    padding: 1rem 2rem;
+  }
+}
+
+/* Per evitare overflow su schermi molto stretti */
+@media (max-width: 480px) {
+  .btn-group button {
+    flex: 1 1 100%;
+    white-space: normal;
+    word-break: keep-all;
   }
 }
 </style>
