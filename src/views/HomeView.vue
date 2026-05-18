@@ -4,6 +4,17 @@
       <div class="hero-icon">🎲</div>
       <h1>ArUco Game</h1>
       <p>Gioco da tavolo in realtà aumentata.<br>Punta la fotocamera sulla plancia.</p>
+            <p>Pagine di test per lo sviluppo</p>
+            
+    </div>
+        <div class="info-card">
+      <p>
+        <strong>{{ registeredCount }}</strong> marker registrati ·
+        <strong>{{ gameStore.gridCols }}×{{ gameStore.gridRows }}</strong> griglia
+      </p>
+      <p v-if="!allCornersAssigned" class="hint-corners">
+        ⚠️ Imposta prima i 4 marker d'angolo (NO, NE, SO, SE)
+      </p>
     </div>
 
     <div class="btn-group">
@@ -14,7 +25,7 @@
         🗺️ Con mappa
       </button>
       <button class="btn-secondary btn-setup" @click="$router.push('/setup')">
-        ⚙️ Configurazione
+        ⚙️ Configurazione mappa e pedine di gioco
       </button>
       <button class="btn-secondary btn-map" @click="$router.push('/map-editor')">
         🗺️ Editor Mappa
@@ -29,22 +40,15 @@
         🎧 Guida al posizionamento
       </button>
       <button class="btn-accent btn-move" @click="$router.push('/voice-movement')">
-        🎤 Muovi quadrato con voce
-      </button>
-      <button class="btn-accent btn-pieces" @click="$router.push('/voice-pieces')">
         🎲 Muovi pedine con voce
+      </button>
+
+      <button class="btn-accent btn-settings" @click="$router.push('/settings')">
+        Personalizzazione messaggi audio
       </button>
     </div>
 
-    <div class="info-card">
-      <p>
-        <strong>{{ registeredCount }}</strong> marker registrati ·
-        <strong>{{ gameStore.gridCols }}×{{ gameStore.gridRows }}</strong> griglia
-      </p>
-      <p v-if="!allCornersAssigned" class="hint-corners">
-        ⚠️ Imposta prima i 4 marker d'angolo (NO, NE, SO, SE)
-      </p>
-    </div>
+
   </div>
 </template>
 

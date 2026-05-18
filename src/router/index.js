@@ -8,6 +8,7 @@ import PlacementAssistantView from '../views/PlacementAssistantView.vue'
 import GestureRecognitionView from '../views/GestureRecognitionView.vue'
 import VoiceColorView from '../views/VoiceColorView.vue'
 import VoiceMovementView from '../views/VoiceMovementView.vue'
+import SettingsView from '../views/SettingsView.vue'
 
 
 const routes = [
@@ -20,6 +21,7 @@ const routes = [
   { path: '/gesture-recognition', component: GestureRecognitionView },
   { path: '/voice-color', component: VoiceColorView },
   { path: '/voice-movement', component: VoiceMovementView },
+  { path: '/settings', name: 'Settings', component: SettingsView }
 
 
 ]
