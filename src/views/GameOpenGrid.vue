@@ -10,7 +10,7 @@
       />
     </div>
 
-    <!-- Modalità Tabella Pedine -->
+    <!-- Modalità Tabella Pedine (open map) -->
     <div v-show="viewMode === 'table'" class="table-view">
       <!-- Nuovo indicatore angoli visibili -->
       <div class="corner-indicator">
@@ -28,6 +28,14 @@
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- CANVAS per la mappa (open map) -->
+      <div v-if="homographyReady" class="map-canvas-container" ref="mapContainer">
+        <canvas ref="mapCanvas" class="map-canvas"></canvas>
+      </div>
+      <div v-else class="map-placeholder">
+        ⚠️ Calibrazione non pronta – inquadra i quattro angoli
       </div>
 
       <div class="table-header">
@@ -173,7 +181,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import CameraView from '../components/CameraView.vue'
 import MarkerSetupDialog from '../components/MarkerSetupDialog.vue'
 import CameraSettingsPanel from '../components/CameraSettingsPanel.vue'
@@ -197,6 +205,13 @@ const viewMode = ref('camera')
 
 // Set degli angoli attualmente visibili (per indicatore in tabella)
 const visibleCornersSet = ref(new Set())
+
+// Riferimenti canvas per open map
+const mapCanvas = ref(null)
+const mapContainer = ref(null)
+
+// Helper per sapere se la calibrazione è pronta
+const homographyReady = computed(() => gameStore.homographyReady)
 
 // Lista delle sole pedine (esclusi corner e furniture)
 const piecesList = computed(() => {
@@ -256,9 +271,159 @@ function getLofTargets(piece, allPieces) {
 }
 // --------------------------------------------------
 
+// --- Funzioni di disegno sulla canvas (open map) ---
+function gridToPixel(col, row) {
+  const corners = gameStore.cornerPositions
+  if (!corners || Object.keys(corners).length < 4) return null
+  const pNO = corners.NO
+  const pNE = corners.NE
+  const pSO = corners.SO
+  const pSE = corners.SE
+  if (!pNO || !pNE || !pSO || !pSE) return null
+
+  const t = col / (gameStore.gridCols - 1)
+  const u = row / (gameStore.gridRows - 1)
+
+  // Interpolazione bilineare
+  const topX = pNO.x * (1 - t) + pNE.x * t
+  const topY = pNO.y * (1 - t) + pNE.y * t
+  const bottomX = pSO.x * (1 - t) + pSE.x * t
+  const bottomY = pSO.y * (1 - t) + pSE.y * t
+
+  const x = topX * (1 - u) + bottomX * u
+  const y = topY * (1 - u) + bottomY * u
+  return { x, y }
+}
+
+function isPointInsideQuad(px, py, quad) {
+  let inside = false
+  for (let i = 0, j = quad.length-1; i < quad.length; j = i++) {
+    const xi = quad[i].x, yi = quad[i].y
+    const xj = quad[j].x, yj = quad[j].y
+    const intersect = ((yi > py) != (yj > py)) &&
+      (px < (xj - xi) * (py - yi) / (yj - yi) + xi)
+    if (intersect) inside = !inside
+  }
+  return inside
+}
+
+function drawDirectionLine(ctx, start, angleDeg, quad, color, lineWidth = 3) {
+  const angleRad = angleDeg * Math.PI / 180
+  const dirX = Math.cos(angleRad)
+  const dirY = Math.sin(angleRad)
+  let tMax = 1
+  let step = 10
+  for (let i = 1; i <= 200; i++) {
+    const testX = start.x + dirX * i * step
+    const testY = start.y + dirY * i * step
+    if (!isPointInsideQuad(testX, testY, quad)) {
+      tMax = i * step
+      break
+    }
+  }
+  const endX = start.x + dirX * tMax
+  const endY = start.y + dirY * tMax
+  ctx.beginPath()
+  ctx.moveTo(start.x, start.y)
+  ctx.lineTo(endX, endY)
+  ctx.strokeStyle = color
+  ctx.lineWidth = lineWidth
+  ctx.stroke()
+}
+
+function drawMap() {
+  const canvas = mapCanvas.value
+  if (!canvas) return
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return
+
+  // Imposta dimensioni canvas uguali al contenitore
+  const container = mapContainer.value
+  if (!container) return
+  const rect = container.getBoundingClientRect()
+  if (rect.width === 0 || rect.height === 0) return
+  canvas.width = rect.width
+  canvas.height = rect.height
+  ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+  const corners = gameStore.cornerPositions
+  if (!corners || Object.keys(corners).length < 4) return
+
+  const pNO = corners.NO
+  const pNE = corners.NE
+  const pSO = corners.SO
+  const pSE = corners.SE
+  const quad = [pNO, pNE, pSE, pSO]
+
+  // 1. Linee gialle per il perimetro (spessore 3px)
+  ctx.beginPath()
+  ctx.moveTo(pNO.x, pNO.y)
+  ctx.lineTo(pNE.x, pNE.y)
+  ctx.lineTo(pSE.x, pSE.y)
+  ctx.lineTo(pSO.x, pSO.y)
+  ctx.closePath()
+  ctx.strokeStyle = '#ffcc00'
+  ctx.lineWidth = 3
+  ctx.stroke()
+
+  // 2. Trova giocatore e nemici
+  const playerPiece = gameStore.pieces.find(p => p.category === 'player')
+  const enemyPieces = gameStore.pieces.filter(p => p.category === 'enemy')
+
+  // Disegna linea blu per giocatore
+  if (playerPiece && playerPiece.col !== null && playerPiece.row !== null) {
+    const start = gridToPixel(playerPiece.col, playerPiece.row)
+    if (start) {
+      drawDirectionLine(ctx, start, playerPiece.angle, quad, '#3399ff', 3)
+    }
+  }
+
+  // Disegna linee rosse per nemici
+  for (const enemy of enemyPieces) {
+    if (enemy.col !== null && enemy.row !== null) {
+      const start = gridToPixel(enemy.col, enemy.row)
+      if (start) {
+        drawDirectionLine(ctx, start, enemy.angle, quad, '#ff4444', 3)
+      }
+    }
+  }
+
+  // 3. Disegna i marker come cerchi colorati
+  for (const piece of gameStore.pieces) {
+    if (piece.col === null || piece.row === null) continue
+    const pos = gridToPixel(piece.col, piece.row)
+    if (!pos) continue
+    ctx.beginPath()
+    ctx.arc(pos.x, pos.y, 8, 0, 2 * Math.PI)
+    if (piece.category === 'player') ctx.fillStyle = '#3399ff'
+    else if (piece.category === 'enemy') ctx.fillStyle = '#ff4444'
+    else ctx.fillStyle = '#ffaa44'
+    ctx.fill()
+    ctx.fillStyle = 'white'
+    ctx.font = 'bold 14px monospace'
+    ctx.shadowBlur = 0
+    ctx.fillText(piece.id, pos.x - 6, pos.y - 6)
+  }
+}
+// --------------------------------------------------
+
 onMounted(() => {
   gameStore.startGame()
   voice.announceCornerStatus(gameStore.cornersAcquired, gameStore.cornerPositions)
+  window.addEventListener('resize', () => {
+    if (viewMode.value === 'table' && homographyReady.value) {
+      drawMap()
+    }
+  })
+})
+
+// Aggiorna canvas quando cambiano i dati o la vista tabella
+watch([() => gameStore.pieces, () => gameStore.cornerPositions, homographyReady, viewMode], () => {
+  if (viewMode.value === 'table' && homographyReady.value) {
+    nextTick(() => {
+      drawMap()
+    })
+  }
 })
 
 const missingCorners = computed(() => CORNER_ROLES.filter(r => !markersStore.corners[r]))
@@ -347,6 +512,30 @@ function onFrameProcessed(payload) {
 .corner-dots-indicator { display: flex; gap: 0.5rem; }
 .indicator-dot { width: 2.2rem; height: 2.2rem; border-radius: 8px; background: #2a2a4a; border: 2px solid #3a3a6a; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: bold; color: #888; transition: all 0.2s; }
 .indicator-dot.active { background: #ff4444; border-color: #ff8888; color: #fff; box-shadow: 0 0 12px rgba(255, 68, 68, 0.5); }
+.map-canvas-container {
+  width: 100%;
+  height: 300px;
+  margin-bottom: 1rem;
+  background: #1e1e2e;
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid #3a3a6a;
+}
+.map-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.map-placeholder {
+  background: #1a1a2e;
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+  color: #aaa;
+  margin-bottom: 1rem;
+  border: 1px solid #3a3a6a;
+}
 .table-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1rem; padding: 0 0.5rem; margin-top: 2.5rem; }
 .table-header h2 { margin: 0; font-size: 1.5rem; color: #fff; }
 .piece-count { color: #7c9ef5; font-size: 1rem; }
