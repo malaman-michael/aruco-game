@@ -9,6 +9,13 @@ export const useGameStore = defineStore('game', () => {
   const gridCols = ref(10)
   const gridRows = ref(10)
 
+  // Modalità: false = griglia, true = campo libero
+  const freeMode = ref(false)
+
+  function toggleFreeMode() {
+    freeMode.value = !freeMode.value
+  }
+
   // Lista delle pedine rilevate nell'ultimo frame
   const pieces = ref([])
 
@@ -121,5 +128,7 @@ export const useGameStore = defineStore('game', () => {
     updateCornerPosition, resetHomography,
     setGridSize, updatePieces,
     startGame, stopGame,
+    freeMode,
+    toggleFreeMode
   }
 })
