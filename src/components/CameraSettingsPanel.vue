@@ -12,7 +12,6 @@
           <!-- Immagine -->
           <div class="section">
             <div class="section-title">📷 Immagine</div>
-
             <SliderRow label="Luminosità"  :value="cam.brightness"  :min="30"  :max="250" unit="%" @update="v => { cam.brightness  = v; cam.save() }" />
             <SliderRow label="Contrasto"   :value="cam.contrast"    :min="50"  :max="400" unit="%" @update="v => { cam.contrast    = v; cam.save() }" />
             <SliderRow label="Saturazione" :value="cam.saturation"  :min="0"   :max="200" unit="%" @update="v => { cam.saturation  = v; cam.save() }" />
@@ -22,7 +21,6 @@
           <!-- Binarizzazione -->
           <div class="section">
             <div class="section-title">🔲 Binarizzazione (scarsa luce)</div>
-
             <div class="toggle-row">
               <span class="toggle-label">Scala di grigi</span>
               <button class="toggle-btn" :class="{ active: cam.grayscale }"
@@ -30,11 +28,9 @@
                 {{ cam.grayscale ? 'ON' : 'OFF' }}
               </button>
             </div>
-
             <SliderRow label="Soglia binarizzazione" :value="cam.threshold"
               :min="0" :max="255" unit="" hint="0 = disabilitata"
               @update="v => { cam.threshold = v; cam.save() }" />
-
             <div class="preset-row">
               <span class="preset-label">Preset:</span>
               <button class="preset-btn" @click="applyPreset('bright')">☀️ Luce intensa</button>
@@ -46,7 +42,6 @@
           <!-- Overlay AR -->
           <div class="section">
             <div class="section-title">🗺️ Overlay AR</div>
-
             <div class="toggle-row">
               <span class="toggle-label">Mostra griglia</span>
               <button class="toggle-btn" :class="{ active: cam.showGrid }"
@@ -54,11 +49,9 @@
                 {{ cam.showGrid ? 'ON' : 'OFF' }}
               </button>
             </div>
-
             <SliderRow label="Opacità griglia" :value="Math.round(cam.gridOpacity * 100)"
               :min="10" :max="100" unit="%"
               @update="v => { cam.gridOpacity = v / 100; cam.save() }" />
-
             <div class="toggle-row">
               <span class="toggle-label">ID sui marker</span>
               <button class="toggle-btn" :class="{ active: cam.showIds }"
@@ -66,13 +59,28 @@
                 {{ cam.showIds ? 'ON' : 'OFF' }}
               </button>
             </div>
-
             <div class="toggle-row">
               <span class="toggle-label">Effetto cubo 3D</span>
               <button class="toggle-btn" :class="{ active: cam.showCubes }"
                 @click="cam.showCubes = !cam.showCubes; cam.save()">
                 {{ cam.showCubes ? 'ON' : 'OFF' }}
               </button>
+            </div>
+          </div>
+
+          <!-- NUOVA SEZIONE: Modalità campo libero -->
+          <div class="section">
+            <div class="section-title">🎯 Modalità campo libero</div>
+            <div class="toggle-row">
+              <span class="toggle-label">Attiva campo libero</span>
+              <!-- Accesso diretto allo store, senza variabile locale -->
+              <button class="toggle-btn" :class="{ active: gameStore.freeMode }"
+                @click="gameStore.toggleFreeMode()">
+                {{ gameStore.freeMode ? 'ON' : 'OFF' }}
+              </button>
+            </div>
+            <div class="setting-hint-text">
+              {{ gameStore.freeMode ? 'Coordinate assolute (px) e orientamento in gradi' : 'Coordinate griglia (col, row) e orientamento N/S/E/O' }}
             </div>
           </div>
 
@@ -85,12 +93,14 @@
 
 <script setup>
 import { useCameraStore } from '../stores/cameraStore.js'
+import { useGameStore } from '../stores/gameStore.js'
 import SliderRow from './SliderRow.vue'
 
 defineProps({ visible: { type: Boolean, default: false } })
 defineEmits(['close'])
 
 const cam = useCameraStore()
+const gameStore = useGameStore()
 
 const PRESETS = {
   bright: { brightness: 70,  contrast: 150, saturation: 80,  grayscale: true,  threshold: 128, sharpness: 2 },
@@ -111,6 +121,7 @@ function applyPreset(name) {
 </script>
 
 <style scoped>
+/* Tutti gli stili originali rimangono identici */
 .settings-backdrop {
   position: fixed; inset: 0; background: rgba(0,0,0,0.6);
   display: flex; align-items: flex-end; justify-content: center; z-index: 200;
@@ -144,6 +155,13 @@ function applyPreset(name) {
 }
 .toggle-btn.active { background: #2a4a8a; border-color: #4a7cf5; color: #7cb8ff; }
 
+.setting-hint-text {
+  font-size: 0.7rem;
+  color: #aaa;
+  margin-top: 0.3rem;
+  text-align: right;
+}
+
 .preset-row {
   display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.6rem;
 }
@@ -162,7 +180,6 @@ function applyPreset(name) {
 
 .slide-up-enter-active, .slide-up-leave-active { transition: transform 0.25s ease; }
 .slide-up-enter-from, .slide-up-leave-to { transform: translateY(100%); }
-
 
 .settings-panel {
   width: 100%;
@@ -209,5 +226,4 @@ function applyPreset(name) {
 .preset-row {
   flex-wrap: wrap;
 }
-
 </style>
