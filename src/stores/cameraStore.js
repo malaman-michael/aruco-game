@@ -21,6 +21,10 @@ export const useCameraStore = defineStore('camera', () => {
   const showCubes   = ref(true)  // effetto cubo 3D
   const gridOpacity = ref(0.5)   // opacità griglia 0–1
 
+  // Nuove impostazioni di performance
+  const videoResolution = ref('1280x720')  // valori: '640x480', '1280x720'
+  const frameSkip = ref(2)                 // 1 = 60fps, 2 = 30fps, 3 = 20fps, 4 = 15fps
+
   function load() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY)
@@ -36,6 +40,8 @@ export const useCameraStore = defineStore('camera', () => {
       showIds.value     = s.showIds     ?? true
       showCubes.value   = s.showCubes   ?? true
       gridOpacity.value = s.gridOpacity ?? 0.5
+      videoResolution.value = s.videoResolution ?? '1280x720'
+      frameSkip.value = s.frameSkip ?? 2
     } catch {}
   }
 
@@ -51,6 +57,8 @@ export const useCameraStore = defineStore('camera', () => {
       showIds:     showIds.value,
       showCubes:   showCubes.value,
       gridOpacity: gridOpacity.value,
+      videoResolution: videoResolution.value,
+      frameSkip: frameSkip.value,
     }))
   }
 
@@ -59,6 +67,8 @@ export const useCameraStore = defineStore('camera', () => {
     sharpness.value = 0; threshold.value = 0; grayscale.value = false
     showGrid.value = true; showIds.value = true; showCubes.value = true
     gridOpacity.value = 0.5
+    videoResolution.value = '1280x720'
+    frameSkip.value = 2
     save()
   }
 
@@ -67,6 +77,7 @@ export const useCameraStore = defineStore('camera', () => {
   return {
     brightness, contrast, saturation, sharpness,
     threshold, grayscale, showGrid, showIds, showCubes, gridOpacity,
+    videoResolution, frameSkip,
     save, reset,
   }
 })

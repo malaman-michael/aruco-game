@@ -42,30 +42,54 @@ let rafId = null
 let stream = null
 let ctx = null
 
-onMounted(async () => {
+// Variabili per frame skip
+let frameCounter = 0
+let restartPending = false
+
+// Funzione per avviare/riavviare la camera con la risoluzione corrente
+async function startCamera() {
+  if (stream) {
+    stream.getTracks().forEach(track => track.stop())
+  }
+  // Parse della risoluzione
+  let [width, height] = cam.videoResolution.split('x').map(Number)
+  if (!width || !height) { width = 1280; height = 720 }
+
   try {
     stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
+      video: {
+        facingMode: 'environment',
+        width: { ideal: width },
+        height: { ideal: height }
+      },
       audio: false,
     })
     video.srcObject = stream
     await video.play()
     cameraReady.value = true
-    ctx = canvasEl.value.getContext('2d', { willReadFrequently: true })
-    offCtx = offscreen.getContext('2d', { willReadFrequently: true })
-
-    try {
-      arucoService = createArucoService()
-      console.log('[CameraView] ArUco detector pronto')
-    } catch (e) {
-      cameraError.value = `Errore ArUco: ${e.message}`
-      return
+    if (restartPending) {
+      restartPending = false
+      startLoop()
     }
-    startLoop()
   } catch (err) {
     cameraError.value = err.name === 'NotAllowedError'
       ? 'Permesso fotocamera negato.' : `Errore: ${err.message}`
   }
+}
+
+onMounted(async () => {
+  await startCamera()
+  ctx = canvasEl.value.getContext('2d', { willReadFrequently: true })
+  offCtx = offscreen.getContext('2d', { willReadFrequently: true })
+
+  try {
+    arucoService = createArucoService()
+    console.log('[CameraView] ArUco detector pronto')
+  } catch (e) {
+    cameraError.value = `Errore ArUco: ${e.message}`
+    return
+  }
+  startLoop()
 })
 
 onUnmounted(() => { stopLoop(); stream?.getTracks().forEach(t => t.stop()) })
@@ -73,12 +97,31 @@ watch(() => props.active, val => val ? startLoop() : stopLoop())
 
 function startLoop() { if (!rafId) loop() }
 function stopLoop()  { cancelAnimationFrame(rafId); rafId = null }
+
 function loop() {
   rafId = requestAnimationFrame(() => {
-    if (props.active && arucoService && cameraReady.value) processFrame()
+    if (props.active && arucoService && cameraReady.value) {
+      frameCounter++
+      if (frameCounter % cam.frameSkip === 0) {
+        processFrame()
+      }
+    }
     loop()
   })
 }
+
+// Ascolta i cambi di risoluzione
+onMounted(() => {
+  window.addEventListener('camera-settings-changed', () => {
+    if (stream) {
+      stopLoop()
+      restartPending = true
+      startCamera().then(() => {
+        if (props.active) startLoop()
+      })
+    }
+  })
+})
 
 // ─── Frame processing ──────────────────────────────────────────────────────
 function processFrame() {
@@ -245,7 +288,6 @@ function drawGrid(ctx, H, w, h) {
     ctx.font = 'bold 11px monospace'
     ctx.textAlign = 'center'
     ctx.fillStyle = 'rgba(255,255,255,0.9)'
-    // Mostra anche la rotazione se disponibile
     const rotText = piece.rotationSymbol ? `, ${piece.rotationSymbol}` : ''
     ctx.fillText(`${piece.col},${piece.row}${rotText}`, cx, cy + 4)
   }
@@ -394,7 +436,6 @@ function handleGameLogic(markers, H) {
       row = cell.row
     }
 
-    // Calcola rotazione approssimata
     const { degrees: rotationDeg, symbol: rotationSymbol } = approximateCardinalAngle(m.angle)
 
     pieces.push({

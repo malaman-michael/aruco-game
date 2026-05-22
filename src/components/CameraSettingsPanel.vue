@@ -68,6 +68,30 @@
             </div>
           </div>
 
+          <!-- NUOVA SEZIONE: Performance -->
+          <div class="section">
+            <div class="section-title">⚡ Performance</div>
+            <div class="toggle-row">
+              <span class="toggle-label">Risoluzione video</span>
+              <select :value="cam.videoResolution" @change="setResolution($event.target.value)">
+                <option value="640x480">640x480 (bassa)</option>
+                <option value="1280x720">1280x720 (alta)</option>
+              </select>
+            </div>
+            <div class="toggle-row">
+              <span class="toggle-label">Frame rate (fotogrammi al secondo)</span>
+              <select :value="cam.frameSkip" @change="setFrameSkip($event.target.value)">
+                <option :value="1">60 fps (massimo)</option>
+                <option :value="2">30 fps (consigliato)</option>
+                <option :value="3">20 fps (risparmio batteria)</option>
+                <option :value="4">15 fps (massimo risparmio)</option>
+              </select>
+            </div>
+            <div class="setting-hint-text">
+              Ridurre risoluzione e frame rate allunga la durata della batteria.
+            </div>
+          </div>
+
           <!-- NUOVA SEZIONE: Modalità campo libero -->
           <div class="section">
             <div class="section-title">🎯 Modalità campo libero</div>
@@ -97,7 +121,7 @@ import { useGameStore } from '../stores/gameStore.js'
 import SliderRow from './SliderRow.vue'
 
 defineProps({ visible: { type: Boolean, default: false } })
-defineEmits(['close'])
+const emit = defineEmits(['close'])
 
 const cam = useCameraStore()
 const gameStore = useGameStore()
@@ -116,6 +140,18 @@ function applyPreset(name) {
   cam.grayscale  = p.grayscale
   cam.threshold  = p.threshold
   cam.sharpness  = p.sharpness
+  cam.save()
+}
+
+function setResolution(res) {
+  cam.videoResolution = res
+  cam.save()
+  // Comunica a CameraView che la risoluzione è cambiata
+  window.dispatchEvent(new CustomEvent('camera-settings-changed'))
+}
+
+function setFrameSkip(skip) {
+  cam.frameSkip = Number(skip)
   cam.save()
 }
 </script>
