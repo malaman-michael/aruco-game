@@ -1,18 +1,18 @@
 let _detector = null
 
-function buildDict4x4_100() {
+function buildDict4x4_250() {
   const AR = window.AR
   if (!AR?.DICTIONARIES?.ARUCO_4X4_1000) return false
 
   const full = AR.DICTIONARIES.ARUCO_4X4_1000
-  // Prendi i primi 100 codici per ottenere un dizionario da 100 marker
-  AR.DICTIONARIES['ARUCO_4X4_100'] = {
+  // Prendi i primi 250 codici per ottenere un dizionario da 250 marker
+  AR.DICTIONARIES['ARUCO_4X4_250'] = {
     nBits: full.nBits,
     tau: full.tau,
-    codeList: full.codeList.slice(0, 100)
+    codeList: full.codeList.slice(0, 250)
   }
 
-  console.log('[ArUco] Dizionario ARUCO_4X4_100 creato')
+  console.log('[ArUco] Dizionario ARUCO_4X4_250 creato')
   return true
 }
 
@@ -22,9 +22,9 @@ function getDetector() {
   const AR = window.AR
   if (!AR) throw new Error('window.AR non caricato (js-aruco2)')
   if (!AR.Detector) throw new Error('AR.Detector non trovato')
-  if (!AR.DICTIONARIES?.ARUCO_4X4_100) buildDict4x4_100()
+  if (!AR.DICTIONARIES?.ARUCO_4X4_250) buildDict4x4_250()
 
-  const dictName = 'ARUCO_4X4_100'
+  const dictName = 'ARUCO_4X4_250'
   console.log('[ArUco] Usando dizionario:', dictName)
 
   _detector = new AR.Detector({
