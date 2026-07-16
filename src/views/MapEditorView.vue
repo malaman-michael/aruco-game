@@ -14,7 +14,9 @@
         </button>
         <button class="icon-btn" @click="saveCurrentMap" title="Salva mappa corrente">💾</button>
         <button class="icon-btn" @click="exportAllMaps" title="Esporta mappe">📤</button>
-        <button class="icon-btn" @click="printMap" title="Stampa / Salva PDF">🖨️</button>
+        <!-- Pulsanti stampa separati -->
+        <button class="icon-btn" @click="printLegendOnly" title="Stampa legenda">📋</button>
+        <button class="icon-btn" @click="printGridOnly" title="Stampa griglia">🗺️</button>
         <button class="icon-btn" @click="triggerFileImport" title="Importa mappe">📥</button>
       </div>
     </div>
@@ -386,17 +388,20 @@ function handleCellClick(col, row) {
   }
 
   const entityId = Date.now() + Math.random()
+  // Se subtype è null (elementi base), details sarà null
+  const details = subtype ? {
+    id: entityId,
+    subtypeId: subtype.id,
+    label: subtype.label,
+    emoji: subtype.emoji,
+    size: [w,h]
+  } : null
+
   for (let dy = 0; dy < h; dy++) {
     for (let dx = 0; dx < w; dx++) {
       currentMap.value.grid[row+dy][col+dx] = {
         type: type,
-        details: {
-          id: entityId,
-          subtypeId: subtype.id,
-          label: subtype.label,
-          emoji: subtype.emoji,
-          size: [w,h]
-        },
+        details: details,
         markerId: null
       }
     }
@@ -409,6 +414,7 @@ function removeEntityAt(col, row) {
   if (!cell || cell.type === CELL_TYPES.EMPTY || cell.type === CELL_TYPES.FLOOR || cell.type === CELL_TYPES.WALL) return
   const entityId = cell.details?.id
   if (!entityId) {
+    // Se è un elemento base o non ha id, lo resettiamo a pavimento
     currentMap.value.grid[row][col] = { type: CELL_TYPES.FLOOR, details: null, markerId: cell.markerId }
     return
   }
@@ -552,88 +558,64 @@ function exportAllMaps() {
   URL.revokeObjectURL(url)
 }
 
-// ===== FUNZIONE STAMPA =====
-function printMap() {
+// ===== FUNZIONI STAMPA SEPARATE =====
+
+// Funzione di base per popolare l'area di stampa
+function preparePrintArea(htmlContent) {
+  const printArea = document.getElementById('printArea')
+  printArea.innerHTML = htmlContent
+  printArea.style.display = 'block'
+}
+
+// Stampa solo la legenda
+function printLegendOnly() {
   if (!currentMap.value) {
-    alert('Nessuna mappa da stampare')
+    alert('Nessuna mappa selezionata')
     return
   }
-  const printArea = document.getElementById('printArea')
-  printArea.innerHTML = ''
-  printArea.style.display = 'block'
-
-  // Titolo
-  const title = document.createElement('h1')
-  title.textContent = `🗺️ ${currentMap.value.name}`
-  printArea.appendChild(title)
-
-  // Legenda
-  const legendTitle = document.createElement('h2')
-  legendTitle.textContent = '📐 Legenda dimensioni (stud)'
-  printArea.appendChild(legendTitle)
-  const legendContainer = document.createElement('div')
-  legendContainer.className = 'print-legend-grid'
+  let html = `<h1>📐 Legenda - ${currentMap.value.name}</h1>`
+  html += `<div class="print-legend-grid">`
   for (const group of legendGroups.value) {
-    const col = document.createElement('div')
-    col.className = 'print-legend-column'
-    const groupTitle = document.createElement('div')
-    groupTitle.className = 'print-legend-group-title'
-    groupTitle.textContent = group.title
-    col.appendChild(groupTitle)
+    html += `<div class="print-legend-column">`
+    html += `<div class="print-legend-group-title">${group.title}</div>`
     for (const item of group.items) {
-      const itemDiv = document.createElement('div')
-      itemDiv.className = 'print-legend-item'
-      itemDiv.innerHTML = `${item.emoji} ${item.label} <span class="print-legend-size">${item.size}</span>`
-      col.appendChild(itemDiv)
+      html += `<div class="print-legend-item">${item.emoji} ${item.label} <span class="print-legend-size">${item.size}</span></div>`
     }
-    legendContainer.appendChild(col)
+    html += `</div>`
   }
-  printArea.appendChild(legendContainer)
-
-  // Griglia
-  const gridWrapper = document.createElement('div')
-  gridWrapper.className = 'print-grid-wrapper'
-  const gridContainer = document.createElement('div')
-  gridContainer.className = 'print-grid-container'
-  const cols = currentMap.value.cols
-  const rows = currentMap.value.rows
-
-  gridContainer.style.display = 'grid'
-  gridContainer.style.gridTemplateColumns = `repeat(${cols}, 1fr)`
-  gridContainer.style.gridTemplateRows = `repeat(${rows}, 1fr)`
-  gridContainer.style.width = '100%'
-  gridContainer.style.aspectRatio = `${cols} / ${rows}`
-
-  for (let r = 0; r < rows; r++) {
-    for (let c = 0; c < cols; c++) {
-      const cell = currentMap.value.grid[r]?.[c] || { type: CELL_TYPES.FLOOR, details: null, markerId: null }
-      const cellDiv = document.createElement('div')
-      cellDiv.className = 'print-cell'
-      const bgColor = getCellBackgroundColor(cell)
-      cellDiv.style.backgroundColor = bgColor
-      if (isMarkerCell(cell)) {
-        cellDiv.textContent = cell.markerId
-        cellDiv.style.color = 'white'
-        cellDiv.style.fontWeight = 'bold'
-        cellDiv.style.fontSize = '1.2em'
-        cellDiv.style.textShadow = '1px 1px 0 #000'
-      } else {
-        const emoji = getCellEmoji(cell)
-        cellDiv.textContent = emoji
-      }
-      gridContainer.appendChild(cellDiv)
-    }
-  }
-
-  gridWrapper.appendChild(gridContainer)
-  printArea.appendChild(gridWrapper)
-
-  // Stampa
+  html += `</div>`
+  preparePrintArea(html)
   window.print()
-
-  // Nascondi dopo stampa (o se l'utente annulla)
-  printArea.style.display = 'none'
+  document.getElementById('printArea').style.display = 'none'
 }
+
+// Stampa solo la griglia
+function printGridOnly() {
+  if (!currentMap.value) {
+    alert('Nessuna mappa selezionata')
+    return
+  }
+  let html = `<h1>🗺️ ${currentMap.value.name}</h1>`
+  html += `<div class="print-grid-wrapper"><div class="print-grid-container" style="display:grid; grid-template-columns: repeat(${currentMap.value.cols}, 1fr); grid-template-rows: repeat(${currentMap.value.rows}, 1fr); width:100%; aspect-ratio: ${currentMap.value.cols}/${currentMap.value.rows};">`
+  for (let r = 0; r < currentMap.value.rows; r++) {
+    for (let c = 0; c < currentMap.value.cols; c++) {
+      const cell = currentMap.value.grid[r]?.[c] || { type: CELL_TYPES.FLOOR, details: null, markerId: null }
+      const bgColor = getCellBackgroundColor(cell)
+      let content = ''
+      if (isMarkerCell(cell)) {
+        content = `<span style="color:white; font-weight:bold; font-size:1.2em; text-shadow:1px 1px 0 #000;">${cell.markerId}</span>`
+      } else {
+        content = getCellEmoji(cell)
+      }
+      html += `<div class="print-cell" style="background-color:${bgColor}; border:1px solid #999; display:flex; align-items:center; justify-content:center; font-size:1.4em; min-width:16px; min-height:16px;">${content}</div>`
+    }
+  }
+  html += `</div></div>`
+  preparePrintArea(html)
+  window.print()
+  document.getElementById('printArea').style.display = 'none'
+}
+
 // ===========================
 
 const fileInput = ref(null)
