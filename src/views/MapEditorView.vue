@@ -12,9 +12,11 @@
         <button class="icon-btn" @click="toggleLegend" :title="legendCollapsed ? 'Mostra legenda' : 'Nascondi legenda'">
           📐
         </button>
+        <button class="icon-btn" @click="toggleMapHeader" :title="showMapHeader ? 'Nascondi header mappa' : 'Mostra header mappa'">
+          👁️
+        </button>
         <button class="icon-btn" @click="saveCurrentMap" title="Salva mappa corrente">💾</button>
         <button class="icon-btn" @click="exportAllMaps" title="Esporta mappe">📤</button>
-        <!-- Pulsanti stampa separati -->
         <button class="icon-btn" @click="printLegendOnly" title="Stampa legenda">📋</button>
         <button class="icon-btn" @click="printGridOnly" title="Stampa griglia">🗺️</button>
         <button class="icon-btn" @click="triggerFileImport" title="Importa mappe">📥</button>
@@ -22,7 +24,7 @@
     </div>
 
     <div class="editor-body">
-      <!-- Sidebar (collassabile) -->
+      <!-- Sidebar -->
       <div v-show="!sidebarCollapsed" class="sidebar">
         <div class="sidebar-header">
           <h3>Mappe salvate</h3>
@@ -72,7 +74,8 @@
 
       <!-- Area principale -->
       <div class="main-area" v-if="currentMap">
-        <div class="map-header">
+        <!-- Map header (toggleable) -->
+        <div v-show="showMapHeader" class="map-header">
           <input
             type="text"
             v-model="mapName"
@@ -87,7 +90,7 @@
           </div>
         </div>
 
-        <!-- Legenda (collassabile) -->
+        <!-- Legenda -->
         <div v-show="!legendCollapsed" class="legend-panel">
           <div class="legend-title">📐 Legenda dimensioni (stud)</div>
           <div class="legend-grid">
@@ -141,13 +144,14 @@
                 :key="c"
                 class="grid-cell"
                 :class="{
-                  'cell-selected': selectedCell && selectedCell.x === c && selectedCell.y === r,
+                  'cell-selected': isCellHighlighted(c, r),
                   'cell-preview': isInPreview(c, r),
                   'marker-cell': isMarkerCell(cell)
                 }"
                 :style="{ backgroundColor: getCellBackgroundColor(cell) }"
                 :title="`Riga: ${r}, Colonna: ${c}`"
                 @click="handleCellClick(c, r)"
+                @contextmenu.prevent="handleRightClick(c, r)"
                 @mouseenter="updatePreview(c, r)"
               >
                 <span v-if="isMarkerCell(cell)" class="marker-number">{{ cell.markerId }}</span>
@@ -163,7 +167,7 @@
       </div>
     </div>
 
-    <!-- Area per la stampa (nascosta, popolata al momento della stampa) -->
+    <!-- Area per la stampa -->
     <div id="printArea" style="display:none;"></div>
 
     <input type="file" ref="fileInput" accept=".json" style="display: none" @change="onFileSelected" />
@@ -194,7 +198,6 @@ const BASE_TYPE_INFO = {
   [CELL_TYPES.WALL]: { label: 'Muro', emoji: '🧱', color: '#5a4a3a' }
 }
 
-// Oggetti con dimensioni in stud (1 cella = 2×2 stud)
 const HEROES = [
   { id: 'barbarian', label: 'Barbaro', emoji: '⚔️', size: [1,1] },
   { id: 'dwarf', label: 'Nano', emoji: '🪓', size: [1,1] },
@@ -246,7 +249,6 @@ const SPECIALS = [
   { id: 'loretome', label: 'Loretome (Libro)', emoji: '📖', size: [1,1] }
 ]
 
-// Legenda organizzata per gruppi (colonne) – usata sia per UI che per stampa
 const legendGroups = computed(() => {
   const groups = []
   const addGroup = (title, items) => {
@@ -275,12 +277,14 @@ function getBaseColor(type) {
   return BASE_TYPE_INFO[type]?.color || '#2a2a4a'
 }
 
-// Stato collasso (persistente in localStorage)
+// ========== STATI TOGGLE ==========
 const SIDEBAR_STORAGE_KEY = 'mapeditor_sidebar_collapsed'
 const LEGEND_STORAGE_KEY = 'mapeditor_legend_collapsed'
+const MAPHEADER_STORAGE_KEY = 'mapeditor_mapheader_visible'
 
 const sidebarCollapsed = ref(JSON.parse(localStorage.getItem(SIDEBAR_STORAGE_KEY) || 'false'))
 const legendCollapsed = ref(JSON.parse(localStorage.getItem(LEGEND_STORAGE_KEY) || 'false'))
+const showMapHeader = ref(JSON.parse(localStorage.getItem(MAPHEADER_STORAGE_KEY) ?? 'true'))
 
 function toggleSidebar() {
   sidebarCollapsed.value = !sidebarCollapsed.value
@@ -290,8 +294,12 @@ function toggleLegend() {
   legendCollapsed.value = !legendCollapsed.value
   localStorage.setItem(LEGEND_STORAGE_KEY, JSON.stringify(legendCollapsed.value))
 }
+function toggleMapHeader() {
+  showMapHeader.value = !showMapHeader.value
+  localStorage.setItem(MAPHEADER_STORAGE_KEY, JSON.stringify(showMapHeader.value))
+}
+// ==================================
 
-// Caricamento mappe
 const STORAGE_KEY = 'heroquest_maps'
 const loadMaps = () => {
   const stored = localStorage.getItem(STORAGE_KEY)
@@ -313,6 +321,64 @@ const selectedCell = ref(null)
 const selectedMarkerId = ref(0)
 const previewPos = ref(null)
 
+// Celle evidenziate per il marker (bordo giallo)
+const highlightedCells = ref([])
+
+// Funzione per calcolare le celle da evidenziare
+function getCellsForHighlight(col, row) {
+  if (!currentMap.value) return []
+  const cell = currentMap.value.grid[row]?.[col]
+  if (!cell) return []
+
+  const entityId = cell.details?.id
+  if (entityId) {
+    // Oggetto multi-cella: evidenzia tutte le celle dell'oggetto
+    const cells = []
+    for (let r = 0; r < currentMap.value.rows; r++) {
+      for (let c = 0; c < currentMap.value.cols; c++) {
+        const c2 = currentMap.value.grid[r][c]
+        if (c2.details?.id === entityId) {
+          cells.push({ x: c, y: r })
+        }
+      }
+    }
+    return cells
+  } else {
+    // Cella singola: evidenzia blocco 2x2 se possibile
+    const w = 2, h = 2
+    const cells = []
+    if (col + w <= currentMap.value.cols && row + h <= currentMap.value.rows) {
+      for (let dy = 0; dy < h; dy++) {
+        for (let dx = 0; dx < w; dx++) {
+          cells.push({ x: col + dx, y: row + dy })
+        }
+      }
+    } else {
+      cells.push({ x: col, y: row })
+    }
+    return cells
+  }
+}
+
+// Aggiorna le celle evidenziate quando cambia la selezione
+function updateHighlightedCells() {
+  if (!selectedCell.value) {
+    highlightedCells.value = []
+    return
+  }
+  highlightedCells.value = getCellsForHighlight(selectedCell.value.x, selectedCell.value.y)
+}
+
+// Watch sulla selezione
+watch(selectedCell, () => {
+  updateHighlightedCells()
+})
+
+// Funzione per verificare se una cella è evidenziata
+function isCellHighlighted(c, r) {
+  return highlightedCells.value.some(h => h.x === c && h.y === r)
+}
+
 const previewShape = computed(() => {
   if (!selectedEntity.value || eraseMode.value || selectionMode.value) return null
   const sub = selectedEntity.value.subtype
@@ -330,14 +396,18 @@ function toggleOrientation() {
 }
 
 function setEraseMode() {
-  eraseMode.value = true; selectedEntity.value = null; selectionMode.value = false
+  eraseMode.value = true
+  selectedEntity.value = null
+  selectionMode.value = false
 }
 function selectBaseType(type) {
-  eraseMode.value = false; selectionMode.value = false;
+  eraseMode.value = false
+  selectionMode.value = false
   selectedEntity.value = { type, subtype: null, size: [1,1] }
 }
 function selectEntity(type, subtype) {
-  eraseMode.value = false; selectionMode.value = false;
+  eraseMode.value = false
+  selectionMode.value = false
   selectedEntity.value = { type, subtype, size: subtype.size || [1,1] }
   if (subtype.allowOrientation) currentOrientation.value = 'horizontal'
 }
@@ -378,7 +448,8 @@ function handleCellClick(col, row) {
     for (let dx = 0; dx < w; dx++) {
       const cell = currentMap.value.grid[row+dy][col+dx]
       if (cell.type !== CELL_TYPES.EMPTY && cell.type !== CELL_TYPES.FLOOR) {
-        canPlace = false; break
+        canPlace = false
+        break
       }
     }
   }
@@ -388,7 +459,6 @@ function handleCellClick(col, row) {
   }
 
   const entityId = Date.now() + Math.random()
-  // Se subtype è null (elementi base), details sarà null
   const details = subtype ? {
     id: entityId,
     subtypeId: subtype.id,
@@ -434,7 +504,36 @@ function removeEntityAt(col, row) {
       markerId: null
     }
   }
+  saveCurrentMap()
+}
 
+function handleRightClick(col, row) {
+  const cell = currentMap.value.grid[row]?.[col]
+  if (!cell) return
+
+  if (cell.type === CELL_TYPES.FLOOR && cell.details === null && cell.markerId === null) return
+
+  const entityId = cell.details?.id
+  if (entityId) {
+    for (let r = 0; r < currentMap.value.rows; r++) {
+      for (let c = 0; c < currentMap.value.cols; c++) {
+        const c2 = currentMap.value.grid[r][c]
+        if (c2.details?.id === entityId) {
+          currentMap.value.grid[r][c] = {
+            type: CELL_TYPES.FLOOR,
+            details: null,
+            markerId: null
+          }
+        }
+      }
+    }
+  } else {
+    currentMap.value.grid[row][col] = {
+      type: CELL_TYPES.FLOOR,
+      details: null,
+      markerId: null
+    }
+  }
   saveCurrentMap()
 }
 
@@ -446,7 +545,8 @@ function getCellEmoji(cell) {
 
 function updatePreview(col, row) {
   if (!previewShape.value || eraseMode.value || selectionMode.value) {
-    previewPos.value = null; return
+    previewPos.value = null
+    return
   }
   const { width, height } = previewShape.value
   if (col+width <= currentMap.value.cols && row+height <= currentMap.value.rows) {
@@ -465,25 +565,73 @@ function clearPreview() {
 }
 
 function startCellSelection() {
-  selectionMode.value = true; eraseMode.value = false; selectedEntity.value = null
+  selectionMode.value = true
+  eraseMode.value = false
+  selectedEntity.value = null
 }
 
+// ===== FUNZIONI PER I MARKER =====
 function assignMarkerToSelectedCell() {
-  if (!selectedCell.value) { alert("Seleziona prima una cella"); return }
-  const { x, y } = selectedCell.value
-  if (currentMap.value.grid[y] && currentMap.value.grid[y][x]) {
-    currentMap.value.grid[y][x].markerId = selectedMarkerId.value
-    saveCurrentMap()
+  if (!selectedCell.value) {
+    alert("Seleziona prima una cella")
+    return
   }
+  const { x, y } = selectedCell.value
+  const cell = currentMap.value.grid[y]?.[x]
+  if (!cell) return
+
+  const entityId = cell.details?.id
+
+  if (entityId) {
+    for (let r = 0; r < currentMap.value.rows; r++) {
+      for (let c = 0; c < currentMap.value.cols; c++) {
+        const c2 = currentMap.value.grid[r][c]
+        if (c2.details?.id === entityId) {
+          c2.markerId = selectedMarkerId.value
+        }
+      }
+    }
+  } else {
+    const w = 2, h = 2
+    if (x + w <= currentMap.value.cols && y + h <= currentMap.value.rows) {
+      for (let dy = 0; dy < h; dy++) {
+        for (let dx = 0; dx < w; dx++) {
+          const cell2 = currentMap.value.grid[y + dy][x + dx]
+          if (cell2) {
+            cell2.markerId = selectedMarkerId.value
+          }
+        }
+      }
+    } else {
+      cell.markerId = selectedMarkerId.value
+    }
+  }
+  saveCurrentMap()
+  // Dopo l'applicazione, rimaniamo con la selezione e l'highlight
 }
+
 function removeMarkerFromSelectedCell() {
   if (!selectedCell.value) return
   const { x, y } = selectedCell.value
-  if (currentMap.value.grid[y]?.[x]) {
-    currentMap.value.grid[y][x].markerId = null
-    saveCurrentMap()
+  const cell = currentMap.value.grid[y]?.[x]
+  if (!cell) return
+
+  const entityId = cell.details?.id
+  if (entityId) {
+    for (let r = 0; r < currentMap.value.rows; r++) {
+      for (let c = 0; c < currentMap.value.cols; c++) {
+        const c2 = currentMap.value.grid[r][c]
+        if (c2.details?.id === entityId) {
+          c2.markerId = null
+        }
+      }
+    }
+  } else {
+    cell.markerId = null
   }
+  saveCurrentMap()
 }
+// ==================================
 
 function createNewMap() {
   let name = prompt("Nome mappa:", "Nuova Avventura")
@@ -510,7 +658,8 @@ function createNewMap() {
 }
 
 function selectMap(id) {
-  currentMapId.value = id; selectedCell.value = null
+  currentMapId.value = id
+  selectedCell.value = null
 }
 function deleteMap(id) {
   if (confirm("Eliminare mappa?")) {
@@ -568,16 +717,12 @@ function exportAllMaps() {
   URL.revokeObjectURL(url)
 }
 
-// ===== FUNZIONI STAMPA SEPARATE =====
-
-// Funzione di base per popolare l'area di stampa
 function preparePrintArea(htmlContent) {
   const printArea = document.getElementById('printArea')
   printArea.innerHTML = htmlContent
   printArea.style.display = 'block'
 }
 
-// Stampa solo la legenda – con almeno 3 colonne
 function printLegendOnly() {
   if (!currentMap.value) {
     alert('Nessuna mappa selezionata')
@@ -599,7 +744,6 @@ function printLegendOnly() {
   document.getElementById('printArea').style.display = 'none'
 }
 
-// Stampa solo la griglia
 function printGridOnly() {
   if (!currentMap.value) {
     alert('Nessuna mappa selezionata')
@@ -625,8 +769,6 @@ function printGridOnly() {
   window.print()
   document.getElementById('printArea').style.display = 'none'
 }
-
-// ===========================
 
 const fileInput = ref(null)
 function triggerFileImport() {
@@ -725,7 +867,6 @@ h1 {
   overflow: hidden;
 }
 
-/* Sidebar */
 .sidebar {
   width: 280px;
   background: #1a1a2e;
@@ -845,7 +986,6 @@ h1 {
   margin-top: 0.5rem;
 }
 
-/* Main area */
 .main-area {
   flex: 1;
   display: flex;
@@ -898,7 +1038,6 @@ h1 {
   cursor: pointer;
 }
 
-/* Legenda */
 .legend-panel {
   background: #1a1a2e;
   border-radius: 8px;
@@ -1067,15 +1206,9 @@ h1 {
   color: #aaa;
 }
 
-/* STYLES PER LA STAMPA */
 @media print {
-  /* Nascondi tutto tranne #printArea */
-  body * {
-    visibility: hidden;
-  }
-  #printArea, #printArea * {
-    visibility: visible;
-  }
+  body * { visibility: hidden; }
+  #printArea, #printArea * { visibility: visible; }
   #printArea {
     position: absolute;
     left: 0;
@@ -1107,14 +1240,8 @@ h1 {
     min-width: 16px;
     min-height: 16px;
   }
-  h1 {
-    font-size: 18px;
-    margin: 0 0 4mm 0;
-  }
-  h2 {
-    font-size: 14px;
-    margin: 0 0 3mm 0;
-  }
+  h1 { font-size: 18px; margin: 0 0 4mm 0; }
+  h2 { font-size: 14px; margin: 0 0 3mm 0; }
 }
 
 @media (max-width: 768px) {
