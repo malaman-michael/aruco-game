@@ -411,21 +411,31 @@ function handleCellClick(col, row) {
 
 function removeEntityAt(col, row) {
   const cell = currentMap.value.grid[row]?.[col]
-  if (!cell || cell.type === CELL_TYPES.EMPTY || cell.type === CELL_TYPES.FLOOR || cell.type === CELL_TYPES.WALL) return
+  if (!cell) return
+
   const entityId = cell.details?.id
-  if (!entityId) {
-    // Se è un elemento base o non ha id, lo resettiamo a pavimento
-    currentMap.value.grid[row][col] = { type: CELL_TYPES.FLOOR, details: null, markerId: cell.markerId }
-    return
-  }
-  for (let r=0; r<currentMap.value.rows; r++) {
-    for (let c=0; c<currentMap.value.cols; c++) {
-      const c2 = currentMap.value.grid[r][c]
-      if (c2.details?.id === entityId) {
-        currentMap.value.grid[r][c] = { type: CELL_TYPES.FLOOR, details: null, markerId: c2.markerId }
+  if (entityId) {
+    for (let r = 0; r < currentMap.value.rows; r++) {
+      for (let c = 0; c < currentMap.value.cols; c++) {
+        const c2 = currentMap.value.grid[r][c]
+        if (c2.details?.id === entityId) {
+          currentMap.value.grid[r][c] = {
+            type: CELL_TYPES.EMPTY,
+            details: null,
+            markerId: null
+          }
+        }
       }
     }
+  } else {
+    currentMap.value.grid[row][col] = {
+      type: CELL_TYPES.EMPTY,
+      details: null,
+      markerId: null
+    }
   }
+
+  saveCurrentMap()
 }
 
 function getCellEmoji(cell) {
@@ -567,19 +577,19 @@ function preparePrintArea(htmlContent) {
   printArea.style.display = 'block'
 }
 
-// Stampa solo la legenda
+// Stampa solo la legenda – con almeno 3 colonne
 function printLegendOnly() {
   if (!currentMap.value) {
     alert('Nessuna mappa selezionata')
     return
   }
   let html = `<h1>📐 Legenda - ${currentMap.value.name}</h1>`
-  html += `<div class="print-legend-grid">`
+  html += `<div class="print-legend-grid" style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 8px 16px; font-size:11px;">`
   for (const group of legendGroups.value) {
     html += `<div class="print-legend-column">`
-    html += `<div class="print-legend-group-title">${group.title}</div>`
+    html += `<div class="print-legend-group-title" style="font-weight:bold; color:#4a7cf5; margin-bottom:2px;">${group.title}</div>`
     for (const item of group.items) {
-      html += `<div class="print-legend-item">${item.emoji} ${item.label} <span class="print-legend-size">${item.size}</span></div>`
+      html += `<div class="print-legend-item" style="display:flex; justify-content:space-between; padding:1px 0;">${item.emoji} ${item.label} <span class="print-legend-size" style="background:#eee; padding:0 4px; border-radius:3px; font-family:monospace;">${item.size}</span></div>`
     }
     html += `</div>`
   }
@@ -1074,30 +1084,6 @@ h1 {
     padding: 10mm;
     background: white;
     color: black;
-  }
-  .print-legend-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 4px;
-    margin-bottom: 8mm;
-  }
-  .print-legend-column {
-    font-size: 9px;
-  }
-  .print-legend-group-title {
-    font-weight: bold;
-    color: #4a7cf5;
-  }
-  .print-legend-item {
-    display: flex;
-    justify-content: space-between;
-    padding: 1px 0;
-  }
-  .print-legend-size {
-    background: #eee;
-    padding: 0 4px;
-    border-radius: 3px;
-    font-family: monospace;
   }
   .print-grid-wrapper {
     width: 100%;
