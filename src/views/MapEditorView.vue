@@ -1,17 +1,27 @@
 <template>
   <div class="map-editor">
     <div class="editor-header">
-      <button class="back-btn" @click="$router?.push('/')">←</button>
-      <h1>Editor Mappe - HeroQuest</h1>
+      <div class="header-left">
+        <button class="back-btn" @click="$router?.push('/')">←</button>
+        <h1>Editor Mappe - HeroQuest</h1>
+      </div>
       <div class="header-actions">
+        <button class="icon-btn" @click="toggleSidebar" :title="sidebarCollapsed ? 'Mostra mappe salvate' : 'Nascondi mappe salvate'">
+          ☰
+        </button>
+        <button class="icon-btn" @click="toggleLegend" :title="legendCollapsed ? 'Mostra legenda' : 'Nascondi legenda'">
+          📐
+        </button>
         <button class="icon-btn" @click="saveCurrentMap" title="Salva mappa corrente">💾</button>
-        <button class="icon-btn" @click="exportAllMaps" title="Esporta tutte le mappe">📤</button>
+        <button class="icon-btn" @click="exportAllMaps" title="Esporta mappe">📤</button>
+        <button class="icon-btn" @click="printMap" title="Stampa / Salva PDF">🖨️</button>
         <button class="icon-btn" @click="triggerFileImport" title="Importa mappe">📥</button>
       </div>
     </div>
 
-    <div class="editor-layout">
-      <div class="sidebar">
+    <div class="editor-body">
+      <!-- Sidebar (collassabile) -->
+      <div v-show="!sidebarCollapsed" class="sidebar">
         <div class="sidebar-header">
           <h3>Mappe salvate</h3>
           <button class="btn-new" @click="createNewMap">➕ Nuova</button>
@@ -38,14 +48,14 @@
           <div class="marker-controls">
             <label>ID Marker (0-250):</label>
             <input type="number" v-model.number="selectedMarkerId" min="0" max="250" />
-            <button class="btn-small" @click="assignMarkerToSelectedCell">Applica alla cella</button>
+            <button class="btn-small" @click="assignMarkerToSelectedCell">Applica</button>
             <button class="btn-small" @click="removeMarkerFromSelectedCell">Rimuovi</button>
           </div>
           <div class="selected-cell-info">
             <span>Cella selezionata:</span>
             <strong v-if="selectedCell">{{ selectedCell.x }}, {{ selectedCell.y }}</strong>
             <span v-else>nessuna</span>
-            <button class="btn-small" @click="startCellSelection">🔍 Seleziona cella</button>
+            <button class="btn-small" @click="startCellSelection">🔍 Seleziona</button>
           </div>
           <div v-if="selectionMode" class="selection-mode-msg">
             ⚡ Modalità selezione attiva. Clicca su una cella.
@@ -58,7 +68,8 @@
         </div>
       </div>
 
-      <div class="editor-area" v-if="currentMap">
+      <!-- Area principale -->
+      <div class="main-area" v-if="currentMap">
         <div class="map-header">
           <input
             type="text"
@@ -74,14 +85,17 @@
           </div>
         </div>
 
-        <!-- LEGENDA DIMENSIONI (in stud) -->
-        <div class="legend-panel" v-if="legendData.length">
+        <!-- Legenda (collassabile) -->
+        <div v-show="!legendCollapsed" class="legend-panel">
           <div class="legend-title">📐 Legenda dimensioni (stud)</div>
           <div class="legend-grid">
-            <div v-for="item in legendData" :key="item.id" class="legend-item">
-              <span class="legend-emoji">{{ item.emoji }}</span>
-              <span class="legend-label">{{ item.label }}</span>
-              <span class="legend-size">{{ item.size }}</span>
+            <div class="legend-column" v-for="(group, idx) in legendGroups" :key="idx">
+              <div class="legend-group-title">{{ group.title }}</div>
+              <div v-for="item in group.items" :key="item.id" class="legend-item">
+                <span class="legend-emoji">{{ item.emoji }}</span>
+                <span class="legend-label">{{ item.label }}</span>
+                <span class="legend-size">{{ item.size }}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -147,6 +161,9 @@
       </div>
     </div>
 
+    <!-- Area per la stampa (nascosta, popolata al momento della stampa) -->
+    <div id="printArea" style="display:none;"></div>
+
     <input type="file" ref="fileInput" accept=".json" style="display: none" @change="onFileSelected" />
   </div>
 </template>
@@ -176,7 +193,6 @@ const BASE_TYPE_INFO = {
 }
 
 // Oggetti con dimensioni in stud (1 cella = 2×2 stud)
-// Dimensione espressa in [larghezza_celle, altezza_celle] (poi moltiplicata per 2)
 const HEROES = [
   { id: 'barbarian', label: 'Barbaro', emoji: '⚔️', size: [1,1] },
   { id: 'dwarf', label: 'Nano', emoji: '🪓', size: [1,1] },
@@ -228,43 +244,52 @@ const SPECIALS = [
   { id: 'loretome', label: 'Loretome (Libro)', emoji: '📖', size: [1,1] }
 ]
 
-// Genera dati per la legenda (dimensioni in stud)
-const legendData = computed(() => {
-  const items = []
-  // Base
-  for (const [type, info] of Object.entries(BASE_TYPE_INFO)) {
-    if (type !== CELL_TYPES.EMPTY) {
-      items.push({
-        id: `base-${type}`,
-        emoji: info.emoji,
-        label: info.label,
-        size: type === CELL_TYPES.WALL ? '1×1 stud' : '2×2 stud (1 cella)'
-      })
-    }
+// Legenda organizzata per gruppi (colonne) – usata sia per UI che per stampa
+const legendGroups = computed(() => {
+  const groups = []
+  const addGroup = (title, items) => {
+    groups.push({ title, items: items.map(item => ({
+      id: item.id,
+      emoji: item.emoji,
+      label: item.label,
+      size: Array.isArray(item.size) ? `${item.size[0]*2}×${item.size[1]*2} stud` : item.size
+    })) })
   }
-  // Eroi
-  HEROES.forEach(h => items.push({ id: `hero-${h.id}`, emoji: h.emoji, label: h.label, size: `${h.size[0]*2}×${h.size[1]*2} stud` }))
-  // Mostri
-  MONSTERS.forEach(m => items.push({ id: `monster-${m.id}`, emoji: m.emoji, label: m.label, size: `${m.size[0]*2}×${m.size[1]*2} stud` }))
-  // Porte
-  DOORS.forEach(d => items.push({ id: `door-${d.id}`, emoji: d.emoji, label: d.label, size: `${d.size[0]*2}×${d.size[1]*2} stud` }))
-  // Ingressi
-  ENTRANCES.forEach(e => items.push({ id: `entrance-${e.id}`, emoji: e.emoji, label: e.label, size: `${e.size[0]*2}×${e.size[1]*2} stud` }))
-  // Arredi
-  FURNITURE.forEach(f => items.push({ id: `furn-${f.id}`, emoji: f.emoji, label: f.label, size: `${f.size[0]*2}×${f.size[1]*2} stud` }))
-  // Trappole
-  TRAPS.forEach(t => items.push({ id: `trap-${t.id}`, emoji: t.emoji, label: t.label, size: `${t.size[0]*2}×${t.size[1]*2} stud` }))
-  // Speciali
-  SPECIALS.forEach(s => items.push({ id: `special-${s.id}`, emoji: s.emoji, label: s.label, size: `${s.size[0]*2}×${s.size[1]*2} stud` }))
-  // Ancora ArUco (sempre 2×2 stud)
-  items.push({ id: 'aruco-anchor', emoji: '📍', label: 'Ancora ArUco', size: '2×2 stud (1 cella)' })
-  return items
+  addGroup('Base', [
+    { id: 'base-floor', emoji: '⬜', label: 'Pavimento', size: '2×2 stud' },
+    { id: 'base-wall', emoji: '🧱', label: 'Muro', size: '1×1 stud' }
+  ])
+  addGroup('Eroi', HEROES)
+  addGroup('Mostri', MONSTERS)
+  addGroup('Porte & Ingressi', [...DOORS, ...ENTRANCES])
+  addGroup('Arredi', FURNITURE)
+  addGroup('Trappole', TRAPS)
+  addGroup('Speciali', SPECIALS)
+  addGroup('Ancore ArUco', [{ id: 'aruco-anchor', emoji: '📍', label: 'Ancora ArUco', size: '2×2 stud' }])
+  return groups
 })
 
 function getBaseColor(type) {
   return BASE_TYPE_INFO[type]?.color || '#2a2a4a'
 }
 
+// Stato collasso (persistente in localStorage)
+const SIDEBAR_STORAGE_KEY = 'mapeditor_sidebar_collapsed'
+const LEGEND_STORAGE_KEY = 'mapeditor_legend_collapsed'
+
+const sidebarCollapsed = ref(JSON.parse(localStorage.getItem(SIDEBAR_STORAGE_KEY) || 'false'))
+const legendCollapsed = ref(JSON.parse(localStorage.getItem(LEGEND_STORAGE_KEY) || 'false'))
+
+function toggleSidebar() {
+  sidebarCollapsed.value = !sidebarCollapsed.value
+  localStorage.setItem(SIDEBAR_STORAGE_KEY, JSON.stringify(sidebarCollapsed.value))
+}
+function toggleLegend() {
+  legendCollapsed.value = !legendCollapsed.value
+  localStorage.setItem(LEGEND_STORAGE_KEY, JSON.stringify(legendCollapsed.value))
+}
+
+// Caricamento mappe
 const STORAGE_KEY = 'heroquest_maps'
 const loadMaps = () => {
   const stored = localStorage.getItem(STORAGE_KEY)
@@ -527,6 +552,90 @@ function exportAllMaps() {
   URL.revokeObjectURL(url)
 }
 
+// ===== FUNZIONE STAMPA =====
+function printMap() {
+  if (!currentMap.value) {
+    alert('Nessuna mappa da stampare')
+    return
+  }
+  const printArea = document.getElementById('printArea')
+  printArea.innerHTML = ''
+  printArea.style.display = 'block'
+
+  // Titolo
+  const title = document.createElement('h1')
+  title.textContent = `🗺️ ${currentMap.value.name}`
+  printArea.appendChild(title)
+
+  // Legenda
+  const legendTitle = document.createElement('h2')
+  legendTitle.textContent = '📐 Legenda dimensioni (stud)'
+  printArea.appendChild(legendTitle)
+  const legendContainer = document.createElement('div')
+  legendContainer.className = 'print-legend-grid'
+  for (const group of legendGroups.value) {
+    const col = document.createElement('div')
+    col.className = 'print-legend-column'
+    const groupTitle = document.createElement('div')
+    groupTitle.className = 'print-legend-group-title'
+    groupTitle.textContent = group.title
+    col.appendChild(groupTitle)
+    for (const item of group.items) {
+      const itemDiv = document.createElement('div')
+      itemDiv.className = 'print-legend-item'
+      itemDiv.innerHTML = `${item.emoji} ${item.label} <span class="print-legend-size">${item.size}</span>`
+      col.appendChild(itemDiv)
+    }
+    legendContainer.appendChild(col)
+  }
+  printArea.appendChild(legendContainer)
+
+  // Griglia
+  const gridWrapper = document.createElement('div')
+  gridWrapper.className = 'print-grid-wrapper'
+  const gridContainer = document.createElement('div')
+  gridContainer.className = 'print-grid-container'
+  const cols = currentMap.value.cols
+  const rows = currentMap.value.rows
+
+  gridContainer.style.display = 'grid'
+  gridContainer.style.gridTemplateColumns = `repeat(${cols}, 1fr)`
+  gridContainer.style.gridTemplateRows = `repeat(${rows}, 1fr)`
+  gridContainer.style.width = '100%'
+  gridContainer.style.aspectRatio = `${cols} / ${rows}`
+
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const cell = currentMap.value.grid[r]?.[c] || { type: CELL_TYPES.FLOOR, details: null, markerId: null }
+      const cellDiv = document.createElement('div')
+      cellDiv.className = 'print-cell'
+      const bgColor = getCellBackgroundColor(cell)
+      cellDiv.style.backgroundColor = bgColor
+      if (isMarkerCell(cell)) {
+        cellDiv.textContent = cell.markerId
+        cellDiv.style.color = 'white'
+        cellDiv.style.fontWeight = 'bold'
+        cellDiv.style.fontSize = '1.2em'
+        cellDiv.style.textShadow = '1px 1px 0 #000'
+      } else {
+        const emoji = getCellEmoji(cell)
+        cellDiv.textContent = emoji
+      }
+      gridContainer.appendChild(cellDiv)
+    }
+  }
+
+  gridWrapper.appendChild(gridContainer)
+  printArea.appendChild(gridWrapper)
+
+  // Stampa
+  window.print()
+
+  // Nascondi dopo stampa (o se l'utente annulla)
+  printArea.style.display = 'none'
+}
+// ===========================
+
 const fileInput = ref(null)
 function triggerFileImport() {
   fileInput.value.click()
@@ -569,23 +678,30 @@ onMounted(() => {
 
 <style scoped>
 .map-editor {
-  min-height: 100vh;
-  background: #0f0f1e;
-  color: #eee;
+  height: 100vh;
   display: flex;
   flex-direction: column;
-  padding: 1rem;
+  background: #0f0f1e;
+  color: #eee;
+  overflow: hidden;
 }
 .editor-header {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: 1rem;
+  justify-content: space-between;
+  padding: 0.5rem 1rem;
+  background: #1a1a2e;
+  border-bottom: 1px solid #2a2a4a;
+  flex-shrink: 0;
 }
-h1 {
-  margin: 0;
-  font-size: 1.4rem;
-  flex: 1;
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.header-actions {
+  display: flex;
+  gap: 0.5rem;
 }
 .back-btn {
   background: none;
@@ -594,36 +710,57 @@ h1 {
   font-size: 1.5rem;
   cursor: pointer;
 }
-.icon-btn, .btn-new, .btn-primary, .btn-small {
+h1 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+.icon-btn {
   background: #2a2a4a;
   border: none;
   color: #ccc;
-  border-radius: 8px;
-  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  padding: 0.3rem 0.6rem;
   cursor: pointer;
+  font-size: 1.1rem;
 }
-.btn-primary {
-  background: #4a7cf5;
-  color: white;
+.icon-btn:hover {
+  background: #3a3a5a;
 }
-.btn-small {
-  font-size: 0.7rem;
-  padding: 0.2rem 0.5rem;
-}
-.editor-layout {
+
+.editor-body {
   display: flex;
-  gap: 1.5rem;
   flex: 1;
   overflow: hidden;
 }
+
+/* Sidebar */
 .sidebar {
   width: 280px;
   background: #1a1a2e;
-  border-radius: 12px;
-  padding: 1rem;
+  border-right: 1px solid #2a2a4a;
   display: flex;
   flex-direction: column;
+  flex-shrink: 0;
+  overflow-y: auto;
+  padding: 1rem;
   gap: 1rem;
+}
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.sidebar-header h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+.btn-new {
+  background: #2a5a2a;
+  border: none;
+  color: #d0ffd0;
+  border-radius: 6px;
+  padding: 0.2rem 0.6rem;
+  cursor: pointer;
 }
 .map-list {
   flex: 1;
@@ -633,32 +770,77 @@ h1 {
   display: flex;
   justify-content: space-between;
   background: #2a2a4a;
-  border-radius: 8px;
-  padding: 0.5rem;
-  margin-bottom: 0.5rem;
+  border-radius: 6px;
+  padding: 0.4rem;
+  margin-bottom: 0.4rem;
   cursor: pointer;
 }
 .map-item.active {
   border: 2px solid #4a7cf5;
 }
+.map-info {
+  display: flex;
+  flex-direction: column;
+}
+.map-name {
+  font-size: 0.9rem;
+}
+.map-size {
+  font-size: 0.7rem;
+  color: #888;
+}
+.btn-delete {
+  background: none;
+  border: none;
+  color: #ff6666;
+  cursor: pointer;
+}
+.no-maps {
+  color: #666;
+  text-align: center;
+  padding: 1rem;
+}
 .marker-panel {
   background: #111122;
-  border-radius: 12px;
-  padding: 0.8rem;
-  border-top: 1px solid #3a3a6a;
+  border-radius: 8px;
+  padding: 0.6rem;
+  border: 1px solid #3a3a6a;
+}
+.marker-panel h4 {
+  margin: 0 0 0.5rem;
+  font-size: 0.9rem;
 }
 .marker-controls {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
+  gap: 0.3rem;
+}
+.marker-controls label {
+  font-size: 0.8rem;
+}
+.marker-controls input {
+  background: #2a2a4a;
+  border: 1px solid #3a3a6a;
+  border-radius: 4px;
+  color: #eee;
+  padding: 0.2rem 0.4rem;
+  width: 80px;
+}
+.btn-small {
+  background: #3a3a6a;
+  border: none;
+  color: #ccc;
+  border-radius: 4px;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.7rem;
+  cursor: pointer;
 }
 .selected-cell-info {
   display: flex;
   justify-content: space-between;
   align-items: center;
   font-size: 0.8rem;
-  margin-top: 0.5rem;
+  margin-top: 0.4rem;
 }
 .selection-mode-msg {
   color: #ffaa44;
@@ -670,86 +852,70 @@ h1 {
   color: #aaa;
   margin-top: 0.5rem;
 }
-.editor-area {
+
+/* Main area */
+.main-area {
   flex: 1;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  padding: 0.5rem 1rem 1rem 1rem;
 }
 .map-header {
   display: flex;
   gap: 1rem;
-  margin-bottom: 1rem;
+  align-items: center;
   flex-wrap: wrap;
+  flex-shrink: 0;
 }
 .map-name-input {
   background: #2a2a4a;
   border: 1px solid #3a3a6a;
-  border-radius: 8px;
+  border-radius: 6px;
   color: white;
-  padding: 0.5rem;
+  padding: 0.3rem 0.6rem;
 }
 .size-controls {
   display: flex;
   gap: 0.5rem;
-  align-items: flex-end;
+  align-items: center;
 }
-.tool-palette {
+.size-input {
   display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  margin-bottom: 1rem;
-  max-height: 200px;
-  overflow-y: auto;
-  background: #0a0a14;
-  padding: 0.5rem;
-  border-radius: 12px;
-}
-.tool-category {
-  background: #1a1a2e;
-  border-radius: 8px;
-  padding: 0.5rem;
-  min-width: 120px;
-}
-.cat-title {
-  font-size: 0.8rem;
-  font-weight: bold;
-  margin-bottom: 0.3rem;
-  color: #aaa;
-}
-.cat-items {
-  display: flex;
-  flex-wrap: wrap;
+  align-items: center;
   gap: 0.3rem;
 }
-.tool-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+.size-input label {
+  font-size: 0.8rem;
+  color: #aaa;
+}
+.size-input input {
+  width: 50px;
   background: #2a2a4a;
-  border-radius: 8px;
-  padding: 0.2rem 0.5rem;
+  border: 1px solid #3a3a6a;
+  border-radius: 4px;
+  color: white;
+  padding: 0.2rem;
+}
+.btn-primary {
+  background: #4a7cf5;
+  border: none;
+  color: white;
+  border-radius: 6px;
+  padding: 0.3rem 0.8rem;
   cursor: pointer;
-  min-width: 55px;
-}
-.tool-item.active {
-  border: 2px solid #4a7cf5;
-  background: #2a2a5a;
-}
-.tool-emoji {
-  font-size: 1.4rem;
-}
-.tool-label {
-  font-size: 0.6rem;
 }
 
-/* LEGENDA DIMENSIONI */
+/* Legenda */
 .legend-panel {
   background: #1a1a2e;
   border-radius: 8px;
   padding: 0.5rem 0.8rem;
-  margin-bottom: 0.8rem;
+  margin: 0.5rem 0;
   border: 1px solid #3a3a6a;
+  flex-shrink: 0;
+  max-height: 200px;
+  overflow-y: auto;
 }
 .legend-title {
   font-size: 0.8rem;
@@ -758,35 +924,113 @@ h1 {
   margin-bottom: 0.3rem;
 }
 .legend-grid {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: 0.5rem 1rem;
+}
+.legend-column {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.legend-group-title {
+  font-size: 0.7rem;
+  font-weight: bold;
+  color: #7c9ef5;
+  margin-bottom: 0.1rem;
 }
 .legend-item {
   display: flex;
   align-items: center;
   gap: 0.3rem;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: #ccc;
 }
 .legend-emoji {
-  font-size: 1rem;
+  font-size: 0.9rem;
 }
 .legend-size {
   background: #2a2a4a;
   padding: 0.05rem 0.3rem;
   border-radius: 4px;
   font-family: monospace;
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   color: #7c9ef5;
+  margin-left: auto;
+}
+
+.tool-palette {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  padding: 0.3rem 0;
+  flex-shrink: 0;
+  overflow-x: auto;
+  max-height: 150px;
+}
+.tool-category {
+  background: #1a1a2e;
+  border-radius: 6px;
+  padding: 0.3rem 0.5rem;
+}
+.cat-title {
+  font-size: 0.7rem;
+  font-weight: bold;
+  color: #aaa;
+  margin-bottom: 0.2rem;
+}
+.cat-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem;
+}
+.tool-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #2a2a4a;
+  border-radius: 6px;
+  padding: 0.1rem 0.3rem;
+  cursor: pointer;
+  min-width: 45px;
+}
+.tool-item.active {
+  border: 2px solid #4a7cf5;
+  background: #2a2a5a;
+}
+.tool-emoji {
+  font-size: 1.2rem;
+}
+.tool-label {
+  font-size: 0.55rem;
+}
+
+.preview-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.75rem;
+  color: #aaa;
+  flex-shrink: 0;
+}
+.btn-rotate {
+  background: #4a7cf5;
+  border: none;
+  color: white;
+  border-radius: 4px;
+  padding: 0.1rem 0.5rem;
+  cursor: pointer;
+  font-size: 0.7rem;
 }
 
 .grid-container {
   flex: 1;
   overflow: auto;
   background: #0a0a14;
-  border-radius: 12px;
-  padding: 1rem;
+  border-radius: 8px;
+  padding: 0.5rem;
+  margin-top: 0.3rem;
 }
 .grid-wrapper {
   display: inline-block;
@@ -795,14 +1039,15 @@ h1 {
   display: flex;
 }
 .grid-cell {
-  width: 48px;
-  height: 48px;
+  width: 44px;
+  height: 44px;
   border: 1px solid #3a3a6a;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   position: relative;
+  font-size: 1.2rem;
 }
 .cell-selected {
   outline: 3px solid gold;
@@ -811,61 +1056,121 @@ h1 {
 .cell-preview {
   background-color: rgba(100,200,100,0.4);
 }
-.cell-emoji {
-  font-size: 1.5rem;
-}
 .marker-cell {
   background-color: #cc3333 !important;
 }
 .marker-number {
-  font-size: 1.6rem;
+  font-size: 1.4rem;
   font-weight: bold;
   color: white;
   text-shadow: 1px 1px 0 #000;
 }
-.preview-info {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 0.3rem 0.5rem;
-  font-size: 0.8rem;
-  color: #aaa;
-}
-.btn-rotate {
-  background: #4a7cf5;
-  border: none;
-  color: white;
-  border-radius: 6px;
-  padding: 0.2rem 0.6rem;
-  margin-left: 1rem;
-  cursor: pointer;
-  font-size: 0.7rem;
-}
+
 .no-map-selected {
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  color: #aaa;
+}
+
+/* STYLES PER LA STAMPA */
+@media print {
+  /* Nascondi tutto tranne #printArea */
+  body * {
+    visibility: hidden;
+  }
+  #printArea, #printArea * {
+    visibility: visible;
+  }
+  #printArea {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    padding: 10mm;
+    background: white;
+    color: black;
+  }
+  .print-legend-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 4px;
+    margin-bottom: 8mm;
+  }
+  .print-legend-column {
+    font-size: 9px;
+  }
+  .print-legend-group-title {
+    font-weight: bold;
+    color: #4a7cf5;
+  }
+  .print-legend-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 1px 0;
+  }
+  .print-legend-size {
+    background: #eee;
+    padding: 0 4px;
+    border-radius: 3px;
+    font-family: monospace;
+  }
+  .print-grid-wrapper {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    page-break-inside: avoid;
+  }
+  .print-grid-container {
+    display: grid;
+    max-width: 100%;
+    max-height: 70vh;
+    aspect-ratio: auto;
+    border: 1px solid #666;
+  }
+  .print-cell {
+    border: 1px solid #999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4em;
+    min-width: 16px;
+    min-height: 16px;
+  }
+  h1 {
+    font-size: 18px;
+    margin: 0 0 4mm 0;
+  }
+  h2 {
+    font-size: 14px;
+    margin: 0 0 3mm 0;
+  }
 }
 
 @media (max-width: 768px) {
-  .editor-layout {
-    flex-direction: column;
-  }
   .sidebar {
     width: 100%;
-    max-height: 300px;
+    max-height: 40vh;
+    border-right: none;
+    border-bottom: 1px solid #2a2a4a;
+  }
+  .editor-body {
+    flex-direction: column;
+  }
+  .legend-grid {
+    grid-template-columns: 1fr 1fr;
   }
   .grid-cell {
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
   }
   .cell-emoji {
-    font-size: 1.2rem;
+    font-size: 1rem;
   }
   .marker-number {
-    font-size: 1.3rem;
+    font-size: 1.2rem;
   }
 }
 </style>
