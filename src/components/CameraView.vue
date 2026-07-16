@@ -1,3 +1,4 @@
+<!-- src/components/CameraView.vue -->
 <template>
   <div class="camera-wrapper">
     <canvas ref="canvasEl" class="camera-canvas" />
@@ -18,43 +19,37 @@ import { voice } from '../services/voiceService.js'
 const props = defineProps({
   active: { type: Boolean, default: true },
 })
+
 const emit = defineEmits(['unknown-marker', 'frame-processed'])
 
-const canvasEl    = ref(null)
+const canvasEl = ref(null)
 const cameraReady = ref(false)
 const cameraError = ref('')
 
 const markersStore = useMarkersStore()
-const gameStore    = useGameStore()
-const cam          = useCameraStore()
+const gameStore = useGameStore()
+const cam = useCameraStore()
 
 const video = document.createElement('video')
-video.autoplay   = true
+video.autoplay = true
 video.playsInline = true
-video.muted      = true
+video.muted = true
 
-// Canvas offscreen per preprocessing
 const offscreen = document.createElement('canvas')
 let offCtx = null
-
 let arucoService = null
 let rafId = null
 let stream = null
 let ctx = null
-
-// Variabili per frame skip
 let frameCounter = 0
 let restartPending = false
 
-// Funzione per avviare/riavviare la camera con la risoluzione corrente
 async function startCamera() {
   if (stream) {
     stream.getTracks().forEach(track => track.stop())
   }
-  // Parse della risoluzione
   let [width, height] = cam.videoResolution.split('x').map(Number)
   if (!width || !height) { width = 1280; height = 720 }
-
   try {
     stream = await navigator.mediaDevices.getUserMedia({
       video: {
@@ -72,8 +67,7 @@ async function startCamera() {
       startLoop()
     }
   } catch (err) {
-    cameraError.value = err.name === 'NotAllowedError'
-      ? 'Permesso fotocamera negato.' : `Errore: ${err.message}`
+    cameraError.value = err.name === 'NotAllowedError' ? 'Permesso fotocamera negato.' : `Errore: ${err.message}`
   }
 }
 
@@ -81,7 +75,6 @@ onMounted(async () => {
   await startCamera()
   ctx = canvasEl.value.getContext('2d', { willReadFrequently: true })
   offCtx = offscreen.getContext('2d', { willReadFrequently: true })
-
   try {
     arucoService = createArucoService()
     console.log('[CameraView] ArUco detector pronto')
@@ -92,11 +85,20 @@ onMounted(async () => {
   startLoop()
 })
 
-onUnmounted(() => { stopLoop(); stream?.getTracks().forEach(t => t.stop()) })
+onUnmounted(() => {
+  stopLoop()
+  stream?.getTracks().forEach(t => t.stop())
+})
+
 watch(() => props.active, val => val ? startLoop() : stopLoop())
 
-function startLoop() { if (!rafId) loop() }
-function stopLoop()  { cancelAnimationFrame(rafId); rafId = null }
+function startLoop() {
+  if (!rafId) loop()
+}
+function stopLoop() {
+  cancelAnimationFrame(rafId)
+  rafId = null
+}
 
 function loop() {
   rafId = requestAnimationFrame(() => {
@@ -110,7 +112,6 @@ function loop() {
   })
 }
 
-// Ascolta i cambi di risoluzione
 onMounted(() => {
   window.addEventListener('camera-settings-changed', () => {
     if (stream) {
@@ -123,62 +124,66 @@ onMounted(() => {
   })
 })
 
-// ─── Frame processing ──────────────────────────────────────────────────────
 function processFrame() {
   const w = video.videoWidth
   const h = video.videoHeight
   if (!w || !h) return
 
   const canvas = canvasEl.value
-  if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h }
-  if (offscreen.width !== w || offscreen.height !== h) { offscreen.width = w; offscreen.height = h }
+  if (canvas.width !== w || canvas.height !== h) {
+    canvas.width = w
+    canvas.height = h
+  }
+  if (offscreen.width !== w || offscreen.height !== h) {
+    offscreen.width = w
+    offscreen.height = h
+  }
 
-  // 1. Preprocessa il frame nel canvas offscreen
   const preprocessed = preprocessFrame(w, h)
-
-  // 2. Rileva marker sull'immagine preprocessata
   let markers = []
-  try { markers = arucoService.detect(preprocessed ? offscreen : video) }
-  catch(e) { console.warn('[ArUco]', e.message) }
+  try {
+    markers = arucoService.detect(preprocessed ? offscreen : video)
+  } catch(e) {
+    console.warn('[ArUco]', e.message)
+  }
 
-  // 3. Calcola omografia
   const H = computeH(markers)
 
-  // 4. Disegna: prima il video originale (non preprocessato) sul canvas visibile
+  // Applica zoom digitale
+  const zoom = cam.digitalZoom
+  const sw = w * zoom
+  const sh = h * zoom
+  const offsetX = (w - sw) / 2
+  const offsetY = (h - sh) / 2
+
   ctx.filter = buildCSSFilter()
-  ctx.drawImage(video, 0, 0, w, h)
+  ctx.drawImage(video, offsetX, offsetY, sw, sh)
   ctx.filter = 'none'
 
-  // 5. Overlay: griglia + marker
+  // Trasformazione per overlay
+  ctx.save()
+  ctx.setTransform(zoom, 0, 0, zoom, offsetX, offsetY)
+
   if (H && cam.showGrid) drawGrid(ctx, H, w, h)
   drawMarkers(ctx, markers, H, w)
 
-  // 6. Aggiorna store
+  ctx.restore()
+
   handleGameLogic(markers, H)
 }
 
-// ─── Preprocessing (miglioramento per detection) ──────────────────────────
 function preprocessFrame(w, h) {
-  const needsProcessing = cam.brightness !== 100 || cam.contrast !== 100
-    || cam.saturation !== 100 || cam.grayscale || cam.threshold > 0
-    || cam.sharpness > 0
+  const needsProcessing = cam.brightness !== 100 || cam.contrast !== 100 || cam.saturation !== 100 || cam.grayscale || cam.threshold > 0 || cam.sharpness > 0
   if (!needsProcessing) return false
-
-  // Disegna con filtri CSS nel canvas offscreen
   offCtx.filter = buildCSSFilter()
   offCtx.drawImage(video, 0, 0, w, h)
   offCtx.filter = 'none'
-
-  // Sharpness: unsharp mask semplice
   if (cam.sharpness > 0) {
     applySharpness(offCtx, w, h, cam.sharpness)
   }
-
-  // Threshold adattivo (binarizzazione)
   if (cam.threshold > 0) {
     applyThreshold(offCtx, w, h, cam.threshold)
   }
-
   return true
 }
 
@@ -195,7 +200,6 @@ function applySharpness(ctx, w, h, amount) {
   const tmp = new Uint8ClampedArray(d)
   const kernel = [-1, -1, -1, -1, 8 + amount * 2, -1, -1, -1, -1]
   const factor = 1 / (amount * 2)
-
   for (let y = 1; y < h - 1; y++) {
     for (let x = 1; x < w - 1; x++) {
       const i = (y * w + x) * 4
@@ -222,17 +226,14 @@ function applyThreshold(ctx, w, h, thresh) {
   ctx.putImageData(imgData, 0, 0)
 }
 
-// ─── Omografia ─────────────────────────────────────────────────────────────
 function computeH(markers) {
   const prevCount = gameStore.cornersAcquired
-
   for (const m of markers) {
     const data = markersStore.getMarker(m.id)
     if (data?.category === MARKER_CATEGORIES.CORNER && data.role) {
       gameStore.updateCornerPosition(data.role, m.center)
     }
   }
-
   const newCount = gameStore.cornersAcquired
   if (newCount > prevCount) {
     const roles = ['NO', 'NE', 'SO', 'SE']
@@ -242,17 +243,14 @@ function computeH(markers) {
       break
     }
   }
-
   return gameStore.homography
 }
 
-// ─── Disegno griglia proiettata ────────────────────────────────────────────
 function drawGrid(ctx, H, w, h) {
   const cols = gameStore.gridCols
   const rows = gameStore.gridRows
   const invH = invert3x3(H)
   const opacity = cam.gridOpacity
-
   ctx.save()
   ctx.strokeStyle = `rgba(100, 200, 255, ${opacity})`
   ctx.lineWidth = 1
@@ -270,13 +268,13 @@ function drawGrid(ctx, H, w, h) {
 
   for (const piece of gameStore.pieces) {
     if (piece.col === null) continue
-    const tl = gridToPixel(invH, piece.col,     piece.row)
+    const tl = gridToPixel(invH, piece.col, piece.row)
     const tr = gridToPixel(invH, piece.col + 1, piece.row)
     const br = gridToPixel(invH, piece.col + 1, piece.row + 1)
-    const bl = gridToPixel(invH, piece.col,     piece.row + 1)
-    const color = piece.category === MARKER_CATEGORIES.PLAYER   ? `rgba(68,136,255,${opacity})`
-                : piece.category === MARKER_CATEGORIES.ENEMY    ? `rgba(255,68,68,${opacity})`
-                : `rgba(255,170,0,${opacity})`
+    const bl = gridToPixel(invH, piece.col, piece.row + 1)
+    const color = piece.category === MARKER_CATEGORIES.PLAYER ? `rgba(68,136,255,${opacity})` :
+                  piece.category === MARKER_CATEGORIES.ENEMY ? `rgba(255,68,68,${opacity})` :
+                  `rgba(255,170,0,${opacity})`
     ctx.beginPath()
     ctx.moveTo(tl.x, tl.y); ctx.lineTo(tr.x, tr.y)
     ctx.lineTo(br.x, br.y); ctx.lineTo(bl.x, bl.y)
@@ -303,7 +301,6 @@ function drawGrid(ctx, H, w, h) {
     ctx.fillStyle = '#ffd700'
     ctx.fillText(label, p.x, p.y - 10)
   }
-
   ctx.restore()
 }
 
@@ -325,20 +322,17 @@ function invert3x3(m) {
   ]
 }
 
-// ─── Disegno marker ────────────────────────────────────────────────────────
 function drawMarkers(ctx, markers, H, videoW) {
   if (!cam.showIds && !cam.showCubes) return
   const fontSize = Math.max(16, videoW * 0.025)
-
   markers.forEach(({ id, corners, center, angle }) => {
-    const known    = markersStore.getMarker(id)
+    const known = markersStore.getMarker(id)
     const isCorner = known?.category === MARKER_CATEGORIES.CORNER
-    const color    = isCorner                                         ? '#ffd700'
-                   : !known                                           ? '#ff4444'
-                   : known.category === MARKER_CATEGORIES.PLAYER     ? '#4488ff'
-                   : known.category === MARKER_CATEGORIES.ENEMY      ? '#ff4444'
-                   : known.category === MARKER_CATEGORIES.FURNITURE  ? '#ffaa00'
-                   :                                                    '#00ff88'
+    const color = isCorner ? '#ffd700' :
+                  !known ? '#ff4444' :
+                  known.category === MARKER_CATEGORIES.PLAYER ? '#4488ff' :
+                  known.category === MARKER_CATEGORIES.ENEMY ? '#ff4444' :
+                  known.category === MARKER_CATEGORIES.FURNITURE ? '#ffaa00' : '#00ff88'
 
     ctx.beginPath()
     ctx.moveTo(corners[0].x, corners[0].y)
@@ -354,7 +348,8 @@ function drawMarkers(ctx, markers, H, videoW) {
       ctx.lineTo(corners[1].x, corners[1].y)
       ctx.lineTo(corners[0].x, corners[0].y)
       ctx.closePath()
-      ctx.fillStyle = color + '33'; ctx.fill()
+      ctx.fillStyle = color + '33'
+      ctx.fill()
       ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.stroke()
       ctx.beginPath()
       ctx.moveTo(corners[0].x, corners[0].y)
@@ -373,18 +368,16 @@ function drawMarkers(ctx, markers, H, videoW) {
     ctx.fillStyle = '#ffff00'; ctx.fill()
 
     if (cam.showIds) {
-      const lift   = cam.showCubes ? Math.max(18, videoW * 0.022) : 0
-      const textY  = Math.min(...corners.map(c=>c.y)) - lift - 8
-      const known  = markersStore.getMarker(id)
-      let label    = `#${id}`
+      const lift = cam.showCubes ? Math.max(18, videoW * 0.022) : 0
+      const textY = Math.min(...corners.map(c=>c.y)) - lift - 8
+      const known = markersStore.getMarker(id)
+      let label = `#${id}`
       if (known?.emoji) label += ` ${known.emoji}`
-
       const piece = gameStore.pieces.find(p => p.id === id)
       if (piece?.col !== null && piece?.col !== undefined) {
         const rot = piece.rotationSymbol ? ` ${piece.rotationSymbol}` : ''
-        label += `  (${piece.col},${piece.row}${rot})`
+        label += ` (${piece.col},${piece.row}${rot})`
       }
-
       ctx.font = `bold ${fontSize}px monospace`
       ctx.textAlign = 'center'
       ctx.lineWidth = 5
@@ -397,15 +390,14 @@ function drawMarkers(ctx, markers, H, videoW) {
   })
 }
 
-// ─── Espone dati per la taratura automatica ───────────────────────────────────
 defineExpose({
   getCalibrationData() {
     if (!video.videoWidth || !offCtx) return { imageData: null, detector: null }
     const tmp = new OffscreenCanvas(video.videoWidth, video.videoHeight)
-    const c   = tmp.getContext('2d')
+    const c = tmp.getContext('2d')
     c.drawImage(video, 0, 0)
     const imageData = c.getImageData(0, 0, video.videoWidth, video.videoHeight)
-    const detector  = window.AR?.DICTIONARIES ? (() => {
+    const detector = window.AR?.DICTIONARIES ? (() => {
       try { return arucoService?._detector ?? null } catch { return null }
     })() : null
     const AR = window.AR
@@ -414,13 +406,15 @@ defineExpose({
   }
 })
 
-// ─── Logica di gioco ───────────────────────────────────────────────────────
 const _announcedPieces = new Set()
 
 function handleGameLogic(markers, H) {
   if (gameStore.allowNewMarkers) {
     for (const m of markers) {
-      if (!markersStore.isKnown(m.id)) { emit('unknown-marker', m); break }
+      if (!markersStore.isKnown(m.id)) {
+        emit('unknown-marker', m)
+        break
+      }
     }
   }
 
@@ -428,26 +422,24 @@ function handleGameLogic(markers, H) {
   for (const m of markers) {
     const data = markersStore.getMarker(m.id)
     if (!data || data.category === MARKER_CATEGORIES.CORNER) continue
-
     let col = null, row = null
     if (H) {
       const cell = pointToCell(H, m.center, gameStore.gridCols, gameStore.gridRows)
       col = cell.col
       row = cell.row
     }
-
     const { degrees: rotationDeg, symbol: rotationSymbol } = approximateCardinalAngle(m.angle)
-
     pieces.push({
-      id: m.id, ...data,
-      col, row,
-      angle:   m.angle,
+      id: m.id,
+      ...data,
+      col,
+      row,
+      angle: m.angle,
       rotationDeg,
       rotationSymbol,
-      center:  m.center,
+      center: m.center,
       corners: m.corners,
     })
-
     if (data && !_announcedPieces.has(m.id)) {
       _announcedPieces.add(m.id)
       voice.announcePiece(data.label, col, row)
@@ -472,20 +464,38 @@ function handleGameLogic(markers, H) {
 
 <style scoped>
 .camera-wrapper {
-  position: relative; width: 100%; height: 100%;
-  background: #000; overflow: hidden;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: #000;
+  overflow: hidden;
 }
 .camera-canvas {
-  width: 100%; height: 100%; object-fit: cover; display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 .camera-error {
-  position: absolute; inset: 0; display: flex; align-items: center;
-  justify-content: center; color: #ff6b6b; font-size: 1rem;
-  background: rgba(0,0,0,0.85); padding: 1.5rem; text-align: center;
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ff6b6b;
+  font-size: 1rem;
+  background: rgba(0,0,0,0.85);
+  padding: 1.5rem;
+  text-align: center;
 }
 .camera-placeholder {
-  position: absolute; inset: 0; display: flex; align-items: center;
-  justify-content: center; color: #fff; font-size: 1.2rem;
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 1.2rem;
   background: rgba(0,0,0,0.6);
 }
 </style>
