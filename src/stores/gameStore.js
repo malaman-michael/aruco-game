@@ -1,76 +1,74 @@
+// src/stores/gameStore.js
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { buildHomographyFromCorners } from '../services/homographyService.js'
+import { buildHomographyFromMarkers } from '../services/homographyService.js'
+import { useMapStore } from './mapStore.js'
 
 const STORAGE_KEY = 'aruco-game-config'
 
 export const useGameStore = defineStore('game', () => {
-  // Configurazione griglia
   const gridCols = ref(10)
   const gridRows = ref(10)
-
-  // Modalità: false = griglia, true = campo libero
   const freeMode = ref(false)
+  const pieces = ref([])
+  const isGameActive = ref(false)
+  const lastFrameTs = ref(0)
+
+  const anchorPositions = ref({}) // { markerId: { center: {x,y} } }
+  const homography = ref(null)
+
+  const visibleAnchorsCount = computed(() => {
+    const mapStore = useMapStore()
+    const targets = mapStore.getMarkerAnchors()
+    const targetIds = new Set(targets.map(a => a.id))
+    let count = 0
+    for (const id of Object.keys(anchorPositions.value)) {
+      if (targetIds.has(Number(id))) count++
+    }
+    return count
+  })
+
+  const homographyReady = computed(() => homography.value !== null)
+
+  function updateAnchor(markerId, center) {
+    anchorPositions.value = {
+      ...anchorPositions.value,
+      [markerId]: { center }
+    }
+    recomputeHomography()
+  }
+
+  function recomputeHomography() {
+    const mapStore = useMapStore()
+    const targets = mapStore.getMarkerAnchors()
+    const detected = []
+    for (const [id, data] of Object.entries(anchorPositions.value)) {
+      const target = targets.find(t => t.id === Number(id))
+      if (target) {
+        detected.push({
+          id: Number(id),
+          center: data.center
+        })
+      }
+    }
+    if (detected.length >= 3) {
+      const H = buildHomographyFromMarkers(detected, targets)
+      if (H) {
+        homography.value = H
+        console.log('[gameStore] Omografia calcolata con', detected.length, 'ancore')
+        return
+      }
+    }
+    homography.value = null
+  }
+
+  function resetHomography() {
+    anchorPositions.value = {}
+    homography.value = null
+  }
 
   function toggleFreeMode() {
     freeMode.value = !freeMode.value
-  }
-
-  // Lista delle pedine rilevate nell'ultimo frame
-  const pieces = ref([])
-
-  // Stato della sessione di gioco
-  const isGameActive = ref(false)
-  const lastFrameTs  = ref(0)
-
-  // ─── Posizioni pixel dei 4 corner (aggiornate ad ogni frame in cui sono visibili)
-  // Struttura: { NO: {x, y}, NE: {x, y}, SO: {x, y}, SE: {x, y} }
-  // Persistono per tutta la sessione — non vengono azzerate se i corner escono dall'inquadratura
-  const cornerPositions = ref({})
-
-  // Matrice di omografia calcolata dai cornerPositions
-  // Viene ricalcolata ogni volta che si aggiorna almeno un corner
-  const homography = ref(null)
-
-  // Numero di corner acquisiti finora
-  const cornersAcquired = computed(() => Object.keys(cornerPositions.value).length)
-  const homographyReady = computed(() => homography.value !== null)
-
-  /**
-   * Chiamato ogni frame per ogni corner marker visibile.
-   * Aggiorna la posizione pixel del corner e ricalcola l'omografia
-   * se tutti e 4 i corner sono stati visti almeno una volta.
-   *
-   * @param {string} role    - 'NO' | 'NE' | 'SO' | 'SE'
-   * @param {{x,y}} center   - centro del marker in pixel nel frame video
-   */
-  function updateCornerPosition(role, center) {
-    cornerPositions.value = { ...cornerPositions.value, [role]: center }
-    _recomputeHomography()
-  }
-
-  function _recomputeHomography() {
-    const cp = cornerPositions.value
-    if (!cp.NO || !cp.NE || !cp.SO || !cp.SE) return
-
-    // buildHomographyFromCorners si aspetta oggetti con .center
-    const corners = {
-      NO: { center: cp.NO },
-      NE: { center: cp.NE },
-      SO: { center: cp.SO },
-      SE: { center: cp.SE },
-    }
-    const H = buildHomographyFromCorners(corners, gridCols.value, gridRows.value)
-    if (H) {
-      homography.value = H
-      console.log('[gameStore] Omografia calcolata ✓ griglia', gridCols.value, '×', gridRows.value)
-    }
-  }
-
-  /** Cancella le posizioni dei corner e l'omografia (utile se si riposiziona la plancia) */
-  function resetHomography() {
-    cornerPositions.value = {}
-    homography.value = null
   }
 
   function loadConfig() {
@@ -81,7 +79,7 @@ export const useGameStore = defineStore('game', () => {
         gridCols.value = cfg.gridCols ?? 10
         gridRows.value = cfg.gridRows ?? 10
       }
-    } catch { /* ignora */ }
+    } catch {}
   }
 
   function saveConfig() {
@@ -94,8 +92,7 @@ export const useGameStore = defineStore('game', () => {
   function setGridSize(cols, rows) {
     gridCols.value = cols
     gridRows.value = rows
-    // Ricalcola l'omografia con le nuove dimensioni griglia
-    _recomputeHomography()
+    recomputeHomography()
     saveConfig()
   }
 
@@ -105,30 +102,40 @@ export const useGameStore = defineStore('game', () => {
   }
 
   function startGame() { isGameActive.value = true }
-  function stopGame()  { isGameActive.value = false }
+  function stopGame() { isGameActive.value = false }
 
-  // ─── Modalità aggiunta pedine ─────────────────────────────────────────────
-  // Quando false, i marker sconosciuti vengono ignorati silenziosamente
-  // (niente dialog, niente falsi positivi durante il gioco)
   const allowNewMarkers = ref(true)
   function toggleNewMarkers() { allowNewMarkers.value = !allowNewMarkers.value }
 
-  const players   = computed(() => pieces.value.filter(p => p.category === 'player'))
-  const enemies   = computed(() => pieces.value.filter(p => p.category === 'enemy'))
+  const players = computed(() => pieces.value.filter(p => p.category === 'player'))
+  const enemies = computed(() => pieces.value.filter(p => p.category === 'enemy'))
   const furniture = computed(() => pieces.value.filter(p => p.category === 'furniture'))
 
   loadConfig()
 
   return {
-    gridCols, gridRows,
-    pieces, isGameActive, lastFrameTs,
-    players, enemies, furniture,
-    cornerPositions, homography, cornersAcquired, homographyReady,
-    allowNewMarkers, toggleNewMarkers,
-    updateCornerPosition, resetHomography,
-    setGridSize, updatePieces,
-    startGame, stopGame,
+    gridCols,
+    gridRows,
+    pieces,
+    isGameActive,
+    lastFrameTs,
+    players,
+    enemies,
+    furniture,
+    anchorPositions,
+    homography,
+    visibleAnchorsCount,
+    homographyReady,
+    allowNewMarkers,
+    toggleNewMarkers,
+    updateAnchor,
+    recomputeHomography,
+    resetHomography,
+    setGridSize,
+    updatePieces,
+    startGame,
+    stopGame,
     freeMode,
-    toggleFreeMode
+    toggleFreeMode,
   }
 })

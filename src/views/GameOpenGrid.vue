@@ -1,47 +1,37 @@
+// src/views/GameOpenGrid.vue
 <template>
   <div class="game-view">
-    <!-- CameraView sempre attivo, visibile solo quando viewMode === 'camera' -->
     <div v-show="viewMode === 'camera'" class="viewport" ref="viewportEl">
-      <CameraView
-        ref="cameraViewRef"
-        :active="isActive"
-        @unknown-marker="onUnknownMarker"
-        @frame-processed="onFrameProcessed"
-      />
+      <CameraView ref="cameraViewRef" :active="isActive" @unknown-marker="onUnknownMarker" @frame-processed="onFrameProcessed" />
     </div>
 
-    <!-- Modalità Tabella Pedine (open map) -->
     <div v-show="viewMode === 'table'" class="table-view">
-      <!-- Nuovo indicatore angoli visibili -->
+      <!-- Indicator ancore visibili -->
       <div class="corner-indicator">
         <div class="corner-box">
-          <span class="corner-label">Angoli visibili</span>
+          <span class="corner-label">Ancore visibili</span>
           <div class="corner-dots-indicator">
-            <div
-              v-for="role in ['NO', 'NE', 'SO', 'SE']"
-              :key="role"
-              class="indicator-dot"
-              :class="{ active: visibleCornersSet.has(role) }"
-              :title="role"
-            >
-              {{ role }}
-            </div>
+            <span class="indicator-dot" :class="{ active: gameStore.visibleAnchorsCount >= 1 }">1</span>
+            <span class="indicator-dot" :class="{ active: gameStore.visibleAnchorsCount >= 2 }">2</span>
+            <span class="indicator-dot" :class="{ active: gameStore.visibleAnchorsCount >= 3 }">3</span>
+            <span class="indicator-dot" :class="{ active: gameStore.homographyReady }">✓</span>
           </div>
+          <span class="corner-count">{{ gameStore.visibleAnchorsCount }} / 3+</span>
         </div>
       </div>
 
-      <!-- CANVAS per la mappa (open map) -->
       <div v-if="homographyReady" class="map-canvas-container" ref="mapContainer">
         <canvas ref="mapCanvas" class="map-canvas"></canvas>
       </div>
       <div v-else class="map-placeholder">
-        ⚠️ Calibrazione non pronta – inquadra i quattro angoli
+        ⚠️ Calibrazione non pronta – sono necessarie almeno 3 ancore visibili
       </div>
 
       <div class="table-header">
         <h2>📋 Pedine in gioco</h2>
         <span class="piece-count">{{ piecesList.length }} pedine rilevate</span>
       </div>
+
       <div class="table-container">
         <table class="pieces-table">
           <thead>
@@ -58,8 +48,7 @@
             <tr v-for="piece in piecesList" :key="piece.id" :class="piece.category">
               <td class="col-id">#{{ piece.id }}</td>
               <td class="col-name">
-                <span class="piece-emoji">{{ piece.emoji }}</span>
-                {{ piece.label }}
+                <span class="piece-emoji">{{ piece.emoji }}</span> {{ piece.label }}
               </td>
               <td class="col-pos">
                 <template v-if="!gameStore.freeMode">
@@ -90,36 +79,24 @@
           </tbody>
         </table>
       </div>
+
       <div class="table-footer">
         <button class="btn-back" @click="viewMode = 'camera'">← Torna alla fotocamera</button>
       </div>
     </div>
 
-    <!-- HUD superiore (visibile solo in modalità camera) -->
+    <!-- HUD superiore (solo camera) -->
     <div v-if="viewMode === 'camera'" class="hud-top">
       <button class="icon-btn" @click="$router.push('/')">✕</button>
       <span class="hud-title">ArUco Game</span>
       <div class="hud-actions">
-        <button
-          class="icon-btn"
-          :class="{ 'icon-btn--active': voiceEnabled }"
-          :title="voiceEnabled ? 'Disattiva voce' : 'Attiva voce'"
-          @click="toggleVoice"
-        >🔊</button>
-
-        <button
-          class="icon-btn"
-          :class="{ 'icon-btn--locked': !gameStore.allowNewMarkers }"
-          :title="gameStore.allowNewMarkers ? 'Blocca aggiunta pedine' : 'Sblocca aggiunta pedine'"
-          @click="gameStore.toggleNewMarkers(); announceMarkerMode()"
-        >{{ gameStore.allowNewMarkers ? '🔓' : '🔒' }}</button>
-
+        <button class="icon-btn" :class="{ 'icon-btn--active': voiceEnabled }" :title="voiceEnabled ? 'Disattiva voce' : 'Attiva voce'" @click="toggleVoice">🔊</button>
+        <button class="icon-btn" :class="{ 'icon-btn--locked': !gameStore.allowNewMarkers }" :title="gameStore.allowNewMarkers ? 'Blocca aggiunta pedine' : 'Sblocca aggiunta pedine'" @click="gameStore.toggleNewMarkers(); announceMarkerMode()">{{ gameStore.allowNewMarkers ? '🔓' : '🔒' }}</button>
         <button class="icon-btn" @click="showSettings = true" title="Impostazioni">⚙️</button>
         <button class="icon-btn" @click="viewMode = 'table'" title="Visualizza tabella pedine">📋</button>
       </div>
     </div>
 
-    <!-- HUD minimale per modalità tabella -->
     <div v-else class="hud-top table-hud">
       <button class="icon-btn" @click="$router.push('/')">✕</button>
       <span class="hud-title">Tabella Pedine</span>
@@ -130,40 +107,26 @@
 
     <!-- Status bar (solo camera) -->
     <div v-if="viewMode === 'camera'" class="status-bar">
-      <span v-if="!markersStore.allCornersAssigned" class="status-warning">
-        ⚠️ Angoli non configurati — vai in Configurazione
-      </span>
-      <span v-else-if="!gameStore.homographyReady" class="status-calibrating">
-        📍 Calibrazione: {{ gameStore.cornersAcquired }}/4 angoli
+      <span v-if="!gameStore.homographyReady" class="status-calibrating">
+        📍 Ancore visibili: {{ gameStore.visibleAnchorsCount }}
         <span class="corner-dots">
-          <span v-for="pos in ['NO','NE','SO','SE']" :key="pos"
-            class="corner-dot" :class="{ acquired: !!gameStore.cornerPositions[pos] }"
-            :title="pos">{{ pos }}</span>
+          <span class="corner-dot" :class="{ acquired: gameStore.visibleAnchorsCount >= 1 }">1</span>
+          <span class="corner-dot" :class="{ acquired: gameStore.visibleAnchorsCount >= 2 }">2</span>
+          <span class="corner-dot" :class="{ acquired: gameStore.visibleAnchorsCount >= 3 }">3</span>
         </span>
+        (servono 3+)
       </span>
       <span v-else class="status-ok">
-        ✓ {{ gameStore.freeMode ? 'Campo libero' : `${gameStore.gridCols}×${gameStore.gridRows}` }}
-        · {{ gameStore.pieces.length }} pedine
-        · {{ gameStore.allowNewMarkers ? '🔓' : '🔒' }}
+        ✓ {{ gameStore.freeMode ? 'Campo libero' : `${gameStore.gridCols}×${gameStore.gridRows}` }} ·
+        {{ gameStore.pieces.length }} pedine ·
+        {{ gameStore.allowNewMarkers ? '🔓' : '🔒' }}
         <button class="reset-h-btn" @click="onResetHomography" title="Ricalibra griglia">↺</button>
       </span>
     </div>
 
-    <!-- Dialog marker sconosciuto -->
-    <MarkerSetupDialog
-      :visible="dialogVisible"
-      :marker="unknownMarker"
-      @confirmed="dialogVisible = false"
-      @cancelled="dialogVisible = false"
-    />
+    <MarkerSetupDialog :visible="dialogVisible" :marker="unknownMarker" @confirmed="dialogVisible = false" @cancelled="dialogVisible = false" />
+    <CameraSettingsPanel :visible="showSettings" @close="showSettings = false" />
 
-    <!-- Pannello impostazioni -->
-    <CameraSettingsPanel
-      :visible="showSettings"
-      @close="showSettings = false"
-    />
-
-    <!-- Pannello lista pedine (solo camera) -->
     <transition v-if="viewMode === 'camera'" name="slide-up">
       <div v-if="showPieceList" class="piece-panel">
         <div class="piece-panel-header">
@@ -175,7 +138,7 @@
             <span class="piece-emoji">{{ p.emoji }}</span>
             <div>
               <strong>{{ p.label }}</strong>
-              <small>#{{ p.id }} · 
+              <small>#{{ p.id }} ·
                 <template v-if="!gameStore.freeMode">
                   {{ p.col !== null ? `(${p.col}, ${p.row})` : '–' }}
                 </template>
@@ -191,10 +154,7 @@
       </div>
     </transition>
 
-    <!-- FAB pedine (solo camera) -->
-    <button v-if="viewMode === 'camera'" class="fab" @click="showPieceList = !showPieceList">
-      🎲 {{ gameStore.pieces.length }}
-    </button>
+    <button v-if="viewMode === 'camera'" class="fab" @click="showPieceList = !showPieceList"> 🎲 {{ gameStore.pieces.length }} </button>
   </div>
 </template>
 
@@ -203,51 +163,41 @@ import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import CameraView from '../components/CameraView.vue'
 import MarkerSetupDialog from '../components/MarkerSetupDialog.vue'
 import CameraSettingsPanel from '../components/CameraSettingsPanel.vue'
-import { useMarkersStore, CORNER_ROLES, MARKER_CATEGORIES } from '../stores/markersStore.js'
+import { useMarkersStore, MARKER_CATEGORIES } from '../stores/markersStore.js'
 import { useGameStore } from '../stores/gameStore.js'
 import { voice } from '../services/voiceService.js'
+import { applyHomography } from '../services/homographyService.js'
 
 const markersStore = useMarkersStore()
-const gameStore    = useGameStore()
+const gameStore = useGameStore()
 
-const isActive        = ref(true)
-const showSettings    = ref(false)
-const showPieceList   = ref(false)
-const dialogVisible   = ref(false)
-const unknownMarker   = ref(null)
-const voiceEnabled    = ref(false)
-const cameraViewRef   = ref(null)
-
-// Modalità vista: 'camera' o 'table'
+const isActive = ref(true)
+const showSettings = ref(false)
+const showPieceList = ref(false)
+const dialogVisible = ref(false)
+const unknownMarker = ref(null)
+const voiceEnabled = ref(false)
+const cameraViewRef = ref(null)
 const viewMode = ref('camera')
-
-// Set degli angoli attualmente visibili (per indicatore in tabella)
-const visibleCornersSet = ref(new Set())
-
-// Riferimenti canvas per open map
 const mapCanvas = ref(null)
 const mapContainer = ref(null)
 
-// Helper per sapere se la calibrazione è pronta
 const homographyReady = computed(() => gameStore.homographyReady)
 
-// Lista delle sole pedine (esclusi corner e furniture)
 const piecesList = computed(() => {
-  return gameStore.pieces.filter(p => 
-    p.category !== MARKER_CATEGORIES.CORNER && 
-    p.category !== 'furniture'
-  )
+  return gameStore.pieces.filter(p => p.category !== 'furniture')
 })
 
-// Helper per ottenere posizione in pixel (modalità libera)
 function getPiecePixelPosition(piece) {
   if (piece.col === null || piece.row === null) return null
-  const pos = gridToPixel(piece.col, piece.row)
+  const H = gameStore.homography
+  if (!H) return null
+  const invH = invertH(H)
+  const pos = applyHomography(invH, { x: piece.col + 0.5, y: piece.row + 0.5 })
   if (!pos) return null
   return `(${Math.round(pos.x)}, ${Math.round(pos.y)})`
 }
 
-// ---- Funzioni per linea di vista e linea di tiro (basate sulla maschera, senza ostacoli di mappa) ----
 function getLosTargets(piece, allPieces) {
   const markerData = markersStore.getMarker(piece.id)
   if (!markerData || !markerData.losMask) return []
@@ -295,30 +245,17 @@ function getLofTargets(piece, allPieces) {
   }
   return targets
 }
-// --------------------------------------------------
 
-// --- Funzioni di disegno sulla canvas (open map) ---
-function gridToPixel(col, row) {
-  const corners = gameStore.cornerPositions
-  if (!corners || Object.keys(corners).length < 4) return null
-  const pNO = corners.NO
-  const pNE = corners.NE
-  const pSO = corners.SO
-  const pSE = corners.SE
-  if (!pNO || !pNE || !pSO || !pSE) return null
-
-  const t = col / (gameStore.gridCols - 1)
-  const u = row / (gameStore.gridRows - 1)
-
-  // Interpolazione bilineare
-  const topX = pNO.x * (1 - t) + pNE.x * t
-  const topY = pNO.y * (1 - t) + pNE.y * t
-  const bottomX = pSO.x * (1 - t) + pSE.x * t
-  const bottomY = pSO.y * (1 - t) + pSE.y * t
-
-  const x = topX * (1 - u) + bottomX * u
-  const y = topY * (1 - u) + bottomY * u
-  return { x, y }
+function invertH(H) {
+  if (!H) return null
+  const [a,b,c,d,e,f,g,h,i] = H
+  const det = a*(e*i-f*h) - b*(d*i-f*g) + c*(d*h-e*g)
+  if (Math.abs(det) < 1e-10) return null
+  return [
+    (e*i-f*h)/det, (c*h-b*i)/det, (b*f-c*e)/det,
+    (f*g-d*i)/det, (a*i-c*g)/det, (c*d-a*f)/det,
+    (d*h-e*g)/det, (b*g-a*h)/det, (a*e-b*d)/det,
+  ]
 }
 
 function isPointInsideQuad(px, py, quad) {
@@ -362,62 +299,57 @@ function drawMap() {
   if (!canvas) return
   const ctx = canvas.getContext('2d')
   if (!ctx) return
-
-  // Imposta dimensioni canvas uguali al contenitore
   const container = mapContainer.value
   if (!container) return
   const rect = container.getBoundingClientRect()
   if (rect.width === 0 || rect.height === 0) return
+
   canvas.width = rect.width
   canvas.height = rect.height
   ctx.clearRect(0, 0, canvas.width, canvas.height)
 
-  const corners = gameStore.cornerPositions
-  if (!corners || Object.keys(corners).length < 4) return
+  const H = gameStore.homography
+  if (!H) return
 
-  const pNO = corners.NO
-  const pNE = corners.NE
-  const pSO = corners.SO
-  const pSE = corners.SE
-  const quad = [pNO, pNE, pSE, pSO]
+  const invH = invertH(H)
+  if (!invH) return
 
-  // 1. Linee gialle per il perimetro (spessore 3px)
-  ctx.beginPath()
-  ctx.moveTo(pNO.x, pNO.y)
-  ctx.lineTo(pNE.x, pNE.y)
-  ctx.lineTo(pSE.x, pSE.y)
-  ctx.lineTo(pSO.x, pSO.y)
-  ctx.closePath()
-  ctx.strokeStyle = '#ffcc00'
-  ctx.lineWidth = 3
-  ctx.stroke()
+  const cols = gameStore.gridCols
+  const rows = gameStore.gridRows
 
-  // 2. Trova giocatore e nemici
-  const playerPiece = gameStore.pieces.find(p => p.category === 'player')
-  const enemyPieces = gameStore.pieces.filter(p => p.category === 'enemy')
-
-  // Disegna linea blu per giocatore
-  if (playerPiece && playerPiece.col !== null && playerPiece.row !== null) {
-    const start = gridToPixel(playerPiece.col, playerPiece.row)
-    if (start) {
-      drawDirectionLine(ctx, start, playerPiece.angle, quad, '#3399ff', 3)
-    }
+  // Disegna la griglia
+  ctx.strokeStyle = 'rgba(255,204,0,0.3)'
+  ctx.lineWidth = 1
+  for (let c = 0; c <= cols; c++) {
+    const p1 = applyHomography(invH, { x: c, y: 0 })
+    const p2 = applyHomography(invH, { x: c, y: rows })
+    ctx.beginPath()
+    ctx.moveTo(p1.x, p1.y)
+    ctx.lineTo(p2.x, p2.y)
+    ctx.stroke()
+  }
+  for (let r = 0; r <= rows; r++) {
+    const p1 = applyHomography(invH, { x: 0, y: r })
+    const p2 = applyHomography(invH, { x: cols, y: r })
+    ctx.beginPath()
+    ctx.moveTo(p1.x, p1.y)
+    ctx.lineTo(p2.x, p2.y)
+    ctx.stroke()
   }
 
-  // Disegna linee rosse per nemici
-  for (const enemy of enemyPieces) {
-    if (enemy.col !== null && enemy.row !== null) {
-      const start = gridToPixel(enemy.col, enemy.row)
-      if (start) {
-        drawDirectionLine(ctx, start, enemy.angle, quad, '#ff4444', 3)
-      }
-    }
-  }
+  // Calcola i quattro angoli della griglia per il disegno delle linee
+  const corners = [
+    applyHomography(invH, { x: 0, y: 0 }),
+    applyHomography(invH, { x: cols, y: 0 }),
+    applyHomography(invH, { x: cols, y: rows }),
+    applyHomography(invH, { x: 0, y: rows })
+  ]
+  const quad = corners
 
-  // 3. Disegna i marker come cerchi colorati
+  // Disegna le pedine
   for (const piece of gameStore.pieces) {
     if (piece.col === null || piece.row === null) continue
-    const pos = gridToPixel(piece.col, piece.row)
+    const pos = applyHomography(invH, { x: piece.col + 0.5, y: piece.row + 0.5 })
     if (!pos) continue
     ctx.beginPath()
     ctx.arc(pos.x, pos.y, 8, 0, 2 * Math.PI)
@@ -429,13 +361,18 @@ function drawMap() {
     ctx.font = 'bold 14px monospace'
     ctx.shadowBlur = 0
     ctx.fillText(piece.id, pos.x - 6, pos.y - 6)
+
+    // Linea di direzione
+    if (piece.angle !== null) {
+      drawDirectionLine(ctx, pos, piece.angle, quad, '#ffaa44', 2)
+    }
   }
 }
-// --------------------------------------------------
 
 onMounted(() => {
   gameStore.startGame()
-  voice.announceCornerStatus(gameStore.cornersAcquired, gameStore.cornerPositions)
+  // Annuncia lo stato iniziale delle ancore
+  voice.announceAnchorsCount?.(gameStore.visibleAnchorsCount)
   window.addEventListener('resize', () => {
     if (viewMode.value === 'table' && homographyReady.value) {
       drawMap()
@@ -443,25 +380,20 @@ onMounted(() => {
   })
 })
 
-// Aggiorna canvas quando cambiano i dati o la vista tabella
-watch([() => gameStore.pieces, () => gameStore.cornerPositions, homographyReady, viewMode, () => gameStore.freeMode], () => {
+watch([() => gameStore.pieces, () => gameStore.homography, homographyReady, viewMode, () => gameStore.freeMode], () => {
   if (viewMode.value === 'table' && homographyReady.value) {
-    nextTick(() => {
-      drawMap()
-    })
+    nextTick(() => { drawMap() })
   }
 })
-
-const missingCorners = computed(() => CORNER_ROLES.filter(r => !markersStore.corners[r]))
 
 function toggleVoice() {
   voice.toggle()
   voiceEnabled.value = voice.enabled
   if (voice.enabled) {
     voice.say('Assistente vocale attivato.', 'voice_on', 2)
-    setTimeout(() => voice.announceCornerStatus(
-      gameStore.cornersAcquired, gameStore.cornerPositions
-    ), 800)
+    setTimeout(() => {
+      voice.announceAnchorsCount?.(gameStore.visibleAnchorsCount)
+    }, 800)
   }
 }
 
@@ -474,7 +406,7 @@ function announceMarkerMode() {
 
 function onResetHomography() {
   gameStore.resetHomography()
-  voice.say('Calibrazione azzerata. Inquadra i quattro angoli.', 'reset_h', 2)
+  voice.say('Calibrazione azzerata. Inquadra almeno 3 ancore.', 'reset_h', 2)
 }
 
 function onUnknownMarker(marker) {
@@ -485,20 +417,16 @@ function onUnknownMarker(marker) {
 }
 
 function onFrameProcessed(payload) {
-  if (payload && payload.markers) {
-    const newVisible = new Set()
-    for (const m of payload.markers) {
-      const data = markersStore.getMarker(m.id)
-      if (data?.category === MARKER_CATEGORIES.CORNER && data.role) {
-        newVisible.add(data.role)
-      }
-    }
-    visibleCornersSet.value = newVisible
-  }
+  // Aggiorna eventuali annunci quando il numero di ancore cambia
+  const prevCount = gameStore.visibleAnchorsCount
+  // Il conteggio viene aggiornato da gameStore dopo recomputeHomography
+  // Possiamo annunciare il cambiamento se necessario
+  // Usiamo un watcher per il conteggio? Lo faremo con watch in onMounted
 }
 </script>
 
 <style scoped>
+/* ... stili esistenti ... */
 .game-view { position: fixed; inset: 0; background: #000; display: flex; flex-direction: column; overflow: hidden; }
 .viewport { flex: 1; position: relative; overflow: hidden; }
 .hud-top { position: absolute; top: env(safe-area-inset-top, 12px); left: 0; right: 0; display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 1rem; z-index: 10; }
@@ -509,7 +437,6 @@ function onFrameProcessed(payload) {
 .icon-btn--active { background: rgba(80,180,80,0.7); }
 .icon-btn--locked { background: rgba(180,60,60,0.7); }
 .status-bar { position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); z-index: 10; background: rgba(0,0,0,0.6); border-radius: 20px; padding: 0.4rem 1rem; font-size: 0.85rem; white-space: nowrap; }
-.status-warning { color: #ffd700; }
 .status-calibrating { color: #88ccff; display: flex; align-items: center; gap: 0.6rem; }
 .status-ok { color: #7fff7f; display: flex; align-items: center; gap: 0.5rem; }
 .corner-dots { display: flex; gap: 0.3rem; }
@@ -533,36 +460,16 @@ function onFrameProcessed(payload) {
 .slide-up-enter-from, .slide-up-leave-to { transform: translateY(100%); }
 .table-view { flex: 1; display: flex; flex-direction: column; background: #0f0f1e; color: #eee; padding: 1rem; overflow: hidden; position: relative; }
 .corner-indicator { position: absolute; top: 1rem; left: 1rem; z-index: 5; }
-.corner-box { background: rgba(26, 26, 46, 0.9); border-radius: 12px; padding: 0.6rem 1rem; backdrop-filter: blur(4px); border: 1px solid #3a3a6a; }
-.corner-label { display: block; font-size: 0.7rem; color: #aaa; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.4rem; }
+.corner-box { background: rgba(26, 26, 46, 0.9); border-radius: 12px; padding: 0.6rem 1rem; backdrop-filter: blur(4px); border: 1px solid #3a3a6a; display: flex; flex-direction: column; align-items: center; gap: 0.3rem; }
+.corner-label { font-size: 0.7rem; color: #aaa; text-transform: uppercase; letter-spacing: 0.05em; }
 .corner-dots-indicator { display: flex; gap: 0.5rem; }
 .indicator-dot { width: 2.2rem; height: 2.2rem; border-radius: 8px; background: #2a2a4a; border: 2px solid #3a3a6a; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: bold; color: #888; transition: all 0.2s; }
-.indicator-dot.active { background: #ff4444; border-color: #ff8888; color: #fff; box-shadow: 0 0 12px rgba(255, 68, 68, 0.5); }
-.map-canvas-container {
-  width: 100%;
-  height: 300px;
-  margin-bottom: 1rem;
-  background: #1e1e2e;
-  border-radius: 12px;
-  overflow: hidden;
-  position: relative;
-  border: 1px solid #3a3a6a;
-}
-.map-canvas {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-.map-placeholder {
-  background: #1a1a2e;
-  border-radius: 12px;
-  padding: 1.5rem;
-  text-align: center;
-  color: #aaa;
-  margin-bottom: 1rem;
-  border: 1px solid #3a3a6a;
-}
-.table-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1rem; padding: 0 0.5rem; margin-top: 2.5rem; }
+.indicator-dot.active { background: #4a7cf5; border-color: #7c9ef5; color: #fff; }
+.corner-count { font-size: 0.8rem; color: #7c9ef5; }
+.map-canvas-container { width: 100%; height: 300px; margin-bottom: 1rem; background: #1e1e2e; border-radius: 12px; overflow: hidden; position: relative; border: 1px solid #3a3a6a; margin-top: 2.5rem; }
+.map-canvas { width: 100%; height: 100%; display: block; }
+.map-placeholder { background: #1a1a2e; border-radius: 12px; padding: 1.5rem; text-align: center; color: #aaa; margin-bottom: 1rem; border: 1px solid #3a3a6a; margin-top: 2.5rem; }
+.table-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1rem; padding: 0 0.5rem; }
 .table-header h2 { margin: 0; font-size: 1.5rem; color: #fff; }
 .piece-count { color: #7c9ef5; font-size: 1rem; }
 .table-container { flex: 1; overflow-y: auto; border-radius: 12px; background: #1a1a2e; }
@@ -584,6 +491,9 @@ function onFrameProcessed(payload) {
 .table-footer { margin-top: 1rem; display: flex; justify-content: center; }
 .btn-back { background: #2a2a4a; border: 2px solid #3a3a6a; border-radius: 12px; color: #ccc; padding: 0.8rem 2rem; font-size: 1rem; cursor: pointer; transition: background 0.15s; }
 .btn-back:hover { background: #3a3a6a; }
-@media (max-width: 768px) { .table-header { flex-direction: column; align-items: flex-start; gap: 0.5rem; margin-top: 4rem; } .pieces-table { min-width: 500px; } .indicator-dot { width: 2rem; height: 2rem; font-size: 0.7rem; } }
-@media (min-width: 768px) { .table-container { overflow-x: visible; } .pieces-table { min-width: auto; } .table-header { flex-direction: row; justify-content: space-between; margin-top: 2.5rem; } .hud-top { padding: 0.5rem 1.5rem; } }
+@media (max-width: 768px) {
+  .table-header { flex-direction: column; align-items: flex-start; gap: 0.5rem; margin-top: 4rem; }
+  .pieces-table { min-width: 500px; }
+  .indicator-dot { width: 2rem; height: 2rem; font-size: 0.7rem; }
+}
 </style>

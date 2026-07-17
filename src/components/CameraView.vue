@@ -1,4 +1,4 @@
-<!-- src/components/CameraView.vue -->
+// src/components/CameraView.vue
 <template>
   <div class="camera-wrapper">
     <canvas ref="canvasEl" class="camera-canvas" />
@@ -13,13 +13,13 @@ import { createArucoService, approximateCardinalAngle } from '../services/arucoS
 import { useMarkersStore, MARKER_CATEGORIES } from '../stores/markersStore.js'
 import { useGameStore } from '../stores/gameStore.js'
 import { useCameraStore } from '../stores/cameraStore.js'
+import { useMapStore } from '../stores/mapStore.js'
 import { buildHomographyFromCorners, pointToCell } from '../services/homographyService.js'
 import { voice } from '../services/voiceService.js'
 
 const props = defineProps({
   active: { type: Boolean, default: true },
 })
-
 const emit = defineEmits(['unknown-marker', 'frame-processed'])
 
 const canvasEl = ref(null)
@@ -28,6 +28,7 @@ const cameraError = ref('')
 
 const markersStore = useMarkersStore()
 const gameStore = useGameStore()
+const mapStore = useMapStore()
 const cam = useCameraStore()
 
 const video = document.createElement('video')
@@ -67,7 +68,9 @@ async function startCamera() {
       startLoop()
     }
   } catch (err) {
-    cameraError.value = err.name === 'NotAllowedError' ? 'Permesso fotocamera negato.' : `Errore: ${err.message}`
+    cameraError.value = err.name === 'NotAllowedError'
+      ? 'Permesso fotocamera negato.'
+      : `Errore: ${err.message}`
   }
 }
 
@@ -149,7 +152,6 @@ function processFrame() {
 
   const H = computeH(markers)
 
-  // Applica zoom digitale
   const zoom = cam.digitalZoom
   const sw = w * zoom
   const sh = h * zoom
@@ -160,7 +162,6 @@ function processFrame() {
   ctx.drawImage(video, offsetX, offsetY, sw, sh)
   ctx.filter = 'none'
 
-  // Trasformazione per overlay
   ctx.save()
   ctx.setTransform(zoom, 0, 0, zoom, offsetX, offsetY)
 
@@ -173,11 +174,15 @@ function processFrame() {
 }
 
 function preprocessFrame(w, h) {
-  const needsProcessing = cam.brightness !== 100 || cam.contrast !== 100 || cam.saturation !== 100 || cam.grayscale || cam.threshold > 0 || cam.sharpness > 0
+  const needsProcessing = cam.brightness !== 100 || cam.contrast !== 100 ||
+    cam.saturation !== 100 || cam.grayscale || cam.threshold > 0 ||
+    cam.sharpness > 0
   if (!needsProcessing) return false
+
   offCtx.filter = buildCSSFilter()
   offCtx.drawImage(video, 0, 0, w, h)
   offCtx.filter = 'none'
+
   if (cam.sharpness > 0) {
     applySharpness(offCtx, w, h, cam.sharpness)
   }
@@ -227,21 +232,26 @@ function applyThreshold(ctx, w, h, thresh) {
 }
 
 function computeH(markers) {
-  const prevCount = gameStore.cornersAcquired
-  for (const m of markers) {
-    const data = markersStore.getMarker(m.id)
-    if (data?.category === MARKER_CATEGORIES.CORNER && data.role) {
-      gameStore.updateCornerPosition(data.role, m.center)
+  // Aggiorna le ancore rilevate
+  const currentMap = mapStore.currentMap
+  if (currentMap) {
+    // Crea una mappa id -> cella per la griglia corrente
+    const cellByMarkerId = {}
+    for (let row = 0; row < currentMap.rows; row++) {
+      for (let col = 0; col < currentMap.cols; col++) {
+        const cell = currentMap.grid[row][col]
+        if (cell.markerId !== undefined && cell.markerId !== null) {
+          cellByMarkerId[cell.markerId] = { col, row }
+        }
+      }
     }
-  }
-  const newCount = gameStore.cornersAcquired
-  if (newCount > prevCount) {
-    const roles = ['NO', 'NE', 'SO', 'SE']
-    for (const role of roles) {
-      if (!gameStore.cornerPositions[role]) continue
-      voice.announceCornerAcquired(role, newCount)
-      break
+    for (const m of markers) {
+      if (cellByMarkerId[m.id]) {
+        gameStore.updateAnchor(m.id, m.center)
+      }
     }
+    // Ricalcola omografia se necessario
+    gameStore.recomputeHomography()
   }
   return gameStore.homography
 }
@@ -251,6 +261,7 @@ function drawGrid(ctx, H, w, h) {
   const rows = gameStore.gridRows
   const invH = invert3x3(H)
   const opacity = cam.gridOpacity
+
   ctx.save()
   ctx.strokeStyle = `rgba(100, 200, 255, ${opacity})`
   ctx.lineWidth = 1
@@ -266,15 +277,18 @@ function drawGrid(ctx, H, w, h) {
     ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke()
   }
 
+  // Pedine
   for (const piece of gameStore.pieces) {
     if (piece.col === null) continue
     const tl = gridToPixel(invH, piece.col, piece.row)
     const tr = gridToPixel(invH, piece.col + 1, piece.row)
     const br = gridToPixel(invH, piece.col + 1, piece.row + 1)
     const bl = gridToPixel(invH, piece.col, piece.row + 1)
-    const color = piece.category === MARKER_CATEGORIES.PLAYER ? `rgba(68,136,255,${opacity})` :
-                  piece.category === MARKER_CATEGORIES.ENEMY ? `rgba(255,68,68,${opacity})` :
-                  `rgba(255,170,0,${opacity})`
+    const color = piece.category === 'player'
+      ? `rgba(68,136,255,${opacity})`
+      : piece.category === 'enemy'
+        ? `rgba(255,68,68,${opacity})`
+        : `rgba(255,170,0,${opacity})`
     ctx.beginPath()
     ctx.moveTo(tl.x, tl.y); ctx.lineTo(tr.x, tr.y)
     ctx.lineTo(br.x, br.y); ctx.lineTo(bl.x, bl.y)
@@ -290,17 +304,6 @@ function drawGrid(ctx, H, w, h) {
     ctx.fillText(`${piece.col},${piece.row}${rotText}`, cx, cy + 4)
   }
 
-  const corners = { NO: [0,0], NE: [cols,0], SO: [0,rows], SE: [cols,rows] }
-  for (const [label, [gc, gr]] of Object.entries(corners)) {
-    if (!markersStore.corners[label]) continue
-    const p = gridToPixel(invH, gc, gr)
-    ctx.font = 'bold 14px monospace'
-    ctx.textAlign = 'center'
-    ctx.strokeStyle = 'rgba(0,0,0,0.8)'; ctx.lineWidth = 4
-    ctx.strokeText(label, p.x, p.y - 10)
-    ctx.fillStyle = '#ffd700'
-    ctx.fillText(label, p.x, p.y - 10)
-  }
   ctx.restore()
 }
 
@@ -325,14 +328,16 @@ function invert3x3(m) {
 function drawMarkers(ctx, markers, H, videoW) {
   if (!cam.showIds && !cam.showCubes) return
   const fontSize = Math.max(16, videoW * 0.025)
+
   markers.forEach(({ id, corners, center, angle }) => {
     const known = markersStore.getMarker(id)
-    const isCorner = known?.category === MARKER_CATEGORIES.CORNER
-    const color = isCorner ? '#ffd700' :
-                  !known ? '#ff4444' :
-                  known.category === MARKER_CATEGORIES.PLAYER ? '#4488ff' :
-                  known.category === MARKER_CATEGORIES.ENEMY ? '#ff4444' :
-                  known.category === MARKER_CATEGORIES.FURNITURE ? '#ffaa00' : '#00ff88'
+    const color = !known
+      ? '#ff4444'
+      : known.category === 'player'
+        ? '#4488ff'
+        : known.category === 'enemy'
+          ? '#ff4444'
+          : '#00ff88' // fallback per altri tipi
 
     ctx.beginPath()
     ctx.moveTo(corners[0].x, corners[0].y)
@@ -370,7 +375,6 @@ function drawMarkers(ctx, markers, H, videoW) {
     if (cam.showIds) {
       const lift = cam.showCubes ? Math.max(18, videoW * 0.022) : 0
       const textY = Math.min(...corners.map(c=>c.y)) - lift - 8
-      const known = markersStore.getMarker(id)
       let label = `#${id}`
       if (known?.emoji) label += ` ${known.emoji}`
       const piece = gameStore.pieces.find(p => p.id === id)
@@ -418,10 +422,27 @@ function handleGameLogic(markers, H) {
     }
   }
 
+  // Crea set di ancore per escluderle dalle pedine
+  const anchors = new Set()
+  const currentMap = mapStore.currentMap
+  if (currentMap) {
+    for (let row = 0; row < currentMap.rows; row++) {
+      for (let col = 0; col < currentMap.cols; col++) {
+        const cell = currentMap.grid[row][col]
+        if (cell.markerId !== undefined && cell.markerId !== null) {
+          anchors.add(cell.markerId)
+        }
+      }
+    }
+  }
+
   const pieces = []
   for (const m of markers) {
+    // Salta i marker che sono ancore (usati per l'omografia)
+    if (anchors.has(m.id)) continue
     const data = markersStore.getMarker(m.id)
-    if (!data || data.category === MARKER_CATEGORIES.CORNER) continue
+    if (!data) continue
+
     let col = null, row = null
     if (H) {
       const cell = pointToCell(H, m.center, gameStore.gridCols, gameStore.gridRows)
@@ -429,17 +450,18 @@ function handleGameLogic(markers, H) {
       row = cell.row
     }
     const { degrees: rotationDeg, symbol: rotationSymbol } = approximateCardinalAngle(m.angle)
+
     pieces.push({
       id: m.id,
       ...data,
-      col,
-      row,
+      col, row,
       angle: m.angle,
       rotationDeg,
       rotationSymbol,
       center: m.center,
       corners: m.corners,
     })
+
     if (data && !_announcedPieces.has(m.id)) {
       _announcedPieces.add(m.id)
       voice.announcePiece(data.label, col, row)

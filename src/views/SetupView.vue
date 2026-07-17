@@ -1,6 +1,6 @@
+// src/views/SetupView.vue
 <template>
   <div class="setup-view">
-    <!-- Header -->
     <div class="setup-header">
       <button class="back-btn" @click="$router.push('/')">←</button>
       <h1>Configurazione</h1>
@@ -12,20 +12,12 @@
       </div>
     </div>
 
-    <!-- Tabs -->
     <div class="tabs">
-      <button
-        v-for="t in tabs"
-        :key="t.id"
-        class="tab"
-        :class="{ active: activeTab === t.id }"
-        @click="activeTab = t.id"
-      >
+      <button v-for="t in tabs" :key="t.id" class="tab" :class="{ active: activeTab === t.id }" @click="activeTab = t.id">
         {{ t.icon }} {{ t.label }}
       </button>
     </div>
 
-    <!-- TAB: GRIGLIA -->
     <div v-if="activeTab === 'grid'" class="tab-content">
       <div class="card">
         <h2>Dimensioni griglia</h2>
@@ -35,28 +27,8 @@
         </div>
         <button class="btn-primary" @click="saveGrid">Salva griglia</button>
       </div>
-
-      <div class="card">
-        <h2>Marker angolo griglia</h2>
-        <div class="corners-visual">
-          <div class="corner-grid-display">
-            <div
-              v-for="pos in ['NO','NE','SO','SE']"
-              :key="pos"
-              class="corner-chip"
-              :class="{ assigned: !!markersStore.corners[pos] }"
-            >
-              <strong>{{ pos }}</strong>
-              <small v-if="markersStore.corners[pos]">#{{ markersStore.corners[pos].id }}</small>
-              <small v-else>—</small>
-            </div>
-          </div>
-          <p class="corners-hint">Assegna i 4 angoli puntando la camera sui marker durante il gioco</p>
-        </div>
-      </div>
     </div>
 
-    <!-- TAB: MARKER -->
     <div v-if="activeTab === 'markers'" class="tab-content">
       <div class="add-marker-header">
         <button class="btn-primary add-btn" @click="toggleAddForm">
@@ -65,7 +37,6 @@
         </button>
       </div>
 
-      <!-- Form di aggiunta marker -->
       <div v-if="showAddForm" class="add-marker-form card">
         <h3>Nuovo marker</h3>
         <div class="form-grid">
@@ -80,7 +51,6 @@
           <div class="form-field">
             <label>Categoria <span class="required">*</span></label>
             <select v-model="newMarker.category" @change="onCategoryChange">
-              <option value="corner">📍 Angolo</option>
               <option value="player">🧙 Giocatore</option>
               <option value="enemy">💀 Nemico</option>
             </select>
@@ -105,18 +75,15 @@
         <p v-if="addError" class="error-msg">{{ addError }}</p>
       </div>
 
-      <!-- Filtri -->
       <div class="filters">
         <select v-model="filterCat" class="filter-select">
           <option value="">Tutti i tipi</option>
-          <option value="corner">📍 Angolo</option>
           <option value="player">🧙 Giocatore</option>
           <option value="enemy">💀 Nemico</option>
         </select>
         <input v-model="filterSearch" class="filter-input" placeholder="Cerca ID o nome…" />
       </div>
 
-      <!-- Tabella marker -->
       <div class="marker-table-wrap">
         <table class="marker-table" v-if="filteredMarkers.length">
           <thead>
@@ -132,21 +99,10 @@
             </tr>
           </thead>
           <tbody>
-            <tr
-              v-for="m in filteredMarkers"
-              :key="m.id"
-              :class="['row-' + m.category, { editing: editingId === m.id }]"
-            >
+            <tr v-for="m in filteredMarkers" :key="m.id" :class="['row-' + m.category, { editing: editingId === m.id }]">
               <td class="col-id">
                 <template v-if="editingId === m.id">
-                  <input
-                    type="number"
-                    v-model.number="editData.newId"
-                    min="0"
-                    step="1"
-                    class="edit-input"
-                    :class="{ 'input-error': editErrors.id }"
-                  />
+                  <input type="number" v-model.number="editData.newId" min="0" step="1" class="edit-input" :class="{ 'input-error': editErrors.id }" />
                   <div v-if="editErrors.id" class="field-error">{{ editErrors.id }}</div>
                 </template>
                 <template v-else>#{{ m.id }}</template>
@@ -177,14 +133,8 @@
                 </template>
                 <template v-else>{{ m.description || '—' }}</template>
               </td>
-              <!-- Bottone maschere solo per giocatori/nemici -->
               <td class="col-masks">
-                <button
-                  v-if="m.category !== CORNER_CATEGORY"
-                  class="act-btn masks"
-                  @click="openMaskEditor(m)"
-                  title="Modifica linee di vista/tiro"
-                >🎴</button>
+                <button v-if="m.category !== 'corner'" class="act-btn masks" @click="openMaskEditor(m)" title="Modifica linee di vista/tiro">🎴</button>
                 <span v-else class="no-masks">—</span>
               </td>
               <td class="col-actions">
@@ -201,15 +151,36 @@
           </tbody>
         </table>
         <div v-else class="empty-table">
-          {{ Object.keys(markersStore.registry).length === 0
-            ? 'Nessun marker configurato — punta la camera sui marker durante il gioco'
-            : 'Nessun marker corrisponde ai filtri' }}
+          {{ Object.keys(markersStore.registry).length === 0 ? 'Nessun marker configurato — punta la camera sui marker durante il gioco' : 'Nessun marker corrisponde ai filtri' }}
         </div>
       </div>
 
-      <button v-if="Object.keys(markersStore.registry).length" class="btn-danger" @click="clearAll">
-        🗑 Cancella tutti i marker
-      </button>
+      <!-- Ancora: elenco marker associati a celle nella mappa corrente -->
+      <div v-if="mapStore.currentMap" class="card">
+        <h2>📍 Ancore nella mappa corrente</h2>
+        <p class="card-desc">Marker ArUco associati a celle della mappa. Questi vengono usati per calcolare l'omografia.</p>
+        <div class="anchor-table-wrap">
+          <table class="marker-table" v-if="anchorList.length">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Colonna</th>
+                <th>Riga</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="a in anchorList" :key="a.id">
+                <td class="col-id">#{{ a.id }}</td>
+                <td>{{ a.col }}</td>
+                <td>{{ a.row }}</td>
+              </tr>
+            </tbody>
+          </table>
+          <div v-else class="empty-table">Nessuna ancora assegnata.</div>
+        </div>
+      </div>
+
+      <button v-if="Object.keys(markersStore.registry).length" class="btn-danger" @click="clearAll"> 🗑 Cancella tutti i marker </button>
     </div>
 
     <!-- TAB: IMPORT/EXPORT -->
@@ -234,10 +205,7 @@
 
       <div v-if="importResult" class="card" :class="importResult.ok ? 'card-ok' : 'card-err'">
         <h2>{{ importResult.ok ? '✓ Importazione riuscita' : '⚠️ Importazione con errori' }}</h2>
-        <p v-if="importResult.ok">
-          Importati {{ importResult.imported?.markers?.length ?? 0 }} marker, griglia
-          {{ importResult.imported?.grid?.cols }}×{{ importResult.imported?.grid?.rows }}.
-        </p>
+        <p v-if="importResult.ok">Importati {{ importResult.imported?.markers?.length ?? 0 }} marker, griglia {{ importResult.imported?.grid?.cols }}×{{ importResult.imported?.grid?.rows }}.</p>
         <ul v-if="importResult.errors.length">
           <li v-for="e in importResult.errors" :key="e" class="err-item">{{ e }}</li>
         </ul>
@@ -258,18 +226,8 @@
             <button @click="closeMaskDialog">✕</button>
           </div>
           <div class="mask-dialog-content">
-            <MaskEditor
-              v-model="tempLosMask"
-              :grid-cols="gameStore.gridCols"
-              :grid-rows="gameStore.gridRows"
-              title="Linea di vista (LOS)"
-            />
-            <MaskEditor
-              v-model="tempLofMask"
-              :grid-cols="gameStore.gridCols"
-              :grid-rows="gameStore.gridRows"
-              title="Linea di tiro (LOF)"
-            />
+            <MaskEditor v-model="tempLosMask" :grid-cols="gameStore.gridCols" :grid-rows="gameStore.gridRows" title="Linea di vista (LOS)" />
+            <MaskEditor v-model="tempLofMask" :grid-cols="gameStore.gridCols" :grid-rows="gameStore.gridRows" title="Linea di tiro (LOF)" />
           </div>
           <div class="dialog-actions">
             <button class="btn-primary" @click="saveMasks">Salva</button>
@@ -283,25 +241,18 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import {
-  useMarkersStore,
-  MARKER_CATEGORIES,
-  CORNER_ROLES,
-  PLAYER_TYPES,
-  ENEMY_TYPES,
-} from '../stores/markersStore.js'
+import { useMarkersStore, MARKER_CATEGORIES, PLAYER_TYPES, ENEMY_TYPES } from '../stores/markersStore.js'
 import { useGameStore } from '../stores/gameStore.js'
 import { useCameraStore } from '../stores/cameraStore.js'
+import { useMapStore } from '../stores/mapStore.js'
 import { downloadConfig, importConfig, readFile } from '../services/configIO.js'
 import MaskEditor from '../components/MaskEditor.vue'
-
-const CORNER_CATEGORY = MARKER_CATEGORIES.CORNER
 
 const markersStore = useMarkersStore()
 const gameStore = useGameStore()
 const cameraStore = useCameraStore()
+const mapStore = useMapStore()
 
-// ─── Griglia ─────────────────────────────────────────────────────────────────
 const cols = ref(gameStore.gridCols)
 const rows = ref(gameStore.gridRows)
 
@@ -309,7 +260,6 @@ function saveGrid() {
   gameStore.setGridSize(cols.value, rows.value)
 }
 
-// ─── Tabs ────────────────────────────────────────────────────────────────────
 const activeTab = ref('markers')
 const tabs = [
   { id: 'markers', label: 'Marker', icon: '🎲' },
@@ -317,7 +267,6 @@ const tabs = [
   { id: 'io', label: 'Import/Export', icon: '📁' },
 ]
 
-// ─── Filtri tabella ──────────────────────────────────────────────────────────
 const filterCat = ref('')
 const filterSearch = ref('')
 
@@ -335,18 +284,10 @@ const filteredMarkers = computed(() => {
     .sort((a, b) => a.id - b.id)
 })
 
-// ─── Labels ──────────────────────────────────────────────────────────────────
-const CAT_LABELS = {
-  corner: 'Angolo',
-  player: 'Giocatore',
-  enemy: 'Nemico',
-}
-function catLabel(cat) {
-  return CAT_LABELS[cat] ?? cat
-}
+const CAT_LABELS = { player: 'Giocatore', enemy: 'Nemico' }
+function catLabel(cat) { return CAT_LABELS[cat] ?? cat }
 
 const ALL_SUBTYPES = {
-  corner: CORNER_ROLES.map((r) => ({ id: r, label: r, emoji: '📍' })),
   player: PLAYER_TYPES,
   enemy: ENEMY_TYPES,
 }
@@ -357,11 +298,10 @@ function subtypeOptions(cat) {
 
 function subtypeLabel(cat, role) {
   if (!role) return '—'
-  const found = (ALL_SUBTYPES[cat] ?? []).find((o) => o.id === role)
+  const found = (ALL_SUBTYPES[cat] ?? []).find(o => o.id === role)
   return found ? `${found.emoji} ${found.label}` : role
 }
 
-// ─── Editing inline ──────────────────────────────────────────────────────────
 const editingId = ref(null)
 const editData = ref({})
 const editErrors = ref({})
@@ -402,7 +342,7 @@ function saveEdit(originalId) {
   if (!validateEditData(originalId)) return
   const newId = editData.value.newId
   const current = markersStore.getMarker(originalId)
-  const sub = subtypeOptions(editData.value.category).find((o) => o.id === editData.value.role)
+  const sub = subtypeOptions(editData.value.category).find(o => o.id === editData.value.role)
   const updatedData = {
     ...current,
     label: editData.value.label.trim(),
@@ -412,11 +352,6 @@ function saveEdit(originalId) {
   }
   if (newId !== originalId) {
     markersStore.unregister(originalId)
-    for (const pos of ['NO', 'NE', 'SO', 'SE']) {
-      if (markersStore.corners[pos]?.id === originalId) {
-        markersStore.corners[pos] = { id: newId, ...updatedData }
-      }
-    }
     markersStore.register(newId, updatedData, gameStore.gridCols, gameStore.gridRows)
   } else {
     markersStore.register(originalId, updatedData, gameStore.gridCols, gameStore.gridRows)
@@ -442,7 +377,6 @@ function clearAll() {
   }
 }
 
-// ─── Aggiunta marker ─────────────────────────────────────────────────────────
 const showAddForm = ref(false)
 const addError = ref('')
 const newMarker = ref({
@@ -464,13 +398,7 @@ function cancelAddForm() {
 }
 
 function resetAddForm() {
-  newMarker.value = {
-    id: null,
-    label: '',
-    category: 'player',
-    role: '',
-    description: '',
-  }
+  newMarker.value = { id: null, label: '', category: 'player', role: '', description: '' }
   addError.value = ''
 }
 
@@ -495,9 +423,8 @@ function addMarker() {
     addError.value = `ID #${newMarker.value.id} già utilizzato.`
     return
   }
-  const sub = subtypeOptions(newMarker.value.category).find((o) => o.id === newMarker.value.role)
-  const emoji = sub?.emoji || (newMarker.value.category === 'corner' ? '📍' : '❓')
-  // Maschera predefinita (per corner sarà vuota)
+  const sub = subtypeOptions(newMarker.value.category).find(o => o.id === newMarker.value.role)
+  const emoji = sub?.emoji || '❓'
   const defaultMask = markersStore.getDefaultMaskForCategory(
     newMarker.value.category,
     gameStore.gridCols,
@@ -521,22 +448,15 @@ function addMarker() {
   showAddForm.value = false
 }
 
-// ─── Maschere LOS/LOF ────────────────────────────────────────────────────────
 const showMaskDialog = ref(false)
 const editingMaskMarker = ref(null)
 const tempLosMask = ref([])
 const tempLofMask = ref([])
 
 function openMaskEditor(marker) {
-  // I marker angolo non hanno maschere
-  if (marker.category === CORNER_CATEGORY) {
-    alert('I marker angolo non hanno linee di vista/tiro.')
-    return
-  }
   editingMaskMarker.value = marker
   const cols = gameStore.gridCols
   const rows = gameStore.gridRows
-  // Se le maschere non esistono, creale con la predefinita
   if (!marker.losMask) {
     marker.losMask = markersStore.getDefaultMaskForCategory(marker.category, cols, rows)
   }
@@ -561,7 +481,6 @@ function saveMasks() {
   closeMaskDialog()
 }
 
-// ─── Import / Export ─────────────────────────────────────────────────────────
 const importResult = ref(null)
 
 function doExport() {
@@ -584,22 +503,31 @@ async function doImport(evt) {
   evt.target.value = ''
 }
 
+// Ancora: elenco marker associati a celle nella mappa corrente
+const anchorList = computed(() => {
+  if (!mapStore.currentMap) return []
+  return mapStore.getMarkerAnchors()
+})
+
 const jsonSchema = `{
   "version": "1.0",
   "exportedAt": "2024-01-01T00:00:00.000Z",
   "grid": { "cols": 10, "rows": 10 },
   "camera": {
-    "brightness": 100, "contrast": 100,
-    "saturation": 100, "threshold": 0,
-    "grayscale": false, "sharpness": 0
+    "brightness": 100,
+    "contrast": 100,
+    "saturation": 100,
+    "threshold": 0,
+    "grayscale": false,
+    "sharpness": 0
   },
   "markers": [
     {
       "id": 0,
-      "category": "corner",
-      "role": "NO",
-      "label": "Angolo NO",
-      "emoji": "📍",
+      "category": "player",
+      "role": "warrior",
+      "label": "Guerriero",
+      "emoji": "⚔️",
       "description": "",
       "losMask": [[false]],
       "lofMask": [[false]]
@@ -609,7 +537,6 @@ const jsonSchema = `{
 </script>
 
 <style scoped>
-/* Stili originali (non cambiati) – li lasciamo identici a quelli che avevi */
 .setup-view { min-height: 100vh; background: #0f0f1e; color: #eee; padding-bottom: 2rem; }
 .setup-header { display: flex; align-items: center; gap: 0.8rem; padding: 1rem; background: #1a1a2e; position: sticky; top:0; z-index:10; }
 h1 { margin:0; font-size:1.2rem; flex:1; }
@@ -628,12 +555,6 @@ h2 { margin:0 0 0.8rem; font-size:0.95rem; color:#bbb; }
 .grid-inputs { display:flex; gap:1.5rem; margin-bottom:1rem; }
 label { display:flex; flex-direction:column; gap:0.4rem; font-size:0.88rem; color:#aaa; }
 input[type='number'] { background:#2a2a4a; border:2px solid #3a3a6a; border-radius:8px; color:#eee; padding:0.5rem 0.7rem; width:80px; }
-.corners-visual { display:flex; flex-direction:column; gap:0.8rem; }
-.corner-grid-display { display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; max-width:200px; }
-.corner-chip { background:#2a2a4a; border:2px solid #3a3a6a; border-radius:10px; padding:0.6rem; text-align:center; }
-.corner-chip.assigned { border-color:#ffd700; }
-.corner-chip strong { display:block; }
-.corners-hint { font-size:0.82rem; color:#666; }
 .filters { display:flex; gap:0.6rem; }
 .filter-select, .filter-input { background:#2a2a4a; border:1px solid #3a3a6a; border-radius:8px; color:#eee; padding:0.5rem 0.7rem; }
 .marker-table-wrap { overflow-x:auto; border-radius:12px; background:#1a1a2e; }
@@ -643,7 +564,6 @@ input[type='number'] { background:#2a2a4a; border:2px solid #3a3a6a; border-radi
 .marker-table td { padding:0.55rem 0.8rem; border-bottom:1px solid #222244; vertical-align:middle; }
 .marker-table tr:last-child td { border-bottom:none; }
 .marker-table tr.editing td { background:#1e2040; }
-.row-corner td:first-child { border-left:3px solid #ffd700; }
 .row-player td:first-child { border-left:3px solid #4a7cf5; }
 .row-enemy td:first-child { border-left:3px solid #e54040; }
 .col-id { font-family:monospace; width:70px; }
@@ -651,7 +571,6 @@ input[type='number'] { background:#2a2a4a; border:2px solid #3a3a6a; border-radi
 .col-masks button { background:#3a3a6a; border:none; border-radius:6px; font-size:1.2rem; cursor:pointer; padding:0.2rem 0.4rem; }
 .no-masks { color:#666; font-size:0.8rem; }
 .type-badge { display:inline-block; padding:0.15rem 0.5rem; border-radius:6px; font-size:0.75rem; font-weight:600; }
-.type-badge.corner { background:#3a3000; color:#ffd700; }
 .type-badge.player { background:#1a2a4a; color:#7cb8ff; }
 .type-badge.enemy { background:#3a1a1a; color:#ff8888; }
 .edit-input, .edit-select { background:#2a2a5a; border:1px solid #4a4a8a; border-radius:6px; color:#eee; padding:0.3rem 0.5rem; width:100%; }
@@ -684,5 +603,10 @@ input[type='number'] { background:#2a2a4a; border:2px solid #3a3a6a; border-radi
 .dialog-actions { display:flex; gap:1rem; justify-content:flex-end; margin-top:1rem; }
 .modal-header { display:flex; justify-content:space-between; font-weight:bold; color:#eee; margin-bottom:1rem; }
 .modal-header button { background:none; border:none; color:#aaa; font-size:1.2rem; cursor:pointer; }
-@media (max-width:480px) { .form-grid { grid-template-columns:1fr; } .form-field.full-width { grid-column:span 1; } .mask-dialog { width:95%; padding:1rem; } }
+.anchor-table-wrap { overflow-x:auto; }
+@media (max-width:480px) {
+  .form-grid { grid-template-columns:1fr; }
+  .form-field.full-width { grid-column:span 1; }
+  .mask-dialog { width:95%; padding:1rem; }
+}
 </style>
