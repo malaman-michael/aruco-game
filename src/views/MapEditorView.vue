@@ -1,456 +1,597 @@
+<!-- src/views/MapEditorView.vue -->
 <template>
   <div class="map-editor">
     <div class="editor-header">
-      <div class="header-left">
-        <button class="back-btn" @click="$router?.push('/')">←</button>
-        <h1>Editor Mappe - HeroQuest</h1>
-      </div>
+      <button class="back-btn" @click="$router.push('/')">←</button>
+      <h1>🗺️ Editor Mappa</h1>
       <div class="header-actions">
-        <button class="icon-btn" @click="toggleSidebar" :title="sidebarCollapsed ? 'Mostra mappe salvate' : 'Nascondi mappe salvate'"> ☰ </button>
-        <button class="icon-btn" @click="toggleLegend" :title="legendCollapsed ? 'Mostra legenda' : 'Nascondi legenda'"> 📐 </button>
-        <button class="icon-btn" @click="toggleMapHeader" :title="showMapHeader ? 'Nascondi header mappa' : 'Mostra header mappa'"> 👁️ </button>
-        <button class="icon-btn" @click="showElementList = true" title="Mostra lista elementi">📋</button>
-        <button class="icon-btn" @click="saveCurrentMap" title="Salva mappa corrente">💾</button>
-        <button class="icon-btn" @click="exportAllMaps" title="Esporta mappe">📤</button>
-        <button class="icon-btn" @click="printLegendOnly" title="Stampa legenda">📋</button>
-        <button class="icon-btn" @click="printGridOnly" title="Stampa griglia">🗺️</button>
-        <button class="icon-btn" @click="triggerFileImport" title="Importa mappe">📥</button>
-      </div>
-    </div>
-    <div class="editor-body">
-      <div v-show="!sidebarCollapsed" class="sidebar">
-        <div class="sidebar-header">
-          <h3>Mappe salvate</h3>
-          <button class="btn-new" @click="createNewMap">➕ Nuova</button>
-        </div>
-        <div class="map-list">
-          <div v-for="map in maps" :key="map.id" class="map-item" :class="{ active: currentMapId === map.id }" @click="selectMap(map.id)">
-            <div class="map-info">
-              <span class="map-name">{{ map.name }}</span>
-              <span class="map-size">{{ map.cols }}×{{ map.rows }}</span>
-            </div>
-            <button class="btn-delete" @click.stop="deleteMap(map.id)">🗑</button>
-          </div>
-          <p v-if="maps.length === 0" class="no-maps">Nessuna mappa. Crea una nuova mappa.</p>
-        </div>
-        <div class="marker-panel">
-          <h4>🎯 Associa Marker ArUco</h4>
-          <div class="marker-controls">
-            <label>ID Marker (0-250):</label>
-            <input type="number" v-model.number="selectedMarkerId" min="0" max="250" />
-            <button class="btn-small" @click="assignMarkerToSelectedCell">Applica</button>
-            <button class="btn-small" @click="removeMarkerFromSelectedCell">Rimuovi</button>
-          </div>
-          <div class="selected-cell-info">
-            <span>Cella selezionata:</span>
-            <strong v-if="selectedCell">{{ selectedCell.x }}, {{ selectedCell.y }}</strong>
-            <span v-else>nessuna</span>
-            <button class="btn-small" @click="startCellSelection">🔍 Seleziona</button>
-          </div>
-          <div v-if="selectionMode" class="selection-mode-msg">⚡ Modalità selezione attiva. Clicca su una cella.</div>
-          <div class="marker-hint">
-            💡 I marker servono per l'omografia.<br />
-            Associane uno a una cella (sfondo rosso) per usarla come ancora.<br />
-            <strong>Le ancore ArUco sono sempre 2×2 stud (una cella intera).</strong>
-          </div>
-        </div>
-      </div>
-      <div class="main-area" v-if="currentMap">
-        <div v-show="showMapHeader" class="map-header">
-          <input type="text" v-model="mapName" placeholder="Nome mappa" class="map-name-input" @blur="saveCurrentMap" />
-          <div class="size-controls">
-            <div class="size-input"><label>Colonne</label><input type="number" v-model.number="tempCols" min="4" :max="MAX_SIZE" /></div>
-            <div class="size-input"><label>Righe</label><input type="number" v-model.number="tempRows" min="4" :max="MAX_SIZE" /></div>
-            <button class="btn-primary" @click="applyResize">Ridimensiona</button>
-          </div>
-        </div>
-        <div v-show="!legendCollapsed" class="legend-panel">
-          <div class="legend-title">📐 Legenda dimensioni (stud)</div>
-          <div class="legend-grid">
-            <div class="legend-column" v-for="(group, idx) in legendGroups" :key="idx">
-              <div class="legend-group-title">{{ group.title }}</div>
-              <div v-for="item in group.items" :key="item.id" class="legend-item">
-                <span class="legend-emoji">{{ item.emoji }}</span>
-                <span class="legend-label">{{ item.label }}</span>
-                <span class="legend-size">{{ item.size }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="tool-palette">
-          <div class="tool-category">
-            <div class="cat-title">📦 Base</div>
-            <div class="cat-items">
-              <div v-for="(info, type) in BASE_TYPE_INFO" :key="type" class="tool-item" :class="{ active: selectedEntity?.type === type && !selectedEntity?.subtype }" @click="selectBaseType(type)">
-                <span class="tool-emoji">{{ info.emoji }}</span><span class="tool-label">{{ info.label }}</span>
-              </div>
-            </div>
-          </div>
-          <div class="tool-category"><div class="cat-title">⚔️ Eroi</div><div class="cat-items"><div v-for="hero in HEROES" :key="hero.id" class="tool-item" :class="{ active: selectedEntity?.subtype?.id === hero.id }" @click="selectEntity('HERO', hero)"><span class="tool-emoji">{{ hero.emoji }}</span><span class="tool-label">{{ hero.label }}</span></div></div></div>
-          <div class="tool-category"><div class="cat-title">👹 Mostri</div><div class="cat-items"><div v-for="monster in MONSTERS" :key="monster.id" class="tool-item" :class="{ active: selectedEntity?.subtype?.id === monster.id }" @click="selectEntity('MONSTER', monster)"><span class="tool-emoji">{{ monster.emoji }}</span><span class="tool-label">{{ monster.label }}</span></div></div></div>
-          <div class="tool-category"><div class="cat-title">🚪 Porte &amp; Ingressi</div><div class="cat-items"><div v-for="door in DOORS" :key="door.id" class="tool-item" :class="{ active: selectedEntity?.subtype?.id === door.id }" @click="selectEntity('DOOR', door)"><span class="tool-emoji">{{ door.emoji }}</span><span class="tool-label">{{ door.label }}</span></div><div v-for="ent in ENTRANCES" :key="ent.id" class="tool-item" :class="{ active: selectedEntity?.subtype?.id === ent.id }" @click="selectEntity('ENTRANCE', ent)"><span class="tool-emoji">{{ ent.emoji }}</span><span class="tool-label">{{ ent.label }}</span></div></div></div>
-          <div class="tool-category"><div class="cat-title">🪑 Arredi</div><div class="cat-items"><div v-for="furn in FURNITURE" :key="furn.id" class="tool-item" :class="{ active: selectedEntity?.subtype?.id === furn.id }" @click="selectEntity('FURNITURE', furn)"><span class="tool-emoji">{{ furn.emoji }}</span><span class="tool-label">{{ furn.label }}</span></div></div></div>
-          <div class="tool-category"><div class="cat-title">⚠️ Trappole</div><div class="cat-items"><div v-for="trap in TRAPS" :key="trap.id" class="tool-item" :class="{ active: selectedEntity?.subtype?.id === trap.id }" @click="selectEntity('TRAP', trap)"><span class="tool-emoji">{{ trap.emoji }}</span><span class="tool-label">{{ trap.label }}</span></div></div></div>
-          <div class="tool-category"><div class="cat-title">📜 Oggetti Speciali</div><div class="cat-items"><div v-for="obj in SPECIALS" :key="obj.id" class="tool-item" :class="{ active: selectedEntity?.subtype?.id === obj.id }" @click="selectEntity('SPECIAL', obj)"><span class="tool-emoji">{{ obj.emoji }}</span><span class="tool-label">{{ obj.label }}</span></div></div></div>
-          <div class="tool-category"><div class="cat-title">🗑️ Cancella</div><div class="cat-items"><div class="tool-item" @click="setEraseMode"><span class="tool-emoji">❌</span><span class="tool-label">Elimina</span></div></div></div>
-        </div>
-        <div v-if="previewShape" class="preview-info">
-          <span>Anteprima: occupa {{ previewShape.width }}x{{ previewShape.height }} caselle ({{ previewShape.width*2 }}×{{ previewShape.height*2 }} stud)</span>
-          <div class="preview-id-control">
-            <label>ID entità:
-              <input type="number" v-model.number="manualEntityId" min="1" step="1" class="id-input" />
-            </label>
-            <span v-if="manualEntityId && isEntityIdTaken(manualEntityId)" class="id-warning">⚠️ ID già in uso!</span>
-          </div>
-          <button v-if="selectedEntity?.subtype?.allowOrientation" class="btn-rotate" @click="toggleOrientation">
-            ⟳ Ruota ({{ currentOrientation === 'horizontal' ? '→ Orizzontale' : '↓ Verticale' }})
-          </button>
-        </div>
-        <div class="grid-container">
-          <div class="grid-wrapper" @mouseleave="clearPreview">
-            <div v-for="(row, r) in currentMap.grid" :key="r" class="grid-row">
-              <div v-for="(cell, c) in row" :key="c" class="grid-cell"
-                :class="{ 'cell-selected': isCellHighlighted(c, r), 'cell-preview': isInPreview(c, r), 'marker-cell': isMarkerCell(cell) }"
-                :style="{ backgroundColor: getCellBackgroundColor(cell) }"
-                :title="`Riga: ${r}, Colonna: ${c}`"
-                @click="handleCellClick(c, r)"
-                @contextmenu.prevent="handleRightClick(c, r)"
-                @mouseenter="updatePreview(c, r)">
-                <span v-if="isMarkerCell(cell)" class="marker-number">{{ cell.markerId }}</span>
-                <span v-else class="cell-emoji">{{ getCellEmoji(cell) }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div v-else class="no-map-selected">
-        <p>Seleziona una mappa o creane una nuova.</p>
-        <button class="btn-primary" @click="createNewMap">➕ Crea nuova mappa</button>
+        <button class="action-btn" @click="saveMap">💾 Salva</button>
+        <button class="action-btn" @click="exportMap">📤 Esporta</button>
+        <button class="action-btn" @click="importMap">📥 Importa</button>
+        <button class="action-btn" @click="printMap">🖨️ Stampa</button>
+        <button class="action-btn" @click="showIdTable = true">📋 ID in uso</button>
+        <input type="file" ref="fileInput" accept=".json" hidden @change="handleImport" />
       </div>
     </div>
 
-    <!-- Modale lista elementi -->
-    <div v-if="showElementList" class="modal-overlay" @click.self="showElementList = false">
-      <div class="modal-sheet modal-large">
-        <div class="modal-header">
-          <span>📋 Lista elementi della mappa</span>
-          <button @click="showElementList = false">✕</button>
+    <div class="editor-body" v-if="mapStore.currentMap">
+      <div class="sidebar">
+        <!-- ========== GESTIONE MAPPE ========== -->
+        <div class="map-management">
+          <div class="map-header">🗺️ Mappe</div>
+          <div class="map-list">
+            <div
+              v-for="map in mapStore.maps"
+              :key="map.id"
+              class="map-item"
+              :class="{ active: mapStore.currentMapId === map.id }"
+              @click="selectMap(map.id)"
+            >
+              <span class="map-name">{{ map.name }}</span>
+              <span class="map-size">{{ map.cols }}×{{ map.rows }}</span>
+              <button class="map-delete" @click.stop="deleteMap(map.id)" title="Cancella mappa">🗑</button>
+            </div>
+          </div>
+          <div class="map-actions">
+            <button class="btn-new-map" @click="showNewMapDialog = true">➕ Nuova</button>
+            <button class="btn-rename" @click="renameCurrentMap" v-if="mapStore.currentMap">✏️ Rinomina</button>
+          </div>
         </div>
-        <div class="modal-body">
-          <table class="element-table" v-if="entityList.length">
+
+        <!-- Dialog per nuova mappa -->
+        <div v-if="showNewMapDialog" class="dialog-overlay" @click.self="showNewMapDialog = false">
+          <div class="dialog-box">
+            <h3>Nuova mappa</h3>
+            <label>Nome: <input v-model="newMapName" placeholder="Nome mappa" /></label>
+            <label>Colonne: <input type="number" v-model.number="newMapCols" min="2" max="40" /></label>
+            <label>Righe: <input type="number" v-model.number="newMapRows" min="2" max="40" /></label>
+            <div class="dialog-actions">
+              <button class="btn-confirm" @click="createNewMap">Crea</button>
+              <button class="btn-cancel" @click="showNewMapDialog = false">Annulla</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========== FINE GESTIONE MAPPE ========== -->
+
+        <!-- Gruppi oggetti -->
+        <div class="object-groups">
+          <div class="group">
+            <div class="group-header" @click="toggleGroup('structures')">
+              <span>🏗️ Strutture</span>
+              <span class="toggle-icon">{{ expandedGroups.structures ? '▼' : '▶' }}</span>
+            </div>
+            <div v-if="expandedGroups.structures" class="group-items">
+              <div
+                v-for="item in structureItems"
+                :key="item.id"
+                class="object-item"
+                :class="{ selected: selectedObject?.id === item.id }"
+                @click="selectObject(item)"
+              >
+                <span class="item-emoji">{{ item.emoji }}</span>
+                <span class="item-name">{{ item.label }}</span>
+                <span class="item-size">{{ item.widthStud }}×{{ item.heightStud }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="group">
+            <div class="group-header" @click="toggleGroup('furniture')">
+              <span>🪑 Mobile</span>
+              <span class="toggle-icon">{{ expandedGroups.furniture ? '▼' : '▶' }}</span>
+            </div>
+            <div v-if="expandedGroups.furniture" class="group-items">
+              <div
+                v-for="item in furnitureItems"
+                :key="item.id"
+                class="object-item"
+                :class="{ selected: selectedObject?.id === item.id }"
+                @click="selectObject(item)"
+              >
+                <span class="item-emoji">{{ item.emoji }}</span>
+                <span class="item-name">{{ item.label }}</span>
+                <span class="item-size">{{ item.widthStud }}×{{ item.heightStud }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="group">
+            <div class="group-header" @click="toggleGroup('players')">
+              <span>🧙 Giocatori</span>
+              <span class="toggle-icon">{{ expandedGroups.players ? '▼' : '▶' }}</span>
+            </div>
+            <div v-if="expandedGroups.players" class="group-items">
+              <div
+                v-for="item in playerItems"
+                :key="item.id"
+                class="object-item"
+                :class="{ selected: selectedObject?.id === item.id }"
+                @click="selectObject(item)"
+              >
+                <span class="item-emoji">{{ item.emoji }}</span>
+                <span class="item-name">{{ item.label }}</span>
+                <span class="item-size">{{ item.widthStud }}×{{ item.heightStud }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="group">
+            <div class="group-header" @click="toggleGroup('enemies')">
+              <span>💀 Nemici</span>
+              <span class="toggle-icon">{{ expandedGroups.enemies ? '▼' : '▶' }}</span>
+            </div>
+            <div v-if="expandedGroups.enemies" class="group-items">
+              <div
+                v-for="item in enemyItems"
+                :key="item.id"
+                class="object-item"
+                :class="{ selected: selectedObject?.id === item.id }"
+                @click="selectObject(item)"
+              >
+                <span class="item-emoji">{{ item.emoji }}</span>
+                <span class="item-name">{{ item.label }}</span>
+                <span class="item-size">{{ item.widthStud }}×{{ item.heightStud }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Controlli rotazione -->
+        <div class="rotation-controls" v-if="selectedObject">
+          <button class="rotate-btn" @click="rotateObject">↻ Ruota ({{ rotation }}°)</button>
+          <span class="size-hint">Dimensione: {{ getObjectCols() }}×{{ getObjectRows() }} celle</span>
+        </div>
+
+        <!-- Legenda -->
+        <div class="legend">
+          <div class="legend-item">
+            <span class="legend-color" style="background: #3a3a4a"></span> Pavimento
+          </div>
+          <div class="legend-item">
+            <span class="legend-color" style="background: #5a4a3a"></span> Muro
+          </div>
+          <div class="legend-item">
+            <span class="legend-color" style="background: #8b4513"></span> Porta chiusa
+          </div>
+          <div class="legend-item">
+            <span class="legend-color" style="background: #a0522d"></span> Porta aperta
+          </div>
+          <div class="legend-item">
+            <span class="legend-color" style="background: #cd853f"></span> Mobile
+          </div>
+          <div class="legend-item">
+            <span class="legend-color" style="background: #4a7cf5"></span> Eroe
+          </div>
+          <div class="legend-item">
+            <span class="legend-color" style="background: #aa4444"></span> Mostro
+          </div>
+          <div class="legend-item">
+            <span class="legend-color" style="background: #ffd700"></span> Ancora
+          </div>
+        </div>
+      </div>
+
+      <!-- Griglia mappa -->
+      <div class="map-container">
+        <div class="map-grid" :style="gridStyle">
+          <div
+            v-for="(row, r) in mapStore.currentMap.grid"
+            :key="r"
+            class="grid-row"
+          >
+            <div
+              v-for="(cell, c) in row"
+              :key="c"
+              class="grid-cell"
+              :class="getCellClasses(r, c)"
+              :style="getCellStyle(cell)"
+              @mouseenter="onCellHover(r, c)"
+              @mouseleave="onCellLeave"
+              @click="onCellClick(r, c)"
+              @contextmenu.prevent="onCellRightClick(r, c)"
+            >
+              <span class="cell-emoji">
+                <span class="cell-emoji-char">{{ getCellEmoji(cell).emoji }}</span>
+                <span v-if="getCellEmoji(cell).id !== null" class="cell-id">{{ getCellEmoji(cell).id }}</span>
+              </span>
+              <!-- Tooltip anteprima -->
+              <div v-if="hoverPos && selectedObject && isCellInPreview(r, c)" class="preview-tooltip">
+                {{ getObjectCols() }}×{{ getObjectRows() }}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="map-info">
+          <span>{{ mapStore.currentMap.name }} · {{ mapStore.currentMap.cols }}×{{ mapStore.currentMap.rows }}</span>
+          <span v-if="selectedObject" class="selected-info">
+            Selezione: {{ selectedObject.label }} ({{ getObjectCols() }}×{{ getObjectRows() }})
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div v-else class="no-map">
+      <p>Nessuna mappa selezionata. Crea una nuova mappa o caricane una esistente.</p>
+      <button class="btn-primary" @click="showNewMapDialog = true">➕ Nuova mappa</button>
+    </div>
+
+    <!-- Pulsante flottante per modificare ID e tipo -->
+    <button
+      v-if="mapStore.currentMap"
+      class="fab-edit"
+      :class="{ active: editMode }"
+      @click="toggleEditMode"
+      title="Modifica elemento (clicca su una cella)"
+    >
+      ✏️
+    </button>
+
+    <!-- Dialog per modifica elemento -->
+    <div v-if="editDialogVisible" class="dialog-overlay" @click.self="closeEditDialog">
+      <div class="dialog-box">
+        <h3>✏️ Modifica elemento</h3>
+        <label>Tipo:
+          <select v-model="editType">
+            <option v-for="item in allItems" :key="item.id" :value="item.id">
+              {{ item.emoji }} {{ item.label }}
+            </option>
+          </select>
+        </label>
+        <label>ID ArUco (0-249, lascia vuoto per nessun ID):
+          <input type="number" v-model.number="editId" min="0" max="249" placeholder="es. 42" />
+        </label>
+        <div class="dialog-actions">
+          <button class="btn-confirm" @click="applyEdit">Applica</button>
+          <button class="btn-cancel" @click="closeEditDialog">Annulla</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dialog: Tabella ID in uso -->
+    <div v-if="showIdTable" class="dialog-overlay" @click.self="showIdTable = false">
+      <div class="dialog-box dialog-large">
+        <div class="modal-header">
+          <h3>📋 ID ArUco in uso</h3>
+          <button @click="showIdTable = false" aria-label="Chiudi">✕</button>
+        </div>
+        <div class="id-table-filters">
+          <label>Filtra per tipo:
+            <select v-model="idFilterType">
+              <option value="all">Tutti</option>
+              <option value="structure">Strutture</option>
+              <option value="furniture">Mobili</option>
+              <option value="player">Giocatori</option>
+              <option value="enemy">Nemici</option>
+              <option value="anchor">Ancore</option>
+            </select>
+          </label>
+          <span class="id-count">{{ filteredIdEntries.length }} ID trovati</span>
+        </div>
+        <div class="id-table-wrap">
+          <table class="id-table" v-if="filteredIdEntries.length">
             <thead>
-              <tr><th>ID</th><th>Emoji</th><th>Nome</th><th>Posizione</th><th>Dimensione</th><th>Azioni</th></tr>
+              <tr>
+                <th>ID</th>
+                <th>Tipo</th>
+                <th>Posizione</th>
+                <th>Emoji</th>
+              </tr>
             </thead>
             <tbody>
-              <tr v-for="elem in entityList" :key="elem.id">
-                <td>{{ elem.id }}</td>
-                <td>{{ elem.emoji }}</td>
-                <td>{{ elem.label }}</td>
-                <td>{{ elem.position }}</td>
-                <td>{{ elem.size[0]*2 }}×{{ elem.size[1]*2 }} stud</td>
-                <td>
-                  <button class="act-btn edit" @click="editEntity(elem.id)">✏️</button>
-                  <button class="act-btn del" @click="deleteEntity(elem.id)">🗑</button>
-                </td>
+              <tr v-for="entry in filteredIdEntries" :key="entry.id + entry.col + entry.row">
+                <td class="col-id">{{ entry.id }}</td>
+                <td>{{ entry.typeLabel }}</td>
+                <td>{{ entry.col }}, {{ entry.row }}</td>
+                <td class="col-emoji">{{ entry.emoji }}</td>
               </tr>
             </tbody>
           </table>
-          <p v-else class="empty-table">Nessun elemento presente.</p>
+          <div v-else class="empty-table">Nessun ID trovato con questo filtro.</div>
         </div>
       </div>
     </div>
-
-    <!-- Modale modifica entità -->
-    <div v-if="showEditModal" class="modal-overlay" @click.self="showEditModal = false">
-      <div class="modal-sheet">
-        <div class="modal-header">
-          <span>✏️ Modifica elemento</span>
-          <button @click="showEditModal = false">✕</button>
-        </div>
-        <div class="modal-body">
-          <div class="form-field">
-            <label>ID:</label>
-            <input type="number" v-model.number="editEntityData.id" min="1" step="1" class="edit-input" />
-            <span v-if="editEntityData.id && isEntityIdTaken(editEntityData.id, editingEntityId)" class="id-warning">⚠️ ID già in uso</span>
-          </div>
-          <div class="form-field">
-            <label>Etichetta:</label>
-            <input v-model="editEntityData.label" class="edit-input" />
-          </div>
-          <div class="form-field">
-            <label>Emoji:</label>
-            <input v-model="editEntityData.emoji" class="edit-input" maxlength="2" />
-          </div>
-          <div class="form-actions">
-            <button class="btn-primary" @click="saveEditEntity">💾 Salva</button>
-            <button class="btn-secondary" @click="showEditModal = false">Annulla</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <input type="file" ref="fileInput" accept=".json" style="display: none" @change="onFileSelected" />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useMapStore, CELL_TYPES, CELL_TYPE_INFO, FURNITURE_STATIC_TYPES } from '../stores/mapStore.js'
+import { useGameStore } from '../stores/gameStore.js'
+import { useMarkersStore, PLAYER_TYPES, ENEMY_TYPES } from '../stores/markersStore.js'
 
-const MAX_SIZE = 300
-const CELL_TYPES = {
-  EMPTY: 'empty', FLOOR: 'floor', WALL: 'wall', HERO: 'hero', MONSTER: 'monster',
-  DOOR: 'door', ENTRANCE: 'entrance', FURNITURE: 'furniture', TRAP: 'trap', SPECIAL: 'special'
+const mapStore = useMapStore()
+const gameStore = useGameStore()
+const markersStore = useMarkersStore()
+const fileInput = ref(null)
+
+// ==================== DIMENSIONI OGGETTI ====================
+const OBJECT_DIMENSIONS = {
+  // Strutture
+  'wall':        { widthStud: 1, heightStud: 1 },
+  'door_closed': { widthStud: 1, heightStud: 1 },
+  'door_open':   { widthStud: 1, heightStud: 1 },
+  'door_secret': { widthStud: 1, heightStud: 1 },
+  'trap':        { widthStud: 1, heightStud: 1 },
+  'entrance':    { widthStud: 1, heightStud: 1 },
+  'special':     { widthStud: 1, heightStud: 1 },
+  'stairs':      { widthStud: 2, heightStud: 2 },
+  'anchor':      { widthStud: 2, heightStud: 2 },  // ancora 2×2
+
+  // Mobili
+  'table':       { widthStud: 2, heightStud: 1 },
+  'bookcase':    { widthStud: 2, heightStud: 1 },
+  'chest':       { widthStud: 2, heightStud: 2 },
+
+  // Giocatori (1×1)
+  'warrior':     { widthStud: 1, heightStud: 1 },
+  'dwarf':       { widthStud: 1, heightStud: 1 },
+  'mage':        { widthStud: 1, heightStud: 1 },
+  'rogue':       { widthStud: 1, heightStud: 1 },
+  'paladin':     { widthStud: 1, heightStud: 1 },
+  'ranger':      { widthStud: 1, heightStud: 1 },
+
+  // Nemici (1×1)
+  'skeleton':    { widthStud: 1, heightStud: 1 },
+  'orc':         { widthStud: 1, heightStud: 1 },
+  'barbarian':   { widthStud: 1, heightStud: 1 },
+  'goblin':      { widthStud: 1, heightStud: 1 },
+  'troll':       { widthStud: 1, heightStud: 1 },
+  'dragon':      { widthStud: 1, heightStud: 1 },
 }
+const DEFAULT_DIMS = { widthStud: 2, heightStud: 2 }
 
-const BASE_TYPE_INFO = {
-  [CELL_TYPES.EMPTY]: { label: 'Vuoto', emoji: '⬛', color: '#1a1a2e' },
-  [CELL_TYPES.FLOOR]: { label: 'Pavimento', emoji: '⬜', color: '#3a3a4a' },
-  [CELL_TYPES.WALL]: { label: 'Muro', emoji: '🧱', color: '#5a4a3a' }
-}
-
-const HEROES = [
-  { id: 'barbarian', label: 'Barbaro', emoji: '⚔️', size: [1,1] },
-  { id: 'dwarf', label: 'Nano', emoji: '🪓', size: [1,1] },
-  { id: 'elf', label: 'Elfo', emoji: '🏹', size: [1,1] },
-  { id: 'wizard', label: 'Mago', emoji: '🔮', size: [1,1] }
-]
-const MONSTERS = [
-  { id: 'orc', label: 'Orco', emoji: '👹', size: [1,1] },
-  { id: 'goblin', label: 'Goblin', emoji: '👺', size: [1,1] },
-  { id: 'fimir', label: 'Fimir', emoji: '🐉', size: [1,1] },
-  { id: 'chaos_warrior', label: 'Guerriero Caos', emoji: '⚔️', size: [1,1] },
-  { id: 'chaos_lord', label: 'Signore Caos', emoji: '👑', size: [1,1] },
-  { id: 'gargoyle', label: 'Gargolla', emoji: '🗿', size: [1,1] },
-  { id: 'skeleton', label: 'Scheletro', emoji: '💀', size: [1,1] },
-  { id: 'undead', label: 'Non-Morto', emoji: '🧟', size: [1,1] }
-]
-const DOORS = [
-  { id: 'normal_door', label: 'Porta Normale', emoji: '🚪', size: [1,1] },
-  { id: 'secret_door', label: 'Porta Segreta', emoji: '🔒', size: [1,1] },
-  { id: 'iron_gate', label: 'Cancello di Ferro', emoji: '🔗', size: [1,1] }
-]
-const ENTRANCES = [
-  { id: 'spiral_stairs', label: 'Scale a Chiocciola', emoji: '🌀', size: [2,2] }
-]
-const FURNITURE = [
-  { id: 'chest', label: 'Cassa/Scrigno', emoji: '📦', size: [1,1] },
-  { id: 'bookcase', label: 'Libreria', emoji: '📚', size: [1,1] },
-  { id: 'table', label: 'Tavolo', emoji: '🪑', size: [1,1] },
-  { id: 'throne', label: 'Trono', emoji: '👑', size: [1,1] },
-  { id: 'alchemist', label: 'Banco Alchimista', emoji: '⚗️', size: [1,1] },
-  { id: 'fireplace', label: 'Caminetto', emoji: '🔥', size: [1,1] },
-  { id: 'weapon_rack', label: 'Supporto Armi', emoji: '🗡️', size: [1,1] },
-  { id: 'cabinet', label: 'Armadietto', emoji: '🗄️', size: [1,1] },
-  { id: 'torture_rack', label: 'Rack Torture', emoji: '⛓️', size: [1,1] },
-  { id: 'tomb', label: 'Tomba', emoji: '⚰️', size: [1,1] },
-  { id: 'wizard_table', label: 'Tavolo Stregone', emoji: '🔮', size: [1,1] }
-]
-const TRAPS = [
-  { id: 'pit', label: 'Buca', emoji: '🕳️', size: [1,1] },
-  { id: 'long_pit', label: 'Buca Lunga', emoji: '🕳️🕳️', size: [1,2], allowOrientation: true },
-  { id: 'falling_rocks', label: 'Massi Cadenti', emoji: '🪨', size: [1,1] },
-  { id: 'false_wall', label: 'Blocco d\'Accesso', emoji: '🧱', size: [1,1] },
-  { id: 'spear', label: 'Lancia', emoji: '🔱', size: [1,1] },
-  { id: 'poison_dart', label: 'Dardo Avvelenato', emoji: '🏹', size: [1,1] },
-  { id: 'blade', label: 'Lama Rotante', emoji: '⚙️', size: [1,1] },
-  { id: 'trap_door', label: 'Porta Trappola', emoji: '🚪', size: [1,1] }
-]
-const SPECIALS = [
-  { id: 'loretome', label: 'Loretome (Libro)', emoji: '📖', size: [1,1] }
+// ==================== GRUPPI OGGETTI ====================
+const STRUCTURE_TYPES = [
+  { id: 'wall',        label: 'Muro',        emoji: '🧱' },
+  { id: 'door_closed', label: 'Porta chiusa', emoji: '🔒' },
+  { id: 'door_open',   label: 'Porta aperta', emoji: '🚪' },
+  { id: 'door_secret', label: 'Porta segreta', emoji: '🚪👓' },
+  { id: 'stairs',      label: 'Scale',       emoji: '🔃' },
+  { id: 'trap',        label: 'Trappola',    emoji: '⚠️' },
+  { id: 'entrance',    label: 'Ingresso',    emoji: '🌀' },
+  { id: 'special',     label: 'Speciale',    emoji: '📖' },
+  { id: 'anchor',      label: 'Ancora',      emoji: '📍' },   // ora è un oggetto normale
 ]
 
-const legendGroups = computed(() => {
-  const groups = []
-  const addGroup = (title, items) => {
-    groups.push({ title, items: items.map(item => ({
-      id: item.id,
-      emoji: item.emoji,
-      label: item.label,
-      size: Array.isArray(item.size) ? `${item.size[0]*2}×${item.size[1]*2} stud` : item.size
-    })) })
-  }
-  addGroup('Base', [
-    { id: 'base-floor', emoji: '⬜', label: 'Pavimento', size: '2×2 stud' },
-    { id: 'base-wall', emoji: '🧱', label: 'Muro', size: '1×1 stud' }
-  ])
-  addGroup('Eroi', HEROES)
-  addGroup('Mostri', MONSTERS)
-  addGroup('Porte & Ingressi', [...DOORS, ...ENTRANCES])
-  addGroup('Arredi', FURNITURE)
-  addGroup('Trappole', TRAPS)
-  addGroup('Speciali', SPECIALS)
-  addGroup('Ancore ArUco', [{ id: 'aruco-anchor', emoji: '📍', label: 'Ancora ArUco', size: '2×2 stud' }])
-  return groups
+const structureItems = STRUCTURE_TYPES.map(t => ({
+  ...t,
+  widthStud: OBJECT_DIMENSIONS[t.id]?.widthStud ?? 1,
+  heightStud: OBJECT_DIMENSIONS[t.id]?.heightStud ?? 1,
+  category: 'structure',
+}))
+
+const furnitureItems = FURNITURE_STATIC_TYPES.map(t => ({
+  ...t,
+  widthStud: OBJECT_DIMENSIONS[t.id]?.widthStud ?? DEFAULT_DIMS.widthStud,
+  heightStud: OBJECT_DIMENSIONS[t.id]?.heightStud ?? DEFAULT_DIMS.heightStud,
+  category: 'furniture',
+}))
+
+const playerItems = PLAYER_TYPES.map(t => ({
+  ...t,
+  widthStud: OBJECT_DIMENSIONS[t.id]?.widthStud ?? DEFAULT_DIMS.widthStud,
+  heightStud: OBJECT_DIMENSIONS[t.id]?.heightStud ?? DEFAULT_DIMS.heightStud,
+  category: 'player',
+}))
+
+const enemyItems = ENEMY_TYPES.map(t => ({
+  ...t,
+  widthStud: OBJECT_DIMENSIONS[t.id]?.widthStud ?? DEFAULT_DIMS.widthStud,
+  heightStud: OBJECT_DIMENSIONS[t.id]?.heightStud ?? DEFAULT_DIMS.heightStud,
+  category: 'enemy',
+}))
+
+// Lista completa di tutti gli elementi per il selettore di modifica
+const allItems = computed(() => [
+  ...structureItems,
+  ...furnitureItems,
+  ...playerItems,
+  ...enemyItems,
+])
+
+// ==================== STATO ====================
+const expandedGroups = ref({
+  structures: true,
+  furniture: true,
+  players: false,
+  enemies: false,
 })
+const selectedObject = ref(null)
+const rotation = ref(0)
+const hoverPos = ref(null)
+const arucoId = ref(null)       // ID corrente per il posizionamento
 
-function getBaseColor(type) {
-  return BASE_TYPE_INFO[type]?.color || '#2a2a4a'
-}
+// Modalità modifica (✏️)
+const editMode = ref(false)
+const editDialogVisible = ref(false)
+const editTarget = ref(null)    // { row, col, objectId? }
+const editType = ref('')
+const editId = ref(null)
 
-// Storage keys
-const SIDEBAR_STORAGE_KEY = 'mapeditor_sidebar_collapsed'
-const LEGEND_STORAGE_KEY = 'mapeditor_legend_collapsed'
-const MAPHEADER_STORAGE_KEY = 'mapeditor_mapheader_visible'
+// Stato per la creazione di nuove mappe
+const showNewMapDialog = ref(false)
+const newMapName = ref('')
+const newMapCols = ref(10)
+const newMapRows = ref(10)
 
-const sidebarCollapsed = ref(JSON.parse(localStorage.getItem(SIDEBAR_STORAGE_KEY) || 'false'))
-const legendCollapsed = ref(JSON.parse(localStorage.getItem(LEGEND_STORAGE_KEY) || 'false'))
-const showMapHeader = ref(JSON.parse(localStorage.getItem(MAPHEADER_STORAGE_KEY) ?? 'true'))
+// Stato per la tabella ID
+const showIdTable = ref(false)
+const idFilterType = ref('all')
 
-function toggleSidebar() {
-  sidebarCollapsed.value = !sidebarCollapsed.value
-  localStorage.setItem(SIDEBAR_STORAGE_KEY, JSON.stringify(sidebarCollapsed.value))
-}
-function toggleLegend() {
-  legendCollapsed.value = !legendCollapsed.value
-  localStorage.setItem(LEGEND_STORAGE_KEY, JSON.stringify(legendCollapsed.value))
-}
-function toggleMapHeader() {
-  showMapHeader.value = !showMapHeader.value
-  localStorage.setItem(MAPHEADER_STORAGE_KEY, JSON.stringify(showMapHeader.value))
-}
+// ==================== COMPUTED ====================
+const gridStyle = computed(() => ({
+  gridTemplateColumns: `repeat(${mapStore.currentMap?.cols || 10}, 1fr)`,
+}))
 
-const STORAGE_KEY = 'heroquest_maps'
-const loadMaps = () => {
-  const stored = localStorage.getItem(STORAGE_KEY)
-  if (stored) return JSON.parse(stored)
-  return []
-}
-const saveMaps = (maps) => localStorage.setItem(STORAGE_KEY, JSON.stringify(maps))
-
-const maps = ref(loadMaps())
-const currentMapId = ref(null)
-const currentMap = computed(() => maps.value.find(m => m.id === currentMapId.value) || null)
-const mapName = ref('')
-const tempCols = ref(10), tempRows = ref(10)
-const selectedEntity = ref(null)
-const eraseMode = ref(false)
-const selectionMode = ref(false)
-const selectedCell = ref(null)
-const selectedMarkerId = ref(0)
-const previewPos = ref(null)
-const highlightedCells = ref([])
-const currentOrientation = ref('horizontal')
-const manualEntityId = ref(1)
-const showElementList = ref(false)
-const showEditModal = ref(false)
-const editingEntityId = ref(null)
-const editEntityData = ref({ id: 0, label: '', emoji: '' })
-
-// --- Funzioni per gestire gli elementi ---
-function getCellsForHighlight(col, row) {
-  if (!currentMap.value) return []
-  const cell = currentMap.value.grid[row]?.[col]
-  if (!cell) return []
-  const entityId = cell.details?.id
-  if (entityId) {
-    const cells = []
-    for (let r = 0; r < currentMap.value.rows; r++) {
-      for (let c = 0; c < currentMap.value.cols; c++) {
-        const c2 = currentMap.value.grid[r][c]
-        if (c2.details?.id === entityId) {
-          cells.push({ x: c, y: r })
-        }
-      }
-    }
-    return cells
-  } else {
-    const w = 2, h = 2
-    const cells = []
-    if (col + w <= currentMap.value.cols && row + h <= currentMap.value.rows) {
-      for (let dy = 0; dy < h; dy++) {
-        for (let dx = 0; dx < w; dx++) {
-          cells.push({ x: col + dx, y: row + dy })
-        }
-      }
-    } else {
-      cells.push({ x: col, y: row })
-    }
-    return cells
-  }
-}
-
-function updateHighlightedCells() {
-  if (!selectedCell.value) { highlightedCells.value = []; return }
-  highlightedCells.value = getCellsForHighlight(selectedCell.value.x, selectedCell.value.y)
-}
-watch(selectedCell, () => { updateHighlightedCells() })
-
-function isCellHighlighted(c, r) {
-  return highlightedCells.value.some(h => h.x === c && h.y === r)
-}
-
-const previewShape = computed(() => {
-  if (!selectedEntity.value || eraseMode.value || selectionMode.value) return null
-  const sub = selectedEntity.value.subtype
-  if (!sub || !sub.size) return null
-  let [w,h] = sub.size
-  if (sub.allowOrientation && currentOrientation.value === 'horizontal') [w,h] = [h,w]
-  return { width: w, height: h }
-})
-
-function toggleOrientation() {
-  if (selectedEntity.value?.subtype?.allowOrientation) {
-    currentOrientation.value = currentOrientation.value === 'horizontal' ? 'vertical' : 'horizontal'
-  }
-}
-function setEraseMode() {
-  eraseMode.value = true; selectedEntity.value = null; selectionMode.value = false
-}
-function selectBaseType(type) {
-  eraseMode.value = false; selectionMode.value = false
-  selectedEntity.value = { type, subtype: null, size: [1,1] }
-}
-function selectEntity(type, subtype) {
-  eraseMode.value = false; selectionMode.value = false
-  selectedEntity.value = { type, subtype, size: subtype.size || [1,1] }
-  if (subtype.allowOrientation) currentOrientation.value = 'horizontal'
-}
-
-function getCellBackgroundColor(cell) {
-  if (cell.markerId !== undefined && cell.markerId !== null) {
-    return '#cc3333'
-  }
-  return getBaseColor(cell.type)
-}
-function isMarkerCell(cell) {
-  return cell.markerId !== undefined && cell.markerId !== null
-}
-
-// --- Nuove funzioni per ID e lista ---
-const entityList = computed(() => {
-  if (!currentMap.value) return []
-  const map = currentMap.value
-  const entities = {}
+// -------------------- ID TABLE --------------------
+const idEntries = computed(() => {
+  const map = mapStore.currentMap
+  if (!map) return []
+  const entries = []
   for (let row = 0; row < map.rows; row++) {
     for (let col = 0; col < map.cols; col++) {
       const cell = map.grid[row][col]
-      if (cell.details && cell.details.id) {
-        const id = cell.details.id
-        if (!entities[id]) {
-          entities[id] = {
-            id: id,
-            emoji: cell.details.emoji || '❓',
-            label: cell.details.label || 'Senza nome',
-            size: cell.details.size || [1, 1],
-            positions: []
-          }
+      if (cell.markerId !== undefined && cell.markerId !== null) {
+        let typeLabel = ''
+        let emoji = ''
+        let category = ''
+        if (cell.details) {
+          category = cell.details.category || ''
+          typeLabel = cell.details.label || cell.details.typeId || ''
+          emoji = cell.details.emoji || ''
+        } else {
+          // caso legacy (dovrebbe essere raro)
+          category = 'anchor'
+          typeLabel = 'Ancora'
+          emoji = '📍'
         }
-        entities[id].positions.push(`${String.fromCharCode(65+col)}${row+1}`)
+        entries.push({
+          id: cell.markerId,
+          col,
+          row,
+          typeLabel,
+          emoji,
+          category,
+        })
       }
     }
   }
-  return Object.values(entities).map(e => ({
-    ...e,
-    position: e.positions.join(', ')
-  })).sort((a, b) => a.id - b.id)
+  entries.sort((a,b) => a.id - b.id)
+  return entries
 })
 
-function isEntityIdTaken(id, excludeId = null) {
-  if (!currentMap.value) return false
-  for (let row = 0; row < currentMap.value.rows; row++) {
-    for (let col = 0; col < currentMap.value.cols; col++) {
-      const cell = currentMap.value.grid[row][col]
-      if (cell.details && cell.details.id === id && id !== excludeId) {
+const filteredIdEntries = computed(() => {
+  if (idFilterType.value === 'all') return idEntries.value
+  return idEntries.value.filter(e => e.category === idFilterType.value)
+})
+
+// ==================== GESTIONE MAPPE ====================
+function selectMap(id) {
+  mapStore.loadMap(id)
+  selectedObject.value = null
+  editMode.value = false
+  editDialogVisible.value = false
+  showIdTable.value = false
+}
+
+function deleteMap(id) {
+  if (mapStore.maps.length <= 1) {
+    alert('Non puoi cancellare l\'ultima mappa.')
+    return
+  }
+  const map = mapStore.maps.find(m => m.id === id)
+  if (!map) return
+  if (confirm(`Cancellare la mappa "${map.name}"?`)) {
+    mapStore.deleteMap(id)
+  }
+}
+
+function renameCurrentMap() {
+  if (!mapStore.currentMap) return
+  const newName = prompt('Nuovo nome per la mappa:', mapStore.currentMap.name)
+  if (newName && newName.trim() !== '') {
+    mapStore.saveCurrentMap(newName.trim())
+  }
+}
+
+function createNewMap() {
+  const name = newMapName.value.trim()
+  if (!name) {
+    alert('Inserisci un nome per la mappa.')
+    return
+  }
+  const cols = newMapCols.value
+  const rows = newMapRows.value
+  if (isNaN(cols) || isNaN(rows) || cols < 2 || rows < 2) {
+    alert('Le dimensioni devono essere almeno 2x2.')
+    return
+  }
+  mapStore.createNewMap(name, cols, rows)
+  showNewMapDialog.value = false
+  newMapName.value = ''
+  newMapCols.value = 10
+  newMapRows.value = 10
+}
+
+// ==================== METODI PRINCIPALI ====================
+function toggleGroup(key) {
+  expandedGroups.value[key] = !expandedGroups.value[key]
+}
+
+function selectObject(item) {
+  if (editMode.value) toggleEditMode()
+  selectedObject.value = item
+  rotation.value = 0
+  hoverPos.value = null
+}
+
+function rotateObject() {
+  rotation.value = (rotation.value + 90) % 360
+  if (hoverPos.value) {
+    const { row, col } = hoverPos.value
+    onCellHover(row, col)
+  }
+}
+
+function getObjectCols() {
+  if (!selectedObject.value) return 0
+  let w = selectedObject.value.widthStud
+  let h = selectedObject.value.heightStud
+  if (rotation.value === 90 || rotation.value === 270) [w, h] = [h, w]
+  return Math.max(1, Math.ceil(w / 2))
+}
+
+function getObjectRows() {
+  if (!selectedObject.value) return 0
+  let w = selectedObject.value.widthStud
+  let h = selectedObject.value.heightStud
+  if (rotation.value === 90 || rotation.value === 270) [w, h] = [h, w]
+  return Math.max(1, Math.ceil(h / 2))
+}
+
+function getOccupiedCells(row, col) {
+  const cols = getObjectCols()
+  const rows = getObjectRows()
+  const cells = []
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      cells.push({ row: row + r, col: col + c })
+    }
+  }
+  return cells
+}
+
+function canPlace(row, col) {
+  if (!selectedObject.value) return false
+  const map = mapStore.currentMap
+  if (!map) return false
+  const cells = getOccupiedCells(row, col)
+  for (const cell of cells) {
+    if (cell.row < 0 || cell.row >= map.rows || cell.col < 0 || cell.col >= map.cols) return false
+    const existing = map.grid[cell.row][cell.col]
+    if (existing.type !== CELL_TYPES.EMPTY && existing.type !== CELL_TYPES.FLOOR) return false
+    if (existing.details !== null) return false
+    if (existing.markerId !== undefined && existing.markerId !== null) return false
+  }
+  return true
+}
+
+function isCellInPreview(row, col) {
+  if (!hoverPos.value || !selectedObject.value) return false
+  const cells = getOccupiedCells(hoverPos.value.row, hoverPos.value.col)
+  return cells.some(c => c.row === row && c.col === col)
+}
+
+// ----- Verifica unicità ID ArUco -----
+function isMarkerIdUsed(markerId, excludeRow = null, excludeCol = null) {
+  const map = mapStore.currentMap
+  if (!map) return false
+  for (let row = 0; row < map.rows; row++) {
+    for (let col = 0; col < map.cols; col++) {
+      if (row === excludeRow && col === excludeCol) continue
+      const cell = map.grid[row][col]
+      if (cell.markerId !== undefined && cell.markerId !== null && cell.markerId === markerId) {
         return true
       }
     }
@@ -458,685 +599,1195 @@ function isEntityIdTaken(id, excludeId = null) {
   return false
 }
 
-function deleteEntity(id) {
-  if (!confirm(`Eliminare l'elemento con ID ${id}?`)) return
-  if (!currentMap.value) return
-  for (let row = 0; row < currentMap.value.rows; row++) {
-    for (let col = 0; col < currentMap.value.cols; col++) {
-      const cell = currentMap.value.grid[row][col]
-      if (cell.details && cell.details.id === id) {
-        currentMap.value.grid[row][col] = { type: CELL_TYPES.EMPTY, details: null, markerId: null }
-      }
-    }
+// ----- Modalità modifica (✏️) -----
+function toggleEditMode() {
+  editMode.value = !editMode.value
+  if (!editMode.value) {
+    closeEditDialog()
   }
-  saveCurrentMap()
+  if (editMode.value) {
+    selectedObject.value = null
+  }
 }
 
-function editEntity(id) {
-  const entity = entityList.value.find(e => e.id === id)
-  if (!entity) return
-  editingEntityId.value = id
-  editEntityData.value = {
-    id: entity.id,
-    label: entity.label,
-    emoji: entity.emoji
-  }
-  showEditModal.value = true
-}
-
-function saveEditEntity() {
-  const newId = editEntityData.value.id
-  const oldId = editingEntityId.value
-  if (!newId || newId < 1) {
-    alert('ID deve essere un numero positivo.')
-    return
-  }
-  if (isEntityIdTaken(newId, oldId)) {
-    alert('ID già in uso da un altro elemento.')
-    return
-  }
-  if (!editEntityData.value.label.trim()) {
-    alert('L\'etichetta è obbligatoria.')
-    return
-  }
-  if (!editEntityData.value.emoji.trim()) {
-    alert('L\'emoji è obbligatoria.')
-    return
-  }
-  if (!currentMap.value) return
-  for (let row = 0; row < currentMap.value.rows; row++) {
-    for (let col = 0; col < currentMap.value.cols; col++) {
-      const cell = currentMap.value.grid[row][col]
-      if (cell.details && cell.details.id === oldId) {
-        cell.details.id = newId
-        cell.details.label = editEntityData.value.label.trim()
-        cell.details.emoji = editEntityData.value.emoji.trim()
-      }
-    }
-  }
-  saveCurrentMap()
-  showEditModal.value = false
-  editingEntityId.value = null
-}
-
-// Modifica handleCellClick per usare manualEntityId
-function handleCellClick(col, row) {
-  if (selectionMode.value) {
-    selectedCell.value = { x: col, y: row }
-    selectionMode.value = false
-    return
-  }
-  if (eraseMode.value) {
-    removeEntityAt(col, row)
-    saveCurrentMap()
-    return
-  }
-  if (!selectedEntity.value) return
-
-  const { type, subtype, size } = selectedEntity.value
-  let [w, h] = size
-  if (subtype?.allowOrientation && currentOrientation.value === 'horizontal') [w, h] = [h, w]
-
-  if (col + w > currentMap.value.cols || row + h > currentMap.value.rows) {
-    alert("Fuori dalla mappa")
-    return
-  }
-
-  for (let dy = 0; dy < h; dy++) {
-    for (let dx = 0; dx < w; dx++) {
-      const cell = currentMap.value.grid[row+dy][col+dx]
-      if (cell.type !== CELL_TYPES.EMPTY && cell.type !== CELL_TYPES.FLOOR) {
-        alert("Celle già occupate")
-        return
-      }
-    }
-  }
-
-  let entityId = manualEntityId.value
-  if (!entityId || entityId < 1 || isEntityIdTaken(entityId)) {
-    let maxId = 0
-    for (let r = 0; r < currentMap.value.rows; r++) {
-      for (let c = 0; c < currentMap.value.cols; c++) {
-        const cell = currentMap.value.grid[r][c]
-        if (cell.details && cell.details.id > maxId) maxId = cell.details.id
-      }
-    }
-    entityId = maxId + 1
-    manualEntityId.value = entityId
-  }
-
-  const details = subtype ? {
-    id: entityId,
-    subtypeId: subtype.id,
-    label: subtype.label,
-    emoji: subtype.emoji,
-    size: [w, h]
-  } : null
-
-  for (let dy = 0; dy < h; dy++) {
-    for (let dx = 0; dx < w; dx++) {
-      currentMap.value.grid[row+dy][col+dx] = {
-        type: type,
-        details: details,
-        markerId: null
-      }
-    }
-  }
-  saveCurrentMap()
-}
-
-// Le seguenti funzioni sono invariate ma necessarie
-function removeEntityAt(col, row) {
-  const cell = currentMap.value.grid[row]?.[col]
+function openEditDialog(row, col) {
+  const map = mapStore.currentMap
+  if (!map) return
+  const cell = map.grid[row]?.[col]
   if (!cell) return
-  const entityId = cell.details?.id
-  if (entityId) {
-    for (let r = 0; r < currentMap.value.rows; r++) {
-      for (let c = 0; c < currentMap.value.cols; c++) {
-        const c2 = currentMap.value.grid[r][c]
-        if (c2.details?.id === entityId) {
-          currentMap.value.grid[r][c] = { type: CELL_TYPES.EMPTY, details: null, markerId: null }
-        }
-      }
-    }
-  } else {
-    currentMap.value.grid[row][col] = { type: CELL_TYPES.EMPTY, details: null, markerId: null }
-  }
-  saveCurrentMap()
-}
-
-function handleRightClick(col, row) {
-  const cell = currentMap.value.grid[row]?.[col]
-  if (!cell) return
-  if (cell.type === CELL_TYPES.FLOOR && cell.details === null && cell.markerId === null) return
-  const entityId = cell.details?.id
-  if (entityId) {
-    for (let r = 0; r < currentMap.value.rows; r++) {
-      for (let c = 0; c < currentMap.value.cols; c++) {
-        const c2 = currentMap.value.grid[r][c]
-        if (c2.details?.id === entityId) {
-          currentMap.value.grid[r][c] = { type: CELL_TYPES.FLOOR, details: null, markerId: null }
-        }
-      }
-    }
-  } else {
-    currentMap.value.grid[row][col] = { type: CELL_TYPES.FLOOR, details: null, markerId: null }
-  }
-  saveCurrentMap()
-}
-
-function getCellEmoji(cell) {
-  if (cell.details?.emoji) return cell.details.emoji
-  if (BASE_TYPE_INFO[cell.type]) return BASE_TYPE_INFO[cell.type].emoji
-  return '⬜'
-}
-
-function updatePreview(col, row) {
-  if (!previewShape.value || eraseMode.value || selectionMode.value) {
-    previewPos.value = null
+  if (cell.type === CELL_TYPES.EMPTY || cell.type === CELL_TYPES.FLOOR) {
+    alert('Questa cella è vuota, non c\'è niente da modificare.')
     return
   }
-  const { width, height } = previewShape.value
-  if (col+width <= currentMap.value.cols && row+height <= currentMap.value.rows) {
-    previewPos.value = { x: col, y: row, w: width, h: height }
-  } else {
-    previewPos.value = null
-  }
-}
-function isInPreview(col, row) {
-  if (!previewPos.value) return false
-  const p = previewPos.value
-  return col >= p.x && col < p.x+p.w && row >= p.y && row < p.y+p.h
-}
-function clearPreview() { previewPos.value = null }
 
-function startCellSelection() {
-  selectionMode.value = true; eraseMode.value = false; selectedEntity.value = null
-}
-function assignMarkerToSelectedCell() {
-  if (!selectedCell.value) { alert("Seleziona prima una cella"); return }
-  const { x, y } = selectedCell.value
-  const cell = currentMap.value.grid[y]?.[x]
-  if (!cell) return
-  const entityId = cell.details?.id
-  if (entityId) {
-    for (let r = 0; r < currentMap.value.rows; r++) {
-      for (let c = 0; c < currentMap.value.cols; c++) {
-        const c2 = currentMap.value.grid[r][c]
-        if (c2.details?.id === entityId) {
-          c2.markerId = selectedMarkerId.value
+  let objectId = cell.details?.objectId
+  let currentTypeId = cell.details?.typeId || ''
+  let currentMarkerId = cell.markerId !== undefined && cell.markerId !== null ? cell.markerId : null
+
+  // se non ha dettagli ma ha markerId (caso legacy), trattalo come ancora
+  if (!cell.details && cell.markerId !== undefined && cell.markerId !== null) {
+    currentTypeId = 'anchor'
+    // cerca objectId nelle celle con stesso markerId
+    for (let r = 0; r < map.rows; r++) {
+      for (let c = 0; c < map.cols; c++) {
+        const other = map.grid[r][c]
+        if (other.markerId === cell.markerId && other.details?.objectId) {
+          objectId = other.details.objectId
+          break
         }
       }
     }
-  } else {
-    const w = 2, h = 2
-    if (x + w <= currentMap.value.cols && y + h <= currentMap.value.rows) {
-      for (let dy = 0; dy < h; dy++) {
-        for (let dx = 0; dx < w; dx++) {
-          const cell2 = currentMap.value.grid[y + dy][x + dx]
-          if (cell2) cell2.markerId = selectedMarkerId.value
+  }
+
+  editTarget.value = { row, col, objectId }
+  editType.value = currentTypeId
+  editId.value = currentMarkerId
+  editDialogVisible.value = true
+}
+
+function closeEditDialog() {
+  editDialogVisible.value = false
+  editTarget.value = null
+  editMode.value = false
+}
+
+function applyEdit() {
+  const map = mapStore.currentMap
+  if (!map || !editTarget.value) return
+
+  const { row, col, objectId } = editTarget.value
+  const newTypeId = editType.value
+  const newId = (editId.value !== null && editId.value !== undefined && !isNaN(editId.value) && editId.value >= 0 && editId.value <= 249) ? editId.value : null
+
+  const item = allItems.value.find(i => i.id === newTypeId)
+  if (!item) {
+    alert('Tipo non valido.')
+    return
+  }
+
+  if (newId !== null && isMarkerIdUsed(newId, row, col)) {
+    alert(`ID ${newId} già utilizzato in un'altra cella. Scegli un ID diverso.`)
+    return
+  }
+
+  const typeMap = {
+    structure: CELL_TYPES.FLOOR,
+    furniture: CELL_TYPES.FURNITURE,
+    player: CELL_TYPES.HERO,
+    enemy: CELL_TYPES.MONSTER,
+  }
+  const baseType = typeMap[item.category] || CELL_TYPES.FURNITURE
+  let finalType = baseType
+  if (item.category === 'structure') {
+    const typeMapStruct = {
+      'wall': CELL_TYPES.WALL,
+      'door_closed': CELL_TYPES.DOOR_CLOSED,
+      'door_open': CELL_TYPES.DOOR_OPEN,
+      'door_secret': CELL_TYPES.DOOR_SECRET,
+      'stairs': CELL_TYPES.STAIRS,
+      'trap': CELL_TYPES.TRAP,
+      'entrance': CELL_TYPES.ENTRANCE,
+      'special': CELL_TYPES.SPECIAL,
+      'anchor': CELL_TYPES.FLOOR,
+    }
+    finalType = typeMapStruct[item.id] || CELL_TYPES.FLOOR
+  }
+
+  // Dettagli per tutti gli oggetti, anche per l'ancora
+  const details = {
+    category: item.category,
+    typeId: item.id,
+    label: item.label,
+    emoji: item.emoji,
+    widthStud: item.widthStud,
+    heightStud: item.heightStud,
+    rotation: rotation.value,
+    objectId: objectId || (Date.now() + '_' + Math.random().toString(36).slice(2, 7)),
+  }
+
+  // Se abbiamo un objectId, aggiorna tutte le celle dello stesso oggetto
+  if (objectId) {
+    const cellsToUpdate = []
+    for (let r = 0; r < map.rows; r++) {
+      for (let c = 0; c < map.cols; c++) {
+        if (map.grid[r][c].details?.objectId === objectId) {
+          cellsToUpdate.push({ row: r, col: c })
         }
+      }
+    }
+    if (cellsToUpdate.length > 0) {
+      for (const pos of cellsToUpdate) {
+        mapStore.setCell(pos.col, pos.row, finalType, details, newId)
       }
     } else {
-      cell.markerId = selectedMarkerId.value
+      // fallback
+      mapStore.setCell(col, row, finalType, details, newId)
     }
+  } else {
+    mapStore.setCell(col, row, finalType, details, newId)
   }
-  saveCurrentMap()
+
+  closeEditDialog()
+  editMode.value = false
 }
-function removeMarkerFromSelectedCell() {
-  if (!selectedCell.value) return
-  const { x, y } = selectedCell.value
-  const cell = currentMap.value.grid[y]?.[x]
+
+// ----- Eventi mouse sulla griglia -----
+function onCellHover(row, col) {
+  if (selectedObject.value) {
+    hoverPos.value = { row, col }
+  }
+}
+
+function onCellLeave() {
+  hoverPos.value = null
+}
+
+function onCellClick(row, col) {
+  if (editMode.value) {
+    openEditDialog(row, col)
+    return
+  }
+
+  if (selectedObject.value) {
+    const isWall = selectedObject.value.id === 'wall'
+    let markerId = null
+
+    // I muri non hanno ID
+    if (!isWall) {
+      let id = arucoId.value
+      if (id === null || id === undefined || !Number.isInteger(id) || id < 0 || id > 249) {
+        const input = prompt(`Inserisci ID ArUco per "${selectedObject.value.label}" (0-249):`, '')
+        if (input === null) return
+        id = parseInt(input, 10)
+        if (isNaN(id) || id < 0 || id > 249) {
+          alert('ID non valido. Deve essere un numero tra 0 e 249.')
+          return
+        }
+        arucoId.value = id
+      }
+      if (isMarkerIdUsed(id)) {
+        alert(`ID ${id} già utilizzato in un'altra cella. Scegli un ID diverso.`)
+        return
+      }
+      markerId = id
+    }
+
+    if (canPlace(row, col)) {
+      placeObject(row, col, markerId)
+      if (!isWall) arucoId.value = null
+    } else {
+      alert('Impossibile posizionare: alcune celle sono già occupate o sono muri.')
+    }
+    return
+  }
+
+  // Se clicca su una cella vuota e non c'è selezione, non fare nulla
+}
+
+// ----- Gestione tasto destro per cancellare (CORRETTA) -----
+function onCellRightClick(row, col) {
+  const map = mapStore.currentMap
+  if (!map) return
+  const cell = map.grid[row]?.[col]
   if (!cell) return
-  const entityId = cell.details?.id
-  if (entityId) {
-    for (let r = 0; r < currentMap.value.rows; r++) {
-      for (let c = 0; c < currentMap.value.cols; c++) {
-        const c2 = currentMap.value.grid[r][c]
-        if (c2.details?.id === entityId) {
-          c2.markerId = null
+
+  // Se è vuota o pavimento SENZA dettagli e SENZA markerId, esci
+  if (cell.type === CELL_TYPES.EMPTY) return
+  if (cell.type === CELL_TYPES.FLOOR && !cell.details && (cell.markerId === undefined || cell.markerId === null)) return
+
+  // 1) Se ha objectId, cancella tutte le celle con lo stesso objectId
+  if (cell.details?.objectId) {
+    const objectId = cell.details.objectId
+    const cellsToRemove = []
+    for (let r = 0; r < map.rows; r++) {
+      for (let c = 0; c < map.cols; c++) {
+        if (map.grid[r][c].details?.objectId === objectId) {
+          cellsToRemove.push({ row: r, col: c })
         }
       }
     }
-  } else {
-    cell.markerId = null
+    for (const pos of cellsToRemove) {
+      mapStore.setCell(pos.col, pos.row, CELL_TYPES.FLOOR, null, null)
+    }
+    return
   }
-  saveCurrentMap()
+
+  // 2) Se ha markerId ma senza objectId (legacy), cancella tutte le celle con lo stesso markerId
+  if (cell.markerId !== undefined && cell.markerId !== null) {
+    const markerId = cell.markerId
+    const cellsToRemove = []
+    for (let r = 0; r < map.rows; r++) {
+      for (let c = 0; c < map.cols; c++) {
+        if (map.grid[r][c].markerId === markerId) {
+          cellsToRemove.push({ row: r, col: c })
+        }
+      }
+    }
+    for (const pos of cellsToRemove) {
+      mapStore.setCell(pos.col, pos.row, CELL_TYPES.FLOOR, null, null)
+    }
+    return
+  }
+
+  // 3) Fallback: cancella solo questa cella
+  mapStore.setCell(col, row, CELL_TYPES.FLOOR, null, null)
 }
 
-function createNewMap() {
-  let name = prompt("Nome mappa:", "Nuova Avventura")
-  if (!name) return
-  let cols = parseInt(prompt("Larghezza (colonne, 4-"+MAX_SIZE+"):", "12") || "12")
-  let rows = parseInt(prompt("Altezza (righe, 4-"+MAX_SIZE+"):", "12") || "12")
-  cols = Math.min(MAX_SIZE, Math.max(4, cols))
-  rows = Math.min(MAX_SIZE, Math.max(4, rows))
-  const newMap = {
-    id: Date.now(),
-    name: name,
-    cols, rows,
-    grid: Array(rows).fill().map(() => Array(cols).fill().map(() => ({
-      type: CELL_TYPES.FLOOR, details: null, markerId: null
-    })))
+// ----- Posizionamento oggetti (con ID unico per tutte le celle) -----
+function placeObject(row, col, markerId = null) {
+  const map = mapStore.currentMap
+  if (!map) return
+
+  const cells = getOccupiedCells(row, col)
+  const typeMap = {
+    structure: CELL_TYPES.FLOOR,
+    furniture: CELL_TYPES.FURNITURE,
+    player: CELL_TYPES.HERO,
+    enemy: CELL_TYPES.MONSTER,
   }
-  maps.value.push(newMap)
-  saveMaps(maps.value)
-  currentMapId.value = newMap.id
-}
-function selectMap(id) {
-  currentMapId.value = id
-  selectedCell.value = null
-}
-function deleteMap(id) {
-  if (confirm("Eliminare mappa?")) {
-    maps.value = maps.value.filter(m => m.id !== id)
-    saveMaps(maps.value)
-    if (currentMapId.value === id) currentMapId.value = maps.value[0]?.id || null
+  const baseType = typeMap[selectedObject.value.category] || CELL_TYPES.FURNITURE
+  let finalType = baseType
+  if (selectedObject.value.category === 'structure') {
+    const typeMapStruct = {
+      'wall': CELL_TYPES.WALL,
+      'door_closed': CELL_TYPES.DOOR_CLOSED,
+      'door_open': CELL_TYPES.DOOR_OPEN,
+      'door_secret': CELL_TYPES.DOOR_SECRET,
+      'stairs': CELL_TYPES.STAIRS,
+      'trap': CELL_TYPES.TRAP,
+      'entrance': CELL_TYPES.ENTRANCE,
+      'special': CELL_TYPES.SPECIAL,
+      'anchor': CELL_TYPES.FLOOR,
+    }
+    finalType = typeMapStruct[selectedObject.value.id] || CELL_TYPES.FLOOR
   }
-}
-function saveCurrentMap() {
-  if (!currentMap.value) return
-  const idx = maps.value.findIndex(m => m.id === currentMap.value.id)
-  if (idx !== -1) {
-    maps.value[idx].name = mapName.value
-    maps.value[idx].grid = currentMap.value.grid
-    maps.value[idx].cols = currentMap.value.cols
-    maps.value[idx].rows = currentMap.value.rows
-    saveMaps(maps.value)
+
+  // Dettagli per tutti gli oggetti (anche per l'ancora)
+  const details = {
+    category: selectedObject.value.category,
+    typeId: selectedObject.value.id,
+    label: selectedObject.value.label,
+    emoji: selectedObject.value.emoji,
+    widthStud: selectedObject.value.widthStud,
+    heightStud: selectedObject.value.heightStud,
+    rotation: rotation.value,
+    objectId: Date.now() + '_' + Math.random().toString(36).slice(2, 7),
   }
+
+  for (const cell of cells) {
+    mapStore.setCell(cell.col, cell.row, finalType, details, markerId)
+  }
+  hoverPos.value = null
 }
-function applyResize() {
-  if (!currentMap.value) return
-  let newCols = Math.min(MAX_SIZE, Math.max(4, tempCols.value))
-  let newRows = Math.min(MAX_SIZE, Math.max(4, tempRows.value))
-  let oldGrid = currentMap.value.grid
-  let newGrid = Array(newRows).fill().map(() => Array(newCols).fill().map(() => ({
-    type: CELL_TYPES.FLOOR, details: null, markerId: null
-  })))
-  for (let r=0; r<Math.min(currentMap.value.rows, newRows); r++) {
-    for (let c=0; c<Math.min(currentMap.value.cols, newCols); c++) {
-      newGrid[r][c] = oldGrid[r][c]
+
+// ----- Funzioni helper per le classi delle celle -----
+function getCellClasses(row, col) {
+  const classes = []
+  const map = mapStore.currentMap
+  if (!map) return classes
+  const cell = map.grid[row]?.[col]
+  if (!cell) return classes
+
+  if (cell.type === CELL_TYPES.WALL) classes.push('wall')
+  else if (cell.type === CELL_TYPES.DOOR_CLOSED) classes.push('door-closed')
+  else if (cell.type === CELL_TYPES.DOOR_OPEN) classes.push('door-open')
+  else if (cell.type === CELL_TYPES.DOOR_SECRET) classes.push('door-secret')
+  else if (cell.type === CELL_TYPES.STAIRS) classes.push('stairs')
+  else if (cell.type === CELL_TYPES.TRAP) classes.push('trap')
+  else if (cell.type === CELL_TYPES.FURNITURE) classes.push('furniture')
+  else if (cell.type === CELL_TYPES.HERO) classes.push('hero')
+  else if (cell.type === CELL_TYPES.MONSTER) classes.push('monster')
+  else if (cell.type === CELL_TYPES.ENTRANCE) classes.push('entrance')
+  else if (cell.type === CELL_TYPES.SPECIAL) classes.push('special')
+  else classes.push('floor')
+
+  if (cell.details !== null) classes.push('has-detail')
+  if (cell.markerId !== undefined && cell.markerId !== null) classes.push('has-marker')
+
+  if (editMode.value) {
+    classes.push('edit-mode')
+  }
+
+  if (!editMode.value && hoverPos.value && selectedObject.value) {
+    const cells = getOccupiedCells(hoverPos.value.row, hoverPos.value.col)
+    const isHovered = cells.some(c => c.row === row && c.col === col)
+    if (isHovered) {
+      classes.push(canPlace(hoverPos.value.row, hoverPos.value.col) ? 'preview-ok' : 'preview-blocked')
     }
   }
-  currentMap.value.grid = newGrid
-  currentMap.value.cols = newCols
-  currentMap.value.rows = newRows
-  saveCurrentMap()
+
+  return classes
 }
-function exportAllMaps() {
-  const exportData = { version: '1.0', maps: maps.value, exportedAt: new Date().toISOString() }
-  const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' })
+
+function getCellStyle(cell) {
+  const base = { backgroundColor: '#2a2a4a' }
+  if (!cell) return base
+
+  // Colore speciale per le ancore (oro)
+  if (cell.details?.category === 'anchor') {
+    return { backgroundColor: '#ffd700', borderColor: '#ffaa00' }
+  }
+
+  const info = CELL_TYPE_INFO[cell.type]
+  if (info) {
+    base.backgroundColor = info.color
+  }
+  return base
+}
+
+// ==================== getCellEmoji ====================
+function getCellEmoji(cell) {
+  if (!cell) return { emoji: '', id: null }
+
+  // Se ha dettagli, usa l'emoji dai dettagli
+  if (cell.details?.emoji) {
+    return {
+      emoji: cell.details.emoji,
+      id: cell.markerId !== undefined && cell.markerId !== null ? cell.markerId : null
+    }
+  }
+
+  // Altrimenti emoji dal tipo di cella
+  const info = CELL_TYPE_INFO[cell.type]
+  return {
+    emoji: info?.emoji || '',
+    id: cell.markerId !== undefined && cell.markerId !== null ? cell.markerId : null
+  }
+}
+
+// ----- Salvataggio, esportazione e importazione -----
+function saveMap() {
+  mapStore.saveCurrentMap(mapStore.currentMap.name)
+  alert('Mappa salvata!')
+}
+
+function exportMap() {
+  const data = {
+    version: '1.0',
+    exportedAt: new Date().toISOString(),
+    map: mapStore.currentMap,
+  }
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = `heroquest_maps_${Date.now()}.json`
+  a.download = `map-${mapStore.currentMap.name || 'unnamed'}.json`
   a.click()
   URL.revokeObjectURL(url)
 }
 
-function preparePrintArea(htmlContent) {
-  const printArea = document.getElementById('printArea')
-  printArea.innerHTML = htmlContent
-  printArea.style.display = 'block'
+function importMap() {
+  fileInput.value.click()
 }
 
-function printLegendOnly() {
-  if (!currentMap.value) { alert('Nessuna mappa selezionata'); return }
-  let html = `<h1>📐 Legenda - ${currentMap.value.name}</h1>`
-  html += `<div class="print-legend-grid" style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 8px 16px; font-size:11px;">`
-  for (const group of legendGroups.value) {
-    html += `<div class="print-legend-column">`
-    html += `<div class="print-legend-group-title" style="font-weight:bold; color:#4a7cf5; margin-bottom:2px;">${group.title}</div>`
-    for (const item of group.items) {
-      html += `<div class="print-legend-item" style="display:flex; justify-content:space-between; padding:1px 0;">${item.emoji} ${item.label} <span class="print-legend-size" style="background:#eee; padding:0 4px; border-radius:3px; font-family:monospace;">${item.size}</span></div>`
-    }
-    html += `</div>`
-  }
-  html += `</div>`
-  preparePrintArea(html)
-  window.print()
-  document.getElementById('printArea').style.display = 'none'
-}
-function printGridOnly() {
-  if (!currentMap.value) { alert('Nessuna mappa selezionata'); return }
-  let html = `<h1>🗺️ ${currentMap.value.name}</h1>`
-  html += `<div class="print-grid-wrapper"><div class="print-grid-container" style="display:grid; grid-template-columns: repeat(${currentMap.value.cols}, 1fr); grid-template-rows: repeat(${currentMap.value.rows}, 1fr); width:100%; aspect-ratio: ${currentMap.value.cols}/${currentMap.value.rows};">`
-  for (let r = 0; r < currentMap.value.rows; r++) {
-    for (let c = 0; c < currentMap.value.cols; c++) {
-      const cell = currentMap.value.grid[r]?.[c] || { type: CELL_TYPES.FLOOR, details: null, markerId: null }
-      const bgColor = getCellBackgroundColor(cell)
-      let content = ''
-      if (isMarkerCell(cell)) {
-        content = `<span style="color:white; font-weight:bold; font-size:1.2em; text-shadow:1px 1px 0 #000;">${cell.markerId}</span>`
-      } else {
-        content = getCellEmoji(cell)
-      }
-      html += `<div class="print-cell" style="background-color:${bgColor}; border:1px solid #999; display:flex; align-items:center; justify-content:center; font-size:1.4em; min-width:16px; min-height:16px;">${content}</div>`
-    }
-  }
-  html += `</div></div>`
-  preparePrintArea(html)
-  window.print()
-  document.getElementById('printArea').style.display = 'none'
-}
-
-const fileInput = ref(null)
-function triggerFileImport() { fileInput.value.click() }
-function onFileSelected(event) {
+function handleImport(event) {
   const file = event.target.files[0]
   if (!file) return
   const reader = new FileReader()
   reader.onload = (e) => {
     try {
       const data = JSON.parse(e.target.result)
-      if (data.maps && Array.isArray(data.maps)) {
-        if (confirm("Sostituire tutte le mappe esistenti?")) {
-          maps.value = data.maps
-          saveMaps(maps.value)
-          currentMapId.value = maps.value[0]?.id || null
-          alert("Importate " + data.maps.length + " mappe.")
+      if (data.map && data.map.grid) {
+        const newMap = {
+          ...data.map,
+          id: Date.now().toString(),
         }
-      } else throw new Error("Formato invalido")
-    } catch(err) {
-      alert("Errore importazione: " + err.message)
+        mapStore.maps.push(newMap)
+        mapStore.currentMapId = newMap.id
+        mapStore.saveMaps()
+        alert('Mappa importata con successo!')
+      } else {
+        alert('Formato file non valido.')
+      }
+    } catch (err) {
+      alert('Errore durante l\'importazione: ' + err.message)
     }
-    fileInput.value.value = ''
   }
   reader.readAsText(file)
+  event.target.value = ''
 }
 
-watch(currentMap, (map) => {
-  if (map) {
-    mapName.value = map.name
-    tempCols.value = map.cols
-    tempRows.value = map.rows
+// ==================== STAMPA ====================
+function printMap() {
+  const map = mapStore.currentMap
+  if (!map) {
+    alert('Nessuna mappa da stampare.')
+    return
   }
-}, { immediate: true })
+
+  const rows = map.rows
+  const cols = map.cols
+  const grid = map.grid
+
+  const printWindow = window.open('', '_blank', 'width=800,height=600')
+  if (!printWindow) {
+    alert('Impossibile aprire la finestra di stampa. Consentire i popup.')
+    return
+  }
+
+  let html = `
+    <html>
+      <head>
+        <title>Mappa: ${map.name}</title>
+        <style>
+          body { font-family: sans-serif; padding: 20px; background: white; color: black; }
+          h1 { text-align: center; font-size: 24px; margin-bottom: 16px; }
+          .grid {
+            display: grid;
+            grid-template-columns: repeat(${cols}, 60px);
+            grid-template-rows: repeat(${rows}, 60px);
+            gap: 2px;
+            background: #ccc;
+            border: 2px solid #333;
+            width: fit-content;
+            margin: 0 auto;
+          }
+          .cell {
+            background: #f0f0f0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            position: relative;
+            padding: 2px;
+          }
+          .cell .marker-id {
+            font-size: 10px;
+            font-weight: bold;
+            color: black;
+            margin-top: 2px;
+            background: rgba(255,255,255,0.6);
+            padding: 0 2px;
+            border-radius: 2px;
+          }
+          .cell .emoji {
+            line-height: 1;
+          }
+          .cell.wall { background: #b0a090; }
+          .cell.door-closed { background: #b8860b; }
+          .cell.door-open { background: #d2b48c; }
+          .cell.door-secret { background: #6b8e23; }
+          .cell.furniture { background: #cd853f; }
+          .cell.hero { background: #4a7cf5; color: white; }
+          .cell.monster { background: #aa4444; color: white; }
+          .cell.entrance { background: #44aa44; color: white; }
+          .cell.special { background: #aa88ff; }
+          .cell.stairs { background: #c0c0c0; }
+          .cell.trap { background: #8b0000; color: white; }
+          .cell.anchor { background: #ffd700; }  /* colore oro per le ancore */
+          .cell.floor { background: #e0e0e0; }
+          .legend {
+            margin-top: 24px;
+            text-align: center;
+            font-size: 14px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
+          }
+          .legend-item { display: inline-flex; align-items: center; gap: 4px; }
+          .legend-color { width: 20px; height: 20px; border: 1px solid #333; }
+          .footer { margin-top: 20px; text-align: center; font-size: 12px; color: #666; }
+          @media print {
+            .no-print { display: none; }
+            body { padding: 10px; }
+            .grid { gap: 1px; }
+          }
+        </style>
+      </head>
+      <body>
+        <h1>🗺️ ${map.name} (${cols}×${rows})</h1>
+        <div class="grid">
+  `
+
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const cell = grid[r]?.[c] || { type: CELL_TYPES.EMPTY, details: null, markerId: null }
+      let cellClass = 'cell'
+      if (cell.type === CELL_TYPES.WALL) cellClass += ' wall'
+      else if (cell.type === CELL_TYPES.DOOR_CLOSED) cellClass += ' door-closed'
+      else if (cell.type === CELL_TYPES.DOOR_OPEN) cellClass += ' door-open'
+      else if (cell.type === CELL_TYPES.DOOR_SECRET) cellClass += ' door-secret'
+      else if (cell.type === CELL_TYPES.STAIRS) cellClass += ' stairs'
+      else if (cell.type === CELL_TYPES.TRAP) cellClass += ' trap'
+      else if (cell.type === CELL_TYPES.FURNITURE) cellClass += ' furniture'
+      else if (cell.type === CELL_TYPES.HERO) cellClass += ' hero'
+      else if (cell.type === CELL_TYPES.MONSTER) cellClass += ' monster'
+      else if (cell.type === CELL_TYPES.ENTRANCE) cellClass += ' entrance'
+      else if (cell.type === CELL_TYPES.SPECIAL) cellClass += ' special'
+      else if (cell.details?.category === 'anchor') {
+        cellClass += ' anchor'
+      } else {
+        cellClass += ' floor'
+      }
+
+      let emoji = ''
+      if (cell.details?.emoji) {
+        emoji = cell.details.emoji
+      } else {
+        const info = CELL_TYPE_INFO[cell.type]
+        emoji = info?.emoji || ''
+      }
+      const markerId = cell.markerId !== undefined && cell.markerId !== null ? cell.markerId : ''
+
+      html += `
+        <div class="${cellClass}">
+          <span class="emoji">${emoji}</span>
+          ${markerId !== '' ? `<span class="marker-id">${markerId}</span>` : ''}
+        </div>
+      `
+    }
+  }
+
+  html += `
+        </div>
+        <div class="legend">
+          <div class="legend-item"><span class="legend-color" style="background:#e0e0e0;"></span> Pavimento</div>
+          <div class="legend-item"><span class="legend-color" style="background:#b0a090;"></span> Muro</div>
+          <div class="legend-item"><span class="legend-color" style="background:#b8860b;"></span> Porta chiusa</div>
+          <div class="legend-item"><span class="legend-color" style="background:#d2b48c;"></span> Porta aperta</div>
+          <div class="legend-item"><span class="legend-color" style="background:#6b8e23;"></span> Porta segreta</div>
+          <div class="legend-item"><span class="legend-color" style="background:#cd853f;"></span> Mobile</div>
+          <div class="legend-item"><span class="legend-color" style="background:#4a7cf5;"></span> Eroe</div>
+          <div class="legend-item"><span class="legend-color" style="background:#aa4444;"></span> Mostro</div>
+          <div class="legend-item"><span class="legend-color" style="background:#ffd700;"></span> Ancora</div>
+        </div>
+        <div class="footer">Stampato il ${new Date().toLocaleString()}</div>
+      </body>
+    </html>
+  `
+
+  printWindow.document.write(html)
+  printWindow.document.close()
+  printWindow.focus()
+  printWindow.print()
+}
+
+// ==================== EVENTI TASTIERA ====================
+function onKeydown(e) {
+  if (e.key === 'r' || e.key === 'R') {
+    e.preventDefault()
+    rotateObject()
+  }
+  if (e.key === 'Escape') {
+    if (editMode.value) toggleEditMode()
+    if (showIdTable.value) showIdTable.value = false
+  }
+}
 
 onMounted(() => {
-  if (maps.value.length) currentMapId.value = maps.value[0].id
+  window.addEventListener('keydown', onKeydown)
+  if (!mapStore.currentMap && mapStore.maps.length) {
+    mapStore.loadMap(mapStore.maps[0].id)
+  }
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', onKeydown)
 })
 </script>
 
 <style scoped>
+/* (lo stile rimane invariato rispetto a quello già presente) */
 .map-editor {
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
+  min-height: 100vh;
   background: #0f0f1e;
   color: #eee;
-  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  position: relative;
 }
+
 .editor-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0.5rem 1rem;
-  background: #1a1a2e;
+  gap: 1rem;
+  padding-bottom: 1rem;
   border-bottom: 1px solid #2a2a4a;
-  flex-shrink: 0;
+  flex-wrap: wrap;
 }
-.header-left { display: flex; align-items: center; gap: 1rem; }
-.header-actions { display: flex; gap: 0.5rem; }
-.back-btn { background: none; border: none; color: #7c9ef5; font-size: 1.5rem; cursor: pointer; }
-h1 { margin: 0; font-size: 1.2rem; }
-.icon-btn {
-  background: #2a2a4a;
+.back-btn {
+  background: none;
   border: none;
-  color: #ccc;
-  border-radius: 6px;
-  padding: 0.3rem 0.6rem;
+  color: #7c9ef5;
+  font-size: 1.8rem;
   cursor: pointer;
-  font-size: 1.1rem;
 }
-.icon-btn:hover { background: #3a3a5a; }
-.editor-body { display: flex; flex: 1; overflow: hidden; }
+h1 {
+  margin: 0;
+  font-size: 1.4rem;
+  flex: 1;
+}
+.header-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.action-btn {
+  background: #2a2a4a;
+  border: 1px solid #3a3a6a;
+  border-radius: 8px;
+  color: #ccc;
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background 0.2s;
+}
+.action-btn:hover {
+  background: #3a3a6a;
+}
+
+.editor-body {
+  display: flex;
+  gap: 1.5rem;
+  flex: 1;
+  margin-top: 1rem;
+  min-height: 0;
+}
+
 .sidebar {
   width: 280px;
   background: #1a1a2e;
-  border-right: 1px solid #2a2a4a;
+  border-radius: 12px;
+  padding: 1rem;
+  overflow-y: auto;
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  flex-shrink: 0;
-  overflow-y: auto;
-  padding: 1rem;
   gap: 1rem;
+  max-height: calc(100vh - 100px);
 }
-.sidebar-header { display: flex; justify-content: space-between; align-items: center; }
-.sidebar-header h3 { margin: 0; font-size: 1rem; }
-.btn-new { background: #2a5a2a; border: none; color: #d0ffd0; border-radius: 6px; padding: 0.2rem 0.6rem; cursor: pointer; }
-.map-list { flex: 1; overflow-y: auto; }
+
+.map-management {
+  background: #1a2a3a;
+  border: 1px solid #3a5a7a;
+  border-radius: 8px;
+  padding: 0.6rem;
+}
+.map-header {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #7c9ef5;
+  margin-bottom: 0.4rem;
+}
+.map-list {
+  max-height: 150px;
+  overflow-y: auto;
+  margin-bottom: 0.4rem;
+}
 .map-item {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  background: #2a2a4a;
-  border-radius: 6px;
-  padding: 0.4rem;
-  margin-bottom: 0.4rem;
+  padding: 0.25rem 0.4rem;
+  border-radius: 4px;
   cursor: pointer;
+  background: transparent;
+  transition: background 0.1s;
 }
-.map-item.active { border: 2px solid #4a7cf5; }
-.map-info { display: flex; flex-direction: column; }
-.map-name { font-size: 0.9rem; }
-.map-size { font-size: 0.7rem; color: #888; }
-.btn-delete { background: none; border: none; color: #ff6666; cursor: pointer; }
-.no-maps { color: #666; text-align: center; padding: 1rem; }
-.marker-panel { background: #111122; border-radius: 8px; padding: 0.6rem; border: 1px solid #3a3a6a; }
-.marker-panel h4 { margin: 0 0 0.5rem; font-size: 0.9rem; }
-.marker-controls { display: flex; flex-direction: column; gap: 0.3rem; }
-.marker-controls label { font-size: 0.8rem; }
-.marker-controls input { background: #2a2a4a; border: 1px solid #3a3a6a; border-radius: 4px; color: #eee; padding: 0.2rem 0.4rem; width: 80px; }
-.btn-small { background: #3a3a6a; border: none; color: #ccc; border-radius: 4px; padding: 0.2rem 0.5rem; font-size: 0.7rem; cursor: pointer; }
-.selected-cell-info { display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; margin-top: 0.4rem; }
-.selection-mode-msg { color: #ffaa44; font-size: 0.7rem; margin-top: 0.3rem; }
-.marker-hint { font-size: 0.65rem; color: #aaa; margin-top: 0.5rem; }
-.main-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 0.5rem 1rem 1rem 1rem; }
-.map-header { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; flex-shrink: 0; }
-.map-name-input { background: #2a2a4a; border: 1px solid #3a3a6a; border-radius: 6px; color: white; padding: 0.3rem 0.6rem; }
-.size-controls { display: flex; gap: 0.5rem; align-items: center; }
-.size-input { display: flex; align-items: center; gap: 0.3rem; }
-.size-input label { font-size: 0.8rem; color: #aaa; }
-.size-input input { width: 50px; background: #2a2a4a; border: 1px solid #3a3a6a; border-radius: 4px; color: white; padding: 0.2rem; }
-.btn-primary { background: #4a7cf5; border: none; color: white; border-radius: 6px; padding: 0.3rem 0.8rem; cursor: pointer; }
-.legend-panel {
-  background: #1a1a2e;
-  border-radius: 8px;
-  padding: 0.5rem 0.8rem;
-  margin: 0.5rem 0;
-  border: 1px solid #3a3a6a;
-  flex-shrink: 0;
-  max-height: 200px;
-  overflow-y: auto;
+.map-item:hover {
+  background: #2a3a5a;
 }
-.legend-title { font-size: 0.8rem; font-weight: bold; color: #aaa; margin-bottom: 0.3rem; }
-.legend-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0.5rem 1rem; }
-.legend-column { display: flex; flex-direction: column; gap: 0.2rem; }
-.legend-group-title { font-size: 0.7rem; font-weight: bold; color: #7c9ef5; margin-bottom: 0.1rem; }
-.legend-item { display: flex; align-items: center; gap: 0.3rem; font-size: 0.7rem; color: #ccc; }
-.legend-emoji { font-size: 0.9rem; }
-.legend-size { background: #2a2a4a; padding: 0.05rem 0.3rem; border-radius: 4px; font-family: monospace; font-size: 0.6rem; color: #7c9ef5; margin-left: auto; }
-.tool-palette {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem 1rem;
-  padding: 0.3rem 0;
-  flex-shrink: 0;
-  overflow-x: auto;
-  max-height: 150px;
+.map-item.active {
+  background: #2a4a7a;
+  border-left: 3px solid #4a7cf5;
 }
-.tool-category { background: #1a1a2e; border-radius: 6px; padding: 0.3rem 0.5rem; }
-.cat-title { font-size: 0.7rem; font-weight: bold; color: #aaa; margin-bottom: 0.2rem; }
-.cat-items { display: flex; flex-wrap: wrap; gap: 0.2rem; }
-.tool-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background: #2a2a4a;
-  border-radius: 6px;
-  padding: 0.1rem 0.3rem;
+.map-name {
+  flex: 1;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.map-size {
+  font-size: 0.65rem;
+  color: #888;
+  margin-right: 0.4rem;
+}
+.map-delete {
+  background: none;
+  border: none;
+  color: #ff6666;
   cursor: pointer;
-  min-width: 45px;
+  font-size: 0.8rem;
+  padding: 0 0.2rem;
+  opacity: 0.6;
 }
-.tool-item.active { border: 2px solid #4a7cf5; background: #2a2a5a; }
-.tool-emoji { font-size: 1.2rem; }
-.tool-label { font-size: 0.55rem; }
-.preview-info {
+.map-delete:hover {
+  opacity: 1;
+}
+.map-actions {
   display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 0.2rem 0.5rem;
+  gap: 0.4rem;
+}
+.btn-new-map, .btn-rename {
+  flex: 1;
+  background: #2a3a4a;
+  border: 1px solid #3a5a6a;
+  border-radius: 4px;
+  color: #ccc;
+  padding: 0.2rem 0.4rem;
+  cursor: pointer;
   font-size: 0.75rem;
-  color: #aaa;
-  flex-shrink: 0;
-  flex-wrap: wrap;
+  text-align: center;
 }
-.preview-id-control {
+.btn-new-map:hover, .btn-rename:hover {
+  background: #3a5a6a;
+}
+
+.dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
   display: flex;
   align-items: center;
-  gap: 1rem;
-  margin-left: 1rem;
+  justify-content: center;
+  z-index: 1000;
 }
-.id-input {
-  width: 70px;
+.dialog-box {
+  background: #1a1a2e;
+  border-radius: 12px;
+  padding: 1.5rem;
+  width: 320px;
+  max-width: 90%;
+  border: 1px solid #3a5a7a;
+}
+.dialog-box h3 {
+  margin: 0 0 1rem;
+  color: #7c9ef5;
+}
+.dialog-box label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.85rem;
+  color: #aaa;
+}
+.dialog-box select,
+.dialog-box input {
+  width: 100%;
   background: #2a2a4a;
   border: 1px solid #3a3a6a;
   border-radius: 4px;
   color: #eee;
-  padding: 0.2rem 0.4rem;
+  padding: 0.3rem 0.5rem;
+  margin-top: 0.2rem;
 }
-.id-warning { color: #ff6666; font-size: 0.8rem; }
-.btn-rotate { background: #4a7cf5; border: none; color: white; border-radius: 4px; padding: 0.1rem 0.5rem; cursor: pointer; font-size: 0.7rem; }
-.grid-container { flex: 1; overflow: auto; background: #0a0a14; border-radius: 8px; padding: 0.5rem; margin-top: 0.3rem; }
-.grid-wrapper { display: inline-block; }
-.grid-row { display: flex; }
-.grid-cell {
-  width: 44px;
-  height: 44px;
-  border: 1px solid #3a3a6a;
+.dialog-actions {
   display: flex;
-  align-items: center;
-  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+.btn-confirm, .btn-cancel {
+  flex: 1;
+  padding: 0.4rem;
+  border: none;
+  border-radius: 4px;
   cursor: pointer;
-  position: relative;
-  font-size: 1.2rem;
+  font-size: 0.85rem;
 }
-.cell-selected { outline: 3px solid gold; z-index: 2; }
-.cell-preview { background-color: rgba(100,200,100,0.4); }
-.marker-cell { background-color: #cc3333 !important; }
-.marker-number { font-size: 1.4rem; font-weight: bold; color: white; text-shadow: 1px 1px 0 #000; }
-.no-map-selected { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #aaa; }
+.btn-confirm {
+  background: #4a7cf5;
+  color: white;
+}
+.btn-cancel {
+  background: #3a3a6a;
+  color: #ccc;
+}
 
-/* Modali */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.6);
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.modal-sheet {
-  background: #1a1a2e;
-  border-radius: 20px;
+.dialog-large {
   width: 90%;
-  max-width: 500px;
+  max-width: 800px;
   max-height: 80vh;
   display: flex;
   flex-direction: column;
-  animation: slideUp 0.2s ease;
-}
-.modal-large { max-width: 800px; }
-@keyframes slideUp {
-  from { transform: translateY(20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
 }
 .modal-header {
   display: flex;
   justify-content: space-between;
-  padding: 1rem;
-  border-bottom: 1px solid #3a3a6a;
-  font-weight: bold;
-  color: #eee;
-  flex-shrink: 0;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+.modal-header h3 {
+  margin: 0;
+  color: #7c9ef5;
 }
 .modal-header button {
   background: none;
   border: none;
   color: #aaa;
-  font-size: 1.2rem;
+  font-size: 1.5rem;
   cursor: pointer;
 }
-.modal-body {
-  padding: 1rem;
+.id-table-filters {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.8rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.id-table-filters label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #ccc;
+  font-size: 0.9rem;
+}
+.id-table-filters select {
+  background: #2a2a4a;
+  border: 1px solid #3a3a6a;
+  border-radius: 4px;
+  color: #eee;
+  padding: 0.2rem 0.5rem;
+}
+.id-count {
+  color: #aaa;
+  font-size: 0.9rem;
+}
+.id-table-wrap {
   overflow-y: auto;
   flex: 1;
 }
-.element-table {
+.id-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.9rem;
 }
-.element-table th {
-  background: #2a2a4a;
-  padding: 0.5rem 0.8rem;
+.id-table thead {
+  position: sticky;
+  top: 0;
+  background: #1a2a3a;
+  z-index: 1;
+}
+.id-table th {
+  padding: 0.6rem 0.5rem;
   text-align: left;
-  color: #aaa;
+  color: #7c9ef5;
   border-bottom: 2px solid #3a3a6a;
 }
-.element-table td {
-  padding: 0.4rem 0.8rem;
-  border-bottom: 1px solid #222244;
+.id-table td {
+  padding: 0.5rem;
+  border-bottom: 1px solid #2a2a4a;
 }
-.element-table .act-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 1.1rem;
-  margin: 0 0.2rem;
+.id-table .col-id {
+  font-family: monospace;
+  color: #ffd700;
 }
-.act-btn.edit { color: #7c9ef5; }
-.act-btn.del { color: #ff6666; }
-.form-field { margin-bottom: 0.8rem; }
-.form-field label { display: block; font-size: 0.9rem; color: #aaa; margin-bottom: 0.2rem; }
-.form-field .edit-input {
-  width: 100%;
+.id-table .col-emoji {
+  font-size: 1.4rem;
+  text-align: center;
+}
+.id-table tr:hover {
   background: #2a2a4a;
-  border: 1px solid #3a3a6a;
-  border-radius: 6px;
-  color: #eee;
+}
+
+.object-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.group {
+  border: 1px solid #2a2a4a;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.group-header {
+  background: #2a2a4a;
   padding: 0.4rem 0.6rem;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  font-weight: 600;
+  font-size: 0.9rem;
 }
-.form-actions { display: flex; gap: 0.8rem; margin-top: 1rem; }
-.btn-secondary {
+.group-header:hover {
+  background: #3a3a6a;
+}
+.toggle-icon {
+  color: #888;
+}
+.group-items {
+  padding: 0.2rem 0;
+  max-height: 200px;
+  overflow-y: auto;
+}
+.object-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.6rem;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background 0.1s;
+}
+.object-item:hover {
   background: #2a2a4a;
+}
+.object-item.selected {
+  background: #4a6a9a;
+}
+.item-emoji {
+  font-size: 1.2rem;
+  width: 1.8rem;
+  text-align: center;
+}
+.item-name {
+  flex: 1;
+  font-size: 0.85rem;
+}
+.item-size {
+  font-size: 0.7rem;
+  color: #888;
+  background: #2a2a4a;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+}
+
+.rotation-controls {
+  background: #2a2a4a;
+  border-radius: 8px;
+  padding: 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  align-items: center;
+}
+.rotate-btn {
+  background: #4a6a9a;
+  border: none;
+  border-radius: 6px;
+  color: white;
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  width: 100%;
+}
+.rotate-btn:hover {
+  background: #5a7aaa;
+}
+.size-hint {
+  font-size: 0.8rem;
   color: #aaa;
-  border: 2px solid #3a3a6a;
+}
+
+.legend {
+  border-top: 1px solid #2a2a4a;
+  padding-top: 0.5rem;
+  margin-top: auto;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: #aaa;
+  padding: 0.1rem 0;
+}
+.legend-color {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: 1px solid #3a3a6a;
+}
+
+.map-container {
+  flex: 1;
+  background: #1a1a2e;
+  border-radius: 12px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.map-grid {
+  display: grid;
+  gap: 3px;
+  flex: 1;
+  background: #2a2a4a;
+  padding: 3px;
+  border-radius: 8px;
+  overflow: auto;
+}
+.grid-row {
+  display: contents;
+}
+.grid-cell {
+  background: #2a2a4a;
+  aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 2px;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.15s;
+  min-width: 24px;
+  min-height: 24px;
+}
+
+.cell-emoji {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.cell-emoji-char {
+  font-size: 1.1rem;
+}
+
+.cell-id {
+  font-size: x-small;
+  color: #fff;
+  background-color: black;
+  font-weight: bold;
+  margin-top: -2px;
+}
+
+.grid-cell.wall { background: #5a4a3a; }
+.grid-cell.door-closed { background: #8B4513; }
+.grid-cell.door-open { background: #A0522D; }
+.grid-cell.door-secret { background: #556B2F; }
+.grid-cell.stairs { background: #C0C0C0; }
+.grid-cell.trap { background: #8B0000; }
+.grid-cell.furniture { background: #8B5A2B; }
+.grid-cell.hero { background: #4a7cf5; }
+.grid-cell.monster { background: #aa4444; }
+.grid-cell.entrance { background: #44aa44; }
+.grid-cell.special { background: #aa88ff; }
+.grid-cell.floor { background: #3a3a4a; }
+.grid-cell.has-detail { border: 2px solid #ffd700; }
+.grid-cell.has-marker { border: 2px solid #ffaa00; }
+
+.grid-cell.edit-mode {
+  background: rgba(255, 215, 0, 0.15) !important;
+  border: 2px dashed #ffd700 !important;
+}
+
+.grid-cell.preview-ok {
+  background: rgba(74, 124, 245, 0.6) !important;
+  border: 3px solid #4a7cf5 !important;
+}
+.grid-cell.preview-blocked {
+  background: rgba(255, 0, 0, 0.5) !important;
+  border: 3px solid #ff4444 !important;
+}
+
+.preview-tooltip {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  font-size: 0.5rem;
+  background: rgba(0,0,0,0.7);
+  color: #fff;
+  padding: 0 3px;
+  border-radius: 3px;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.map-info {
+  margin-top: 0.5rem;
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: #888;
+}
+.selected-info {
+  color: #7c9ef5;
+}
+
+.no-map {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #1a1a2e;
+  border-radius: 12px;
+  padding: 2rem;
+  gap: 1rem;
+}
+.no-map p {
+  color: #aaa;
+}
+.btn-primary {
+  background: #4a7cf5;
+  border: none;
   border-radius: 10px;
+  color: white;
   padding: 0.6rem 1.2rem;
   cursor: pointer;
+  font-size: 1rem;
 }
-.empty-table { text-align: center; color: #555; padding: 1rem; }
+.btn-primary:hover {
+  background: #5c8ef5;
+}
 
-/* Stampa */
-@media print {
-  body * { visibility: hidden; }
-  #printArea, #printArea * { visibility: visible; }
-  #printArea { position: absolute; left: 0; top: 0; width: 100%; padding: 10mm; background: white; color: black; }
-  .print-grid-wrapper { width: 100%; display: flex; justify-content: center; page-break-inside: avoid; }
-  .print-grid-container { display: grid; max-width: 100%; max-height: 70vh; aspect-ratio: auto; border: 1px solid #666; }
-  .print-cell { border: 1px solid #999; display: flex; align-items: center; justify-content: center; font-size: 1.4em; min-width: 16px; min-height: 16px; }
-  h1 { font-size: 18px; margin: 0 0 4mm 0; }
+.fab-edit {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: #2a2a4a;
+  color: #ccc;
+  border: 2px solid #3a3a6a;
+  font-size: 1.8rem;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  z-index: 100;
+  user-select: none;
 }
+.fab-edit:hover {
+  transform: scale(1.05);
+  background: #3a3a6a;
+}
+.fab-edit.active {
+  background: #c9701a;
+  border-color: #ffd700;
+  color: #fff;
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+}
+.fab-edit.active:hover {
+  background: #d9802a;
+}
+
 @media (max-width: 768px) {
-  .sidebar { width: 100%; max-height: 40vh; border-right: none; border-bottom: 1px solid #2a2a4a; }
-  .editor-body { flex-direction: column; }
-  .legend-grid { grid-template-columns: 1fr 1fr; }
-  .grid-cell { width: 36px; height: 36px; }
-  .cell-emoji { font-size: 1rem; }
-  .marker-number { font-size: 1.2rem; }
+  .editor-body {
+    flex-direction: column;
+  }
+  .sidebar {
+    width: 100%;
+    max-height: 300px;
+  }
+  .map-info {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+  }
+  .fab-edit {
+    bottom: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    font-size: 1.5rem;
+  }
+  .dialog-large {
+    width: 95%;
+    max-height: 90vh;
+  }
+  .id-table-filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }
 </style>
