@@ -142,16 +142,26 @@ function processFrame() {
   if (!w || !h) return
 
   const canvas = canvasEl.value
-  if (canvas.width !== w || canvas.height !== h) {
-    canvas.width = w
-    canvas.height = h
+  // Ottieni le dimensioni effettive del contenitore (per eliminare le barre nere)
+  const rect = canvas.getBoundingClientRect()
+  const displayWidth = rect.width || canvas.clientWidth || window.innerWidth
+  const displayHeight = rect.height || canvas.clientHeight || window.innerHeight
+
+  // Imposta il canvas alle dimensioni di visualizzazione (evita scaling CSS)
+  if (canvas.width !== displayWidth || canvas.height !== displayHeight) {
+    canvas.width = displayWidth
+    canvas.height = displayHeight
   }
+
+  // Mantieni offscreen alle dimensioni originali del video per il rilevamento
   if (offscreen.width !== w || offscreen.height !== h) {
     offscreen.width = w
     offscreen.height = h
   }
 
+  // Preprocessa il frame (usa le dimensioni originali del video)
   const preprocessed = preprocessFrame(w, h)
+
   let markers = []
   try {
     markers = arucoService.detect(preprocessed ? offscreen : video)
@@ -161,16 +171,22 @@ function processFrame() {
 
   const H = computeH(markers)
 
-  const zoom = cam.digitalZoom
+  // Calcola il fattore di zoom per riempire il canvas (crop) senza barre nere
+  const ratioW = displayWidth / w
+  const ratioH = displayHeight / h
+  // Scegli il rapporto più grande per coprire l'area (crop)
+  const zoom = Math.max(ratioW, ratioH) * cam.digitalZoom
   const sw = w * zoom
   const sh = h * zoom
-  const offsetX = (w - sw) / 2
-  const offsetY = (h - sh) / 2
+  const offsetX = (displayWidth - sw) / 2
+  const offsetY = (displayHeight - sh) / 2
 
+  // Applica filtro e disegna il video
   ctx.filter = buildCSSFilter()
   ctx.drawImage(video, offsetX, offsetY, sw, sh)
   ctx.filter = 'none'
 
+  // Applica la stessa trasformazione per griglia e marker
   ctx.save()
   ctx.setTransform(zoom, 0, 0, zoom, offsetX, offsetY)
 
@@ -504,7 +520,6 @@ function handleGameLogic(markers, H) {
 .camera-canvas {
   width: 100%;
   height: 100%;
-  object-fit: cover;
   display: block;
 }
 .camera-error {
