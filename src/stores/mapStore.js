@@ -90,7 +90,7 @@ export const useMapStore = defineStore('map', () => {
    */
   async function loadDefaultMapFromFile() {
     try {
-      const response = await fetch('/map-heroquest 32x32.json')
+      const response = await fetch('/heroquest_32x32.json')
       if (!response.ok) throw new Error('File non trovato')
       const data = await response.json()
 
