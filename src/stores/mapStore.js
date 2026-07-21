@@ -1,3 +1,4 @@
+// src/stores/mapStore.js
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 
@@ -42,10 +43,16 @@ export const useMapStore = defineStore('map', () => {
   const currentMapId = ref(null)
   const currentMap = computed(() => maps.value.find(m => m.id === currentMapId.value) || null)
 
+  /**
+   * Carica le mappe da localStorage. Se non ci sono mappe, crea una demo
+   * e poi tenta di caricare il file predefinito.
+   * Se esiste solo la mappa demo, la sostituisce con quella dal file.
+   */
   function loadMaps() {
     const stored = localStorage.getItem(STORAGE_KEY)
     if (stored) {
       maps.value = JSON.parse(stored)
+      // Se c'è solo la mappa demo, prova a caricare il file e sostituirla
       if (maps.value.length === 1 && maps.value[0].id === 'demo') {
         loadDefaultMapFromFile()
       } else {
@@ -56,6 +63,7 @@ export const useMapStore = defineStore('map', () => {
       return
     }
 
+    // Nessuna mappa salvata: crea una demo temporanea e carica il file
     const demo = {
       id: 'demo',
       name: 'Mappa Demo',
@@ -75,6 +83,11 @@ export const useMapStore = defineStore('map', () => {
     loadDefaultMapFromFile()
   }
 
+  /**
+   * Tenta di caricare il file "map-heroquest 32x32.json" dalla cartella public/.
+   * Se il caricamento ha successo, sostituisce le mappe (eliminando la demo) e
+   * seleziona la prima mappa caricata.
+   */
   async function loadDefaultMapFromFile() {
     try {
       const response = await fetch('/heroquest_32x32.json')
@@ -92,12 +105,14 @@ export const useMapStore = defineStore('map', () => {
 
       if (mapList.length === 0) throw new Error('Nessuna mappa nel file')
 
+      // Sostituisci le mappe esistenti (la demo) con quelle caricate
       maps.value = mapList
       currentMapId.value = mapList[0].id
       saveMaps()
       console.log('[mapStore] Mappa predefinita caricata:', mapList[0].name)
     } catch (error) {
       console.warn('[mapStore] Caricamento mappa predefinita fallito:', error.message)
+      // Mantiene la mappa demo già creata
     }
   }
 
@@ -179,6 +194,7 @@ export const useMapStore = defineStore('map', () => {
     return anchors
   }
 
+  // Inizializza il caricamento
   loadMaps()
 
   return {
