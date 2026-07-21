@@ -1,4 +1,3 @@
-// src/components/CameraView.vue
 <template>
   <div class="camera-wrapper">
     <canvas ref="canvasEl" class="camera-canvas" />
@@ -259,6 +258,7 @@ function applyThreshold(ctx, w, h, thresh) {
 function computeH(markers) {
   // Aggiorna le ancore rilevate
   const currentMap = mapStore.currentMap
+  console.log('[CameraView] computeH: currentMap?', currentMap ? currentMap.name : 'nessuna mappa')
   if (currentMap) {
     // Crea una mappa id -> cella per la griglia corrente
     const cellByMarkerId = {}
@@ -270,8 +270,10 @@ function computeH(markers) {
         }
       }
     }
+    console.log('[CameraView] cellByMarkerId:', cellByMarkerId)
     for (const m of markers) {
       if (cellByMarkerId[m.id]) {
+        console.log('[CameraView] trovato marker ancora ID:', m.id, 'posizione:', m.center)
         gameStore.updateAnchor(m.id, m.center)
       }
     }

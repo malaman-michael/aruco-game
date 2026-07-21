@@ -1,4 +1,3 @@
-// src/views/GameWithMap.vue
 <template>
   <div class="game-view">
     <!-- Skip link -->
@@ -422,8 +421,11 @@ function selectMap(mapId) {
   if (mapId) {
     const map = mapStore.maps.find(m => m.id === mapId)
     if (map) {
+      // 🔥 CRITICAL: imposta la mappa corrente nello store, così CameraView la usa per le ancore
+      mapStore.loadMap(mapId)
       gameStore.setGridSize(map.cols, map.rows)
       voice.say(`Mappa ${map.name} attivata (${map.cols}×${map.rows})`, 'map_selected', 1)
+      console.log('[GameWithMap] Mappa selezionata:', map.name, 'ID:', mapId)
     } else {
       voice.say('Mappa non trovata', 'map_error', 1)
       selectedMapId.value = null
@@ -581,6 +583,10 @@ watch(() => mapStore.maps, () => requestRedraw(), { deep: true })
 watch(() => [gameStore.gridCols, gameStore.gridRows], () => requestRedraw())
 
 onMounted(() => {
+  // 🔥 Se non c'è una mappa selezionata e ci sono mappe, seleziona la prima automaticamente
+  if (!selectedMapId.value && mapStore.maps.length > 0) {
+    selectMap(mapStore.maps[0].id)
+  }
   updateCanvasSize()
   const viewport = document.querySelector('.viewport')
   if (viewport && window.ResizeObserver) {
