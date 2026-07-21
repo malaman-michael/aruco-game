@@ -44,22 +44,26 @@ export const useMapStore = defineStore('map', () => {
   const currentMap = computed(() => maps.value.find(m => m.id === currentMapId.value) || null)
 
   /**
-   * Carica le mappe da localStorage. Se non ci sono, crea una mappa demo
-   * e poi tenta di caricare il file predefinito "map-heroquest 32x32.json"
-   * dalla cartella public/.
+   * Carica le mappe da localStorage. Se non ci sono mappe, crea una demo
+   * e poi tenta di caricare il file predefinito.
+   * Se esiste solo la mappa demo, la sostituisce con quella dal file.
    */
   function loadMaps() {
     const stored = localStorage.getItem(STORAGE_KEY)
     if (stored) {
       maps.value = JSON.parse(stored)
-      // Se c'è almeno una mappa, seleziona la prima come corrente
-      if (maps.value.length > 0) {
-        currentMapId.value = maps.value[0].id
+      // Se c'è solo la mappa demo, prova a caricare il file e sostituirla
+      if (maps.value.length === 1 && maps.value[0].id === 'demo') {
+        loadDefaultMapFromFile()
+      } else {
+        if (maps.value.length > 0) {
+          currentMapId.value = maps.value[0].id
+        }
       }
       return
     }
 
-    // Nessuna mappa salvata: crea una demo temporanea
+    // Nessuna mappa salvata: crea una demo temporanea e carica il file
     const demo = {
       id: 'demo',
       name: 'Mappa Demo',
@@ -76,15 +80,13 @@ export const useMapStore = defineStore('map', () => {
     maps.value = [demo]
     currentMapId.value = 'demo'
     saveMaps()
-
-    // Avvia il caricamento asincrono del file predefinito
     loadDefaultMapFromFile()
   }
 
   /**
    * Tenta di caricare il file "map-heroquest 32x32.json" dalla cartella public/.
-   * Se il caricamento ha successo, sostituisce le mappe con quelle del file.
-   * In caso di errore, mantiene la mappa demo.
+   * Se il caricamento ha successo, sostituisce le mappe (eliminando la demo) e
+   * seleziona la prima mappa caricata.
    */
   async function loadDefaultMapFromFile() {
     try {
