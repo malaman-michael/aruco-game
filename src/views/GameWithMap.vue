@@ -1,12 +1,15 @@
 // src/views/GameWithMap.vue
 <template>
   <div class="game-view">
+    <!-- Skip link -->
+    <a href="#main" class="skip-link">Salta al contenuto principale</a>
+
     <div v-show="viewMode === 'camera'" class="viewport" ref="viewportEl">
       <CameraView ref="cameraViewRef" :active="isActive" @unknown-marker="onUnknownMarker" @frame-processed="onFrameProcessed" @homography-updated="onHomographyUpdated" />
-      <canvas v-if="selectedMapId && showMapOverlay" ref="overlayCanvas" class="map-canvas-overlay"></canvas>
+      <canvas v-if="selectedMapId && showMapOverlay" ref="overlayCanvas" class="map-canvas-overlay" aria-label="Mappa sovrapposta alla videocamera con griglia e pedine"></canvas>
     </div>
 
-    <div v-show="viewMode === 'table'" class="table-view">
+    <main id="main" v-show="viewMode === 'table'" class="table-view">
       <!-- Indicator ancore visibili -->
       <div class="corner-indicator">
         <div class="corner-box">
@@ -28,6 +31,7 @@
 
       <div class="table-container">
         <table class="pieces-table" aria-label="Tabella delle pedine attualmente rilevate">
+          <caption class="sr-only">Elenco delle pedine visibili sul campo con ID, nome, posizione e orientamento</caption>
           <thead>
             <tr>
               <th scope="col">ID</th>
@@ -71,6 +75,7 @@
 
       <div class="table-container">
         <table v-if="selectedMapId && currentStaticMap" class="pieces-table" aria-label="Elenco degli elementi statici della mappa">
+          <caption class="sr-only">Elenco degli elementi fissi della mappa selezionata</caption>
           <thead>
             <tr>
               <th scope="col">Colonna</th>
@@ -107,6 +112,7 @@
 
       <div v-if="currentStaticMap" class="grid-table-container">
         <table class="grid-map-table" :aria-label="`Griglia della mappa ${currentStaticMap.name}, ${currentStaticMap.cols} colonne per ${currentStaticMap.rows} righe`">
+          <caption class="sr-only">Griglia della mappa con tutte le celle e i loro tipi</caption>
           <thead>
             <tr>
               <th scope="col" aria-label="Intestazione riga"></th>
@@ -136,7 +142,7 @@
       <div class="table-footer">
         <button class="btn-back" @click="viewMode = 'camera'">← Torna alla fotocamera</button>
       </div>
-    </div>
+    </main>
 
     <div v-if="viewMode === 'camera'" class="hud-top">
       <button class="icon-btn" @click="$router.push('/')" aria-label="Esci">✕</button>
@@ -158,7 +164,8 @@
       </div>
     </div>
 
-    <div v-if="viewMode === 'camera'" class="status-bar">
+    <!-- Status bar con live region -->
+    <div v-if="viewMode === 'camera'" class="status-bar" role="status" aria-live="polite" aria-atomic="true">
       <span v-if="!gameStore.homographyReady" class="status-calibrating">
         📍 Ancore visibili: {{ gameStore.visibleAnchorsCount }}
         <span class="corner-dots">
@@ -200,11 +207,12 @@
 
     <button v-if="viewMode === 'camera'" class="fab" @click="showPieceList = !showPieceList" aria-label="Mostra/nascondi elenco pedine"> 🎲 {{ gameStore.pieces.length }} </button>
 
+    <!-- Modal selezione mappa con gestione focus -->
     <div v-if="showMapPicker" class="modal-overlay" @click.self="showMapPicker = false">
       <div class="modal-sheet" role="dialog" aria-modal="true" aria-label="Selezione mappa">
         <div class="modal-header">
           <span>Scegli una mappa</span>
-          <button @click="showMapPicker = false" aria-label="Chiudi">✕</button>
+          <button ref="modalFirstElement" @click="showMapPicker = false" aria-label="Chiudi selezione mappa">✕</button>
         </div>
         <div class="modal-list">
           <button v-for="map in mapStore.maps" :key="map.id" class="map-option" :class="{ active: selectedMapId === map.id }" @click="selectMap(map.id)" :aria-label="`Seleziona mappa ${map.name} (${map.cols}×${map.rows})`">
@@ -228,7 +236,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import CameraView from '../components/CameraView.vue'
 import MarkerSetupDialog from '../components/MarkerSetupDialog.vue'
 import CameraSettingsPanel from '../components/CameraSettingsPanel.vue'
@@ -255,6 +263,9 @@ const overlayCanvas = ref(null)
 const selectedMapId = ref(null)
 const showMapOverlay = ref(true)
 const showMapPicker = ref(false)
+
+// Ref per il primo elemento focusable nella modale
+const modalFirstElement = ref(null)
 
 let animationFrameId = null
 let resizeObserver = null
@@ -552,6 +563,15 @@ function onFrameProcessed(payload) {
   // non facciamo nulla di specifico
 }
 
+// Gestione focus per modale
+watch(showMapPicker, (val) => {
+  if (val) {
+    nextTick(() => {
+      modalFirstElement.value?.focus()
+    })
+  }
+})
+
 watch(() => gameStore.homography, () => {
   if (gameStore.homographyReady) requestRedraw()
 }, { deep: true })
@@ -584,7 +604,7 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* ... stili esistenti ... */
+/* ... stili esistenti (invariati) ... */
 .game-view { position: fixed; inset: 0; background: #000; display: flex; flex-direction: column; overflow: hidden; }
 .viewport { flex: 1; position: relative; overflow: hidden; }
 .hud-top { position: absolute; top: env(safe-area-inset-top, 12px); left: 0; right: 0; display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 1rem; z-index: 10; }
@@ -677,4 +697,31 @@ onUnmounted(() => {
 .map-emoji { font-size: 1.8rem; }
 .map-details strong { display: block; font-size: 1rem; }
 .map-details small { color: #aaa; font-size: 0.75rem; }
+
+/* Skip link */
+.skip-link {
+  position: absolute;
+  top: -100px;
+  left: 0;
+  background: #4a7cf5;
+  color: #fff;
+  padding: 0.5rem 1rem;
+  z-index: 1000;
+}
+.skip-link:focus {
+  top: 0;
+}
+
+/* Classe sr-only per le caption */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+  border: 0;
+}
 </style>

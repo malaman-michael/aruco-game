@@ -1,52 +1,59 @@
 // src/views/HomeView.vue
 <template>
   <div class="home-view">
-    <div class="hero">
-      <div class="hero-icon">🎲</div>
-      <h1>ArUco Game</h1>
-      <p>Gioco da tavolo in realtà aumentata.<br />Punta la fotocamera sulla plancia.</p>
-      <p class="subtitle">
-        <strong>Campo aperto</strong> → usa la configurazione pedine e griglia<br />
-        <strong>Con mappa</strong> → usa le mappe create nell’Editor Mappa
-      </p>
-    </div>
-    <div class="info-card">
-      <p>
-        <strong>{{ registeredCount }}</strong> marker registrati ·
-        <strong>{{ gameStore.gridCols }}×{{ gameStore.gridRows }}</strong> griglia
-      </p>
-    </div>
-    <div class="btn-group">
-      <button class="btn-primary btn-play-wo-map" @click="$router.push('/gameOpenGrid')">
-        🏞️ Campo aperto
-        <span class="btn-desc">(usa configurazione pedine)</span>
-      </button>
-      <button class="btn-primary btn-play-map" @click="$router.push('/gameWithMap')">
-        🗺️ Con mappa
-        <span class="btn-desc">(usa mappe editor)</span>
-      </button>
-      <button class="btn-secondary btn-setup" @click="$router.push('/setup')">
-        ⚙️ Configurazione pedine e griglia
-      </button>
-      <button class="btn-secondary btn-map" @click="$router.push('/map-editor')">
-        🗺️ Editor Mappa
-      </button>
-      <button class="btn-accent btn-voice" @click="$router.push('/voice-color')">
-        🎤 Cambia colore con la voce
-      </button>
-      <button class="btn-accent btn-gesture" @click="$router.push('/gesture-recognition')">
-        🖐️ Riconoscimento gesti
-      </button>
-      <button class="btn-accent btn-assistant" @click="$router.push('/placement-assistant')">
-        🎧 Guida al posizionamento
-      </button>
-      <button class="btn-accent btn-move" @click="$router.push('/voice-movement')">
-        🎲 Muovi pedine con voce
-      </button>
-      <button class="btn-accent btn-settings" @click="$router.push('/settings')">
-        Personalizzazione messaggi audio
-      </button>
-    </div>
+    <!-- Skip link -->
+    <a href="#main" class="skip-link">Salta al contenuto principale</a>
+
+    <main id="main">
+      <div class="hero">
+        <div class="hero-icon">🎲</div>
+        <h1>ArUco Game</h1>
+        <p>Gioco da tavolo in realtà aumentata.<br />Punta la fotocamera sulla plancia.</p>
+        <p class="subtitle">
+          <strong>Campo aperto</strong> → usa la configurazione pedine e griglia<br />
+          <strong>Con mappa</strong> → usa le mappe create nell’Editor Mappa
+        </p>
+      </div>
+      <div class="info-card">
+        <p>
+          <strong>{{ registeredCount }}</strong> marker registrati ·
+          <strong>{{ gameStore.gridCols }}×{{ gameStore.gridRows }}</strong> griglia
+        </p>
+      </div>
+      <nav aria-label="Menu principale">
+        <div class="btn-group">
+          <button class="btn-primary btn-play-wo-map" @click="$router.push('/gameOpenGrid')">
+            🏞️ Campo aperto
+            <span class="btn-desc">(usa configurazione pedine)</span>
+          </button>
+          <button class="btn-primary btn-play-map" @click="$router.push('/gameWithMap')">
+            🗺️ Con mappa
+            <span class="btn-desc">(usa mappe editor)</span>
+          </button>
+          <button class="btn-secondary btn-setup" @click="$router.push('/setup')">
+            ⚙️ Configurazione pedine e griglia
+          </button>
+          <button class="btn-secondary btn-map" @click="$router.push('/map-editor')">
+            🗺️ Editor Mappa
+          </button>
+          <button class="btn-accent btn-voice" @click="$router.push('/voice-color')">
+            🎤 Cambia colore con la voce
+          </button>
+          <button class="btn-accent btn-gesture" @click="$router.push('/gesture-recognition')">
+            🖐️ Riconoscimento gesti
+          </button>
+          <button class="btn-accent btn-assistant" @click="$router.push('/placement-assistant')">
+            🎧 Guida al posizionamento
+          </button>
+          <button class="btn-accent btn-move" @click="$router.push('/voice-movement')">
+            🎲 Muovi pedine con voce
+          </button>
+          <button class="btn-accent btn-settings" @click="$router.push('/settings')">
+            Personalizzazione messaggi audio
+          </button>
+        </div>
+      </nav>
+    </main>
   </div>
 </template>
 
@@ -61,6 +68,7 @@ const registeredCount = computed(() => Object.keys(markersStore.registry).length
 </script>
 
 <style scoped>
+/* ... stili esistenti ... */
 .home-view {
   min-height: 100vh;
   background: linear-gradient(160deg, #0f0f1e 0%, #1a1a3a 100%);
@@ -175,6 +183,21 @@ p {
   color: #888;
   max-width: 90%;
 }
+
+/* Skip link */
+.skip-link {
+  position: absolute;
+  top: -100px;
+  left: 0;
+  background: #4a7cf5;
+  color: #fff;
+  padding: 0.5rem 1rem;
+  z-index: 1000;
+}
+.skip-link:focus {
+  top: 0;
+}
+
 @media (min-width: 640px) {
   .btn-group { gap: 1rem; }
   .btn-group button { padding: 0.9rem 1.4rem; font-size: 1rem; min-width: 160px; }
