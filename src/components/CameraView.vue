@@ -46,6 +46,13 @@ let frameCounter = 0
 let restartPending = false
 
 async function startCamera() {
+  // Controlla che l'API sia disponibile
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    cameraError.value = 'Il browser non supporta la fotocamera o la connessione non è sicura (usa HTTPS).'
+    cameraReady.value = false
+    return
+  }
+
   if (stream) {
     stream.getTracks().forEach(track => track.stop())
   }
@@ -63,6 +70,7 @@ async function startCamera() {
     video.srcObject = stream
     await video.play()
     cameraReady.value = true
+    cameraError.value = ''
     if (restartPending) {
       restartPending = false
       startLoop()
@@ -71,6 +79,7 @@ async function startCamera() {
     cameraError.value = err.name === 'NotAllowedError'
       ? 'Permesso fotocamera negato.'
       : `Errore: ${err.message}`
+    cameraReady.value = false
   }
 }
 

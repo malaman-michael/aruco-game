@@ -1,4 +1,4 @@
-// stores/mapStore.js
+// src/stores/mapStore.js
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 
@@ -43,42 +43,133 @@ export const useMapStore = defineStore('map', () => {
   const currentMapId = ref(null)
   const currentMap = computed(() => maps.value.find(m => m.id === currentMapId.value) || null)
 
+  /**
+   * Carica le mappe da localStorage. Se non ci sono, crea una mappa demo
+   * e poi tenta di caricare il file predefinito "map-heroquest 32x32.json"
+   * dalla cartella public/.
+   */
   function loadMaps() {
     const stored = localStorage.getItem(STORAGE_KEY)
-    if (stored) maps.value = JSON.parse(stored)
-    else {
-      const demo = {
-        id: 'demo', name: 'Mappa Demo', cols: 10, rows: 10,
-        grid: Array(10).fill().map(() => Array(10).fill().map(() => ({ type: CELL_TYPES.FLOOR, details: null, markerId: null })))
+    if (stored) {
+      maps.value = JSON.parse(stored)
+      // Se c'è almeno una mappa, seleziona la prima come corrente
+      if (maps.value.length > 0) {
+        currentMapId.value = maps.value[0].id
       }
-      maps.value = [demo]
-      currentMapId.value = 'demo'
+      return
+    }
+
+    // Nessuna mappa salvata: crea una demo temporanea
+    const demo = {
+      id: 'demo',
+      name: 'Mappa Demo',
+      cols: 10,
+      rows: 10,
+      grid: Array(10).fill().map(() =>
+        Array(10).fill().map(() => ({
+          type: CELL_TYPES.FLOOR,
+          details: null,
+          markerId: null
+        }))
+      )
+    }
+    maps.value = [demo]
+    currentMapId.value = 'demo'
+    saveMaps()
+
+    // Avvia il caricamento asincrono del file predefinito
+    loadDefaultMapFromFile()
+  }
+
+  /**
+   * Tenta di caricare il file "map-heroquest 32x32.json" dalla cartella public/.
+   * Se il caricamento ha successo, sostituisce le mappe con quelle del file.
+   * In caso di errore, mantiene la mappa demo.
+   */
+  async function loadDefaultMapFromFile() {
+    try {
+      const response = await fetch('/map-heroquest 32x32.json')
+      if (!response.ok) throw new Error('File non trovato')
+      const data = await response.json()
+
+      let mapList = []
+      if (data.maps && Array.isArray(data.maps)) {
+        mapList = data.maps
+      } else if (Array.isArray(data)) {
+        mapList = data
+      } else {
+        throw new Error('Formato JSON non riconosciuto')
+      }
+
+      if (mapList.length === 0) throw new Error('Nessuna mappa nel file')
+
+      // Sostituisci le mappe esistenti (la demo) con quelle caricate
+      maps.value = mapList
+      currentMapId.value = mapList[0].id
       saveMaps()
+      console.log('[mapStore] Mappa predefinita caricata:', mapList[0].name)
+    } catch (error) {
+      console.warn('[mapStore] Caricamento mappa predefinita fallito:', error.message)
+      // Mantiene la mappa demo già creata
     }
   }
-  function saveMaps() { localStorage.setItem(STORAGE_KEY, JSON.stringify(maps.value)) }
+
+  function saveMaps() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(maps.value))
+  }
+
   function createNewMap(name, cols, rows) {
     const id = Date.now().toString()
-    const grid = Array(rows).fill().map(() => Array(cols).fill().map(() => ({ type: CELL_TYPES.FLOOR, details: null, markerId: null })))
+    const grid = Array(rows).fill().map(() =>
+      Array(cols).fill().map(() => ({
+        type: CELL_TYPES.FLOOR,
+        details: null,
+        markerId: null
+      }))
+    )
     maps.value.push({ id, name, cols, rows, grid })
     currentMapId.value = id
     saveMaps()
   }
-  function loadMap(id) { currentMapId.value = id }
-  function saveCurrentMap(newName) { if (currentMap.value) { currentMap.value.name = newName; saveMaps() } }
+
+  function loadMap(id) {
+    currentMapId.value = id
+  }
+
+  function saveCurrentMap(newName) {
+    if (currentMap.value) {
+      currentMap.value.name = newName
+      saveMaps()
+    }
+  }
+
   function deleteMap(id) {
     const idx = maps.value.findIndex(m => m.id === id)
-    if (idx !== -1) { maps.value.splice(idx, 1); if (currentMapId.value === id) currentMapId.value = maps.value[0]?.id || null; saveMaps() }
+    if (idx !== -1) {
+      maps.value.splice(idx, 1)
+      if (currentMapId.value === id) {
+        currentMapId.value = maps.value[0]?.id || null
+      }
+      saveMaps()
+    }
   }
+
   function resizeCurrentMap(newCols, newRows) {
     if (!currentMap.value) return
     const oldGrid = currentMap.value.grid
-    const newGrid = Array(newRows).fill().map((_, r) => Array(newCols).fill().map((_, c) =>
-      (r < oldGrid.length && c < oldGrid[0].length) ? { ...oldGrid[r][c] } : { type: CELL_TYPES.FLOOR, details: null, markerId: null }
-    ))
-    currentMap.value.grid = newGrid; currentMap.value.cols = newCols; currentMap.value.rows = newRows
+    const newGrid = Array(newRows).fill().map((_, r) =>
+      Array(newCols).fill().map((_, c) =>
+        (r < oldGrid.length && c < oldGrid[0].length)
+          ? { ...oldGrid[r][c] }
+          : { type: CELL_TYPES.FLOOR, details: null, markerId: null }
+      )
+    )
+    currentMap.value.grid = newGrid
+    currentMap.value.cols = newCols
+    currentMap.value.rows = newRows
     saveMaps()
   }
+
   function setCell(col, row, type, details = null, markerId = null) {
     if (!currentMap.value) return
     if (col >= 0 && col < currentMap.value.cols && row >= 0 && row < currentMap.value.rows) {
@@ -86,6 +177,7 @@ export const useMapStore = defineStore('map', () => {
       saveMaps()
     }
   }
+
   function getMarkerAnchors() {
     if (!currentMap.value) return []
     const anchors = []
@@ -100,6 +192,19 @@ export const useMapStore = defineStore('map', () => {
     return anchors
   }
 
+  // Inizializza il caricamento
   loadMaps()
-  return { maps, currentMapId, currentMap, createNewMap, loadMap, saveCurrentMap, deleteMap, resizeCurrentMap, setCell, getMarkerAnchors }
+
+  return {
+    maps,
+    currentMapId,
+    currentMap,
+    createNewMap,
+    loadMap,
+    saveCurrentMap,
+    deleteMap,
+    resizeCurrentMap,
+    setCell,
+    getMarkerAnchors
+  }
 })

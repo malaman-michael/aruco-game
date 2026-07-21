@@ -14,43 +14,56 @@
           <strong>Con mappa</strong> → usa le mappe create nell’Editor Mappa
         </p>
       </div>
+
       <div class="info-card">
         <p>
           <strong>{{ registeredCount }}</strong> marker registrati ·
           <strong>{{ gameStore.gridCols }}×{{ gameStore.gridRows }}</strong> griglia
         </p>
       </div>
+
       <nav aria-label="Menu principale">
-        <div class="btn-group">
-          <button class="btn-primary btn-play-wo-map" @click="$router.push('/gameOpenGrid')">
-            🏞️ Campo aperto
-            <span class="btn-desc">(usa configurazione pedine)</span>
-          </button>
-          <button class="btn-primary btn-play-map" @click="$router.push('/gameWithMap')">
-            🗺️ Con mappa
-            <span class="btn-desc">(usa mappe editor)</span>
-          </button>
-          <button class="btn-secondary btn-setup" @click="$router.push('/setup')">
-            ⚙️ Configurazione pedine e griglia
-          </button>
-          <button class="btn-secondary btn-map" @click="$router.push('/map-editor')">
-            🗺️ Editor Mappa
-          </button>
-          <button class="btn-accent btn-voice" @click="$router.push('/voice-color')">
-            🎤 Cambia colore con la voce
-          </button>
-          <button class="btn-accent btn-gesture" @click="$router.push('/gesture-recognition')">
-            🖐️ Riconoscimento gesti
-          </button>
-          <button class="btn-accent btn-assistant" @click="$router.push('/placement-assistant')">
-            🎧 Guida al posizionamento
-          </button>
-          <button class="btn-accent btn-move" @click="$router.push('/voice-movement')">
-            🎲 Muovi pedine con voce
-          </button>
-          <button class="btn-accent btn-settings" @click="$router.push('/settings')">
-            Personalizzazione messaggi audio
-          </button>
+        <!-- Sezione Gioco -->
+        <div class="section-container section-game">
+          <h2 class="section-title">🎮 Gioco</h2>
+          <div class="btn-group">
+            <button class="btn-primary btn-play-wo-map" @click="$router.push('/gameOpenGrid')">
+              🏞️ Campo aperto
+              <span class="btn-desc">(usa configurazione pedine)</span>
+            </button>
+            <button class="btn-primary btn-play-map" @click="$router.push('/gameWithMap')">
+              🗺️ Con mappa
+              <span class="btn-desc">(usa mappe editor)</span>
+            </button>
+            <button class="btn-secondary btn-setup" @click="$router.push('/setup')">
+              ⚙️ Configurazione pedine e griglia
+            </button>
+            <button class="btn-secondary btn-map" @click="$router.push('/map-editor')">
+              🗺️ Editor Mappa
+            </button>
+          </div>
+        </div>
+
+        <!-- Sezione Funzionalità aggiuntive / POC -->
+        <div class="section-container section-features">
+          <h2 class="section-title">🧪 Funzionalità aggiuntive</h2>
+          <div class="btn-group">
+            <button class="btn-accent btn-voice" @click="$router.push('/voice-color')">
+              🎤 Cambia colore con la voce
+            </button>
+            <button class="btn-accent btn-gesture" @click="$router.push('/gesture-recognition')">
+              🖐️ Riconoscimento gesti
+            </button>
+            <button class="btn-accent btn-assistant" @click="$router.push('/placement-assistant')">
+              🎧 Guida al posizionamento
+            </button>
+            <button class="btn-accent btn-move" @click="$router.push('/voice-movement')">
+              🎲 Muovi pedine con voce
+            </button>
+            <button class="btn-accent btn-settings" @click="$router.push('/settings')">
+              Personalizzazione messaggi audio
+            </button>
+          </div>
         </div>
       </nav>
     </main>
@@ -68,7 +81,7 @@ const registeredCount = computed(() => Object.keys(markersStore.registry).length
 </script>
 
 <style scoped>
-/* ... stili esistenti ... */
+/* Stili generali (invariati) */
 .home-view {
   min-height: 100vh;
   background: linear-gradient(160deg, #0f0f1e 0%, #1a1a3a 100%);
@@ -104,14 +117,42 @@ p {
   border-radius: 12px;
   display: inline-block;
 }
+
+.info-card {
+  background: #1a1a2e;
+  border-radius: 12px;
+  padding: 0.8rem 1.2rem;
+  text-align: center;
+  font-size: 0.9rem;
+  color: #888;
+  max-width: 90%;
+}
+
+/* Sezioni */
+.section-container {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 1.2rem 1rem;
+  margin-bottom: 1.5rem;
+  width: 100%;
+  max-width: 1000px;
+}
+.section-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #ccc;
+  margin: 0 0 1rem 0;
+  text-align: left;
+  letter-spacing: 0.5px;
+}
+
 .btn-group {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
   gap: 0.8rem;
   width: 100%;
-  max-width: 1000px;
-  margin: 0 auto;
 }
 .btn-group button {
   border-radius: 14px;
@@ -169,19 +210,13 @@ p {
 .btn-move {
   background: linear-gradient(135deg, #3b82f6, #1e40af);
 }
+.btn-settings {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+}
 .btn-group button:hover {
   transform: translateY(-2px);
   filter: brightness(1.05);
   box-shadow: 0 6px 12px rgba(0,0,0,0.2);
-}
-.info-card {
-  background: #1a1a2e;
-  border-radius: 12px;
-  padding: 0.8rem 1.2rem;
-  text-align: center;
-  font-size: 0.9rem;
-  color: #888;
-  max-width: 90%;
 }
 
 /* Skip link */
@@ -198,12 +233,14 @@ p {
   top: 0;
 }
 
+/* Responsive */
 @media (min-width: 640px) {
   .btn-group { gap: 1rem; }
   .btn-group button { padding: 0.9rem 1.4rem; font-size: 1rem; min-width: 160px; }
 }
 @media (min-width: 1024px) {
-  .btn-group { max-width: 1200px; gap: 1rem; }
+  .section-container { padding: 1.5rem 2rem; }
+  .btn-group { gap: 1rem; }
   .btn-group button { flex: 0 1 auto; min-width: 180px; padding: 1rem 1.5rem; font-size: 1.05rem; }
 }
 @media (max-width: 480px) {
