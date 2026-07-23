@@ -58,13 +58,21 @@ export function pointToCell(colRow, gridCols, gridRows) {
   }
 }
 
+/**
+ * Costruisce l'omografia mappando i marker (che sono al centro delle celle)
+ * ai centri delle celle corrispondenti.
+ */
 export function buildHomographyFromMarkers(markerDetected, anchors, cellSize = 1) {
   const srcPts = [], dstPts = []
   for (const marker of markerDetected) {
     const anchor = anchors.find(a => a.id === marker.id)
     if (anchor) {
       srcPts.push({ x: marker.center.x, y: marker.center.y })
-      dstPts.push({ x: anchor.col * cellSize, y: anchor.row * cellSize })
+      // Il marker è al centro della cella → destinazione = centro cella
+      dstPts.push({
+        x: (anchor.col + 0.5) * cellSize,
+        y: (anchor.row + 0.5) * cellSize
+      })
     }
   }
   if (srcPts.length < 4) {
