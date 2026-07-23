@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { buildHomographyFromMarkers } from '../services/homographyService.js'
 import { useMapStore } from './mapStore.js'
+import { voice } from '../services/voiceService.js'
 
 const STORAGE_KEY = 'aruco-game-config'
 
@@ -100,8 +101,7 @@ export const useGameStore = defineStore('game', () => {
           homography.value = H
           console.log('[gameStore] Omografia calcolata con 4 ancore (area massima):', selected.map(s => `#${s.id}`).join(', '))
           // Annuncio vocale opzionale
-          const voice = (await import('../services/voiceService.js')).voice
-          voice?.say?.(`Omografia con ancore ${selected.map(s => s.id).join(', ')}`, 'homography_anchors', 1)
+          voice.say(`Omografia con ancore ${selected.map(s => s.id).join(', ')}`, 'homography_anchors', 1)
           return
         }
       }

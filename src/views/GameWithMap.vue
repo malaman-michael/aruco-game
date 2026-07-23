@@ -607,7 +607,6 @@ onUnmounted(() => {
 
 
 <style scoped>
-/* ... stili esistenti (invariati) ... */
 .game-view { position: fixed; inset: 0; background: #000; display: flex; flex-direction: column; overflow: hidden; }
 .viewport { flex: 1; position: relative; overflow: hidden; }
 .hud-top { position: absolute; top: env(safe-area-inset-top, 12px); left: 0; right: 0; display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 1rem; z-index: 10; }
