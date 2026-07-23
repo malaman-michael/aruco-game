@@ -1,12 +1,14 @@
 // src/views/GameOpenGrid.vue
 <template>
   <div class="game-view">
+    <!-- Camera View -->
     <div v-show="viewMode === 'camera'" class="viewport" ref="viewportEl">
       <CameraView ref="cameraViewRef" :active="isActive" @unknown-marker="onUnknownMarker" @frame-processed="onFrameProcessed" />
     </div>
 
+    <!-- Table View -->
     <div v-show="viewMode === 'table'" class="table-view">
-      <!-- Indicator ancore visibili -->
+      <!-- Indicatore ancore -->
       <div class="corner-indicator">
         <div class="corner-box">
           <span class="corner-label">Ancore visibili</span>
@@ -14,24 +16,26 @@
             <span class="indicator-dot" :class="{ active: gameStore.visibleAnchorsCount >= 1 }">1</span>
             <span class="indicator-dot" :class="{ active: gameStore.visibleAnchorsCount >= 2 }">2</span>
             <span class="indicator-dot" :class="{ active: gameStore.visibleAnchorsCount >= 3 }">3</span>
+            <span class="indicator-dot" :class="{ active: gameStore.visibleAnchorsCount >= 4 }">4</span>
             <span class="indicator-dot" :class="{ active: gameStore.homographyReady }">✓</span>
           </div>
-          <span class="corner-count">{{ gameStore.visibleAnchorsCount }} / 3+</span>
+          <span class="corner-count">{{ gameStore.visibleAnchorsCount }} / 4</span>
         </div>
       </div>
 
+      <!-- Mappa canvas -->
       <div v-if="homographyReady" class="map-canvas-container" ref="mapContainer">
         <canvas ref="mapCanvas" class="map-canvas"></canvas>
       </div>
       <div v-else class="map-placeholder">
-        ⚠️ Calibrazione non pronta – sono necessarie almeno 3 ancore visibili
+        ⚠️ Calibrazione non pronta – sono necessarie almeno 4 ancore visibili
       </div>
 
+      <!-- Tabella pedine -->
       <div class="table-header">
         <h2>📋 Pedine in gioco</h2>
         <span class="piece-count">{{ piecesList.length }} pedine rilevate</span>
       </div>
-
       <div class="table-container">
         <table class="pieces-table">
           <thead>
@@ -79,7 +83,6 @@
           </tbody>
         </table>
       </div>
-
       <div class="table-footer">
         <button class="btn-back" @click="viewMode = 'camera'">← Torna alla fotocamera</button>
       </div>
@@ -96,7 +99,6 @@
         <button class="icon-btn" @click="viewMode = 'table'" title="Visualizza tabella pedine">📋</button>
       </div>
     </div>
-
     <div v-else class="hud-top table-hud">
       <button class="icon-btn" @click="$router.push('/')">✕</button>
       <span class="hud-title">Tabella Pedine</span>
@@ -113,17 +115,17 @@
           <span class="corner-dot" :class="{ acquired: gameStore.visibleAnchorsCount >= 1 }">1</span>
           <span class="corner-dot" :class="{ acquired: gameStore.visibleAnchorsCount >= 2 }">2</span>
           <span class="corner-dot" :class="{ acquired: gameStore.visibleAnchorsCount >= 3 }">3</span>
+          <span class="corner-dot" :class="{ acquired: gameStore.visibleAnchorsCount >= 4 }">4</span>
         </span>
-        (servono 3+)
+        (servono 4)
       </span>
       <span v-else class="status-ok">
-        ✓ {{ gameStore.freeMode ? 'Campo libero' : `${gameStore.gridCols}×${gameStore.gridRows}` }} ·
-        {{ gameStore.pieces.length }} pedine ·
-        {{ gameStore.allowNewMarkers ? '🔓' : '🔒' }}
+        ✓ {{ gameStore.freeMode ? 'Campo libero' : `${gameStore.gridCols}×${gameStore.gridRows}` }} · {{ gameStore.pieces.length }} pedine · {{ gameStore.allowNewMarkers ? '🔓' : '🔒' }}
         <button class="reset-h-btn" @click="onResetHomography" title="Ricalibra griglia">↺</button>
       </span>
     </div>
 
+    <!-- Dialog e pannelli -->
     <MarkerSetupDialog :visible="dialogVisible" :marker="unknownMarker" @confirmed="dialogVisible = false" @cancelled="dialogVisible = false" />
     <CameraSettingsPanel :visible="showSettings" @close="showSettings = false" />
 
@@ -138,15 +140,7 @@
             <span class="piece-emoji">{{ p.emoji }}</span>
             <div>
               <strong>{{ p.label }}</strong>
-              <small>#{{ p.id }} ·
-                <template v-if="!gameStore.freeMode">
-                  {{ p.col !== null ? `(${p.col}, ${p.row})` : '–' }}
-                </template>
-                <template v-else>
-                  {{ getPiecePixelPosition(p) || '–' }}
-                </template>
-                · {{ p.angle !== null ? `${Math.round(p.angle)}°` : '–' }}
-              </small>
+              <small>#{{ p.id }} · <template v-if="!gameStore.freeMode">{{ p.col !== null ? `(${p.col}, ${p.row})` : '–' }}</template><template v-else>{{ getPiecePixelPosition(p) || '–' }}</template> · {{ p.angle !== null ? `${Math.round(p.angle)}°` : '–' }}</small>
             </div>
           </div>
           <p v-if="!gameStore.pieces.length" class="no-pieces">Nessuna pedina visibile</p>
@@ -154,7 +148,9 @@
       </div>
     </transition>
 
-    <button v-if="viewMode === 'camera'" class="fab" @click="showPieceList = !showPieceList"> 🎲 {{ gameStore.pieces.length }} </button>
+    <button v-if="viewMode === 'camera'" class="fab" @click="showPieceList = !showPieceList">
+      🎲 {{ gameStore.pieces.length }}
+    </button>
   </div>
 </template>
 
@@ -183,7 +179,6 @@ const mapCanvas = ref(null)
 const mapContainer = ref(null)
 
 const homographyReady = computed(() => gameStore.homographyReady)
-
 const piecesList = computed(() => {
   return gameStore.pieces.filter(p => p.category !== 'furniture')
 })
@@ -263,8 +258,7 @@ function isPointInsideQuad(px, py, quad) {
   for (let i = 0, j = quad.length-1; i < quad.length; j = i++) {
     const xi = quad[i].x, yi = quad[i].y
     const xj = quad[j].x, yj = quad[j].y
-    const intersect = ((yi > py) != (yj > py)) &&
-      (px < (xj - xi) * (py - yi) / (yj - yi) + xi)
+    const intersect = ((yi > py) != (yj > py)) && (px < (xj - xi) * (py - yi) / (yj - yi) + xi)
     if (intersect) inside = !inside
   }
   return inside
@@ -303,21 +297,18 @@ function drawMap() {
   if (!container) return
   const rect = container.getBoundingClientRect()
   if (rect.width === 0 || rect.height === 0) return
-
   canvas.width = rect.width
   canvas.height = rect.height
   ctx.clearRect(0, 0, canvas.width, canvas.height)
 
   const H = gameStore.homography
   if (!H) return
-
   const invH = invertH(H)
   if (!invH) return
 
   const cols = gameStore.gridCols
   const rows = gameStore.gridRows
 
-  // Disegna la griglia
   ctx.strokeStyle = 'rgba(255,204,0,0.3)'
   ctx.lineWidth = 1
   for (let c = 0; c <= cols; c++) {
@@ -337,7 +328,6 @@ function drawMap() {
     ctx.stroke()
   }
 
-  // Calcola i quattro angoli della griglia per il disegno delle linee
   const corners = [
     applyHomography(invH, { x: 0, y: 0 }),
     applyHomography(invH, { x: cols, y: 0 }),
@@ -346,7 +336,6 @@ function drawMap() {
   ]
   const quad = corners
 
-  // Disegna le pedine
   for (const piece of gameStore.pieces) {
     if (piece.col === null || piece.row === null) continue
     const pos = applyHomography(invH, { x: piece.col + 0.5, y: piece.row + 0.5 })
@@ -361,8 +350,6 @@ function drawMap() {
     ctx.font = 'bold 14px monospace'
     ctx.shadowBlur = 0
     ctx.fillText(piece.id, pos.x - 6, pos.y - 6)
-
-    // Linea di direzione
     if (piece.angle !== null) {
       drawDirectionLine(ctx, pos, piece.angle, quad, '#ffaa44', 2)
     }
@@ -371,7 +358,6 @@ function drawMap() {
 
 onMounted(() => {
   gameStore.startGame()
-  // Annuncia lo stato iniziale delle ancore
   voice.announceAnchorsCount?.(gameStore.visibleAnchorsCount)
   window.addEventListener('resize', () => {
     if (viewMode.value === 'table' && homographyReady.value) {
@@ -382,7 +368,9 @@ onMounted(() => {
 
 watch([() => gameStore.pieces, () => gameStore.homography, homographyReady, viewMode, () => gameStore.freeMode], () => {
   if (viewMode.value === 'table' && homographyReady.value) {
-    nextTick(() => { drawMap() })
+    nextTick(() => {
+      drawMap()
+    })
   }
 })
 
@@ -406,7 +394,7 @@ function announceMarkerMode() {
 
 function onResetHomography() {
   gameStore.resetHomography()
-  voice.say('Calibrazione azzerata. Inquadra almeno 3 ancore.', 'reset_h', 2)
+  voice.say('Calibrazione azzerata. Inquadra almeno 4 ancore.', 'reset_h', 2)
 }
 
 function onUnknownMarker(marker) {
@@ -417,16 +405,13 @@ function onUnknownMarker(marker) {
 }
 
 function onFrameProcessed(payload) {
-  // Aggiorna eventuali annunci quando il numero di ancore cambia
-  const prevCount = gameStore.visibleAnchorsCount
-  // Il conteggio viene aggiornato da gameStore dopo recomputeHomography
-  // Possiamo annunciare il cambiamento se necessario
-  // Usiamo un watcher per il conteggio? Lo faremo con watch in onMounted
+  // Il conteggio delle ancore viene già aggiornato da gameStore
 }
 </script>
 
+
+
 <style scoped>
-/* ... stili esistenti ... */
 .game-view { position: fixed; inset: 0; background: #000; display: flex; flex-direction: column; overflow: hidden; }
 .viewport { flex: 1; position: relative; overflow: hidden; }
 .hud-top { position: absolute; top: env(safe-area-inset-top, 12px); left: 0; right: 0; display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 1rem; z-index: 10; }

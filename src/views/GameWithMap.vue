@@ -1,15 +1,12 @@
 <template>
   <div class="game-view">
-    <!-- Skip link -->
     <a href="#main" class="skip-link">Salta al contenuto principale</a>
-
     <div v-show="viewMode === 'camera'" class="viewport" ref="viewportEl">
       <CameraView ref="cameraViewRef" :active="isActive" @unknown-marker="onUnknownMarker" @frame-processed="onFrameProcessed" @homography-updated="onHomographyUpdated" />
       <canvas v-if="selectedMapId && showMapOverlay" ref="overlayCanvas" class="map-canvas-overlay" aria-label="Mappa sovrapposta alla videocamera con griglia e pedine"></canvas>
     </div>
-
     <main id="main" v-show="viewMode === 'table'" class="table-view">
-      <!-- Indicator ancore visibili -->
+      <!-- Indicatore ancore -->
       <div class="corner-indicator">
         <div class="corner-box">
           <span class="corner-label">Ancore visibili</span>
@@ -17,17 +14,18 @@
             <span class="indicator-dot" :class="{ active: gameStore.visibleAnchorsCount >= 1 }">1</span>
             <span class="indicator-dot" :class="{ active: gameStore.visibleAnchorsCount >= 2 }">2</span>
             <span class="indicator-dot" :class="{ active: gameStore.visibleAnchorsCount >= 3 }">3</span>
+            <span class="indicator-dot" :class="{ active: gameStore.visibleAnchorsCount >= 4 }">4</span>
             <span class="indicator-dot" :class="{ active: gameStore.homographyReady }">✓</span>
           </div>
-          <span class="corner-count">{{ gameStore.visibleAnchorsCount }} / 3+</span>
+          <span class="corner-count">{{ gameStore.visibleAnchorsCount }} / 4</span>
         </div>
       </div>
 
+      <!-- Tabella pedine -->
       <div class="table-header">
         <h2>🎲 Pedine in gioco</h2>
         <span class="piece-count">{{ piecesList.length }} pedine rilevate</span>
       </div>
-
       <div class="table-container">
         <table class="pieces-table" aria-label="Tabella delle pedine attualmente rilevate">
           <caption class="sr-only">Elenco delle pedine visibili sul campo con ID, nome, posizione e orientamento</caption>
@@ -67,11 +65,11 @@
         </table>
       </div>
 
+      <!-- Contenuto mappa -->
       <div class="table-header" style="margin-top: 2rem;">
         <h2>🗺️ Contenuto mappa: {{ selectedMapName }}</h2>
         <span class="piece-count">{{ staticCellsList.length }} celle occupate</span>
       </div>
-
       <div class="table-container">
         <table v-if="selectedMapId && currentStaticMap" class="pieces-table" aria-label="Elenco degli elementi statici della mappa">
           <caption class="sr-only">Elenco degli elementi fissi della mappa selezionata</caption>
@@ -104,11 +102,11 @@
         </table>
       </div>
 
+      <!-- Griglia mappa -->
       <div v-if="currentStaticMap" class="table-header" style="margin-top: 2rem;">
         <h2>🗺️ Mappa (griglia {{ currentStaticMap.cols }}×{{ currentStaticMap.rows }})</h2>
         <span class="piece-count">{{ currentStaticMap.cols * currentStaticMap.rows }} celle totali</span>
       </div>
-
       <div v-if="currentStaticMap" class="grid-table-container">
         <table class="grid-map-table" :aria-label="`Griglia della mappa ${currentStaticMap.name}, ${currentStaticMap.cols} colonne per ${currentStaticMap.rows} righe`">
           <caption class="sr-only">Griglia della mappa con tutte le celle e i loro tipi</caption>
@@ -123,14 +121,12 @@
           <tbody>
             <tr v-for="row in currentStaticMap.rows" :key="'row-' + row">
               <th scope="row" class="grid-row-header">{{ row + 1 }}</th>
-              <td v-for="col in currentStaticMap.cols" :key="`${row}-${col}`" class="grid-cell"
-                  :class="{
-                    'grid-cell-wall': currentStaticMap.grid[row]?.[col-1]?.type === 'wall',
-                    'grid-cell-player': currentStaticMap.grid[row]?.[col-1]?.type === 'player',
-                    'grid-cell-enemy': currentStaticMap.grid[row]?.[col-1]?.type === 'enemy',
-                    'grid-cell-furniture': currentStaticMap.grid[row]?.[col-1]?.type === 'furniture'
-                  }"
-                  :aria-label="`Cella ${String.fromCharCode(64 + col)}${row + 1}: ${getCellDisplay(currentStaticMap.grid[row]?.[col-1])}`">
+              <td v-for="col in currentStaticMap.cols" :key="`${row}-${col}`" class="grid-cell" :class="{
+                'grid-cell-wall': currentStaticMap.grid[row]?.[col-1]?.type === 'wall',
+                'grid-cell-player': currentStaticMap.grid[row]?.[col-1]?.type === 'player',
+                'grid-cell-enemy': currentStaticMap.grid[row]?.[col-1]?.type === 'enemy',
+                'grid-cell-furniture': currentStaticMap.grid[row]?.[col-1]?.type === 'furniture'
+              }" :aria-label="`Cella ${String.fromCharCode(64 + col)}${row + 1}: ${getCellDisplay(currentStaticMap.grid[row]?.[col-1])}`">
                 <span class="grid-emoji">{{ getCellEmoji(currentStaticMap.grid[row]?.[col-1]) }}</span>
               </td>
             </tr>
@@ -143,6 +139,7 @@
       </div>
     </main>
 
+    <!-- HUD -->
     <div v-if="viewMode === 'camera'" class="hud-top">
       <button class="icon-btn" @click="$router.push('/')" aria-label="Esci">✕</button>
       <span class="hud-title">ArUco Game</span>
@@ -154,7 +151,6 @@
         <button class="icon-btn" @click="viewMode = 'table'" aria-label="Visualizza tabella pedine">📋</button>
       </div>
     </div>
-
     <div v-else class="hud-top table-hud">
       <button class="icon-btn" @click="$router.push('/')" aria-label="Esci">✕</button>
       <span class="hud-title">Tabella Pedine</span>
@@ -163,7 +159,7 @@
       </div>
     </div>
 
-    <!-- Status bar con live region -->
+    <!-- Status bar -->
     <div v-if="viewMode === 'camera'" class="status-bar" role="status" aria-live="polite" aria-atomic="true">
       <span v-if="!gameStore.homographyReady" class="status-calibrating">
         📍 Ancore visibili: {{ gameStore.visibleAnchorsCount }}
@@ -171,13 +167,12 @@
           <span class="corner-dot" :class="{ acquired: gameStore.visibleAnchorsCount >= 1 }">1</span>
           <span class="corner-dot" :class="{ acquired: gameStore.visibleAnchorsCount >= 2 }">2</span>
           <span class="corner-dot" :class="{ acquired: gameStore.visibleAnchorsCount >= 3 }">3</span>
+          <span class="corner-dot" :class="{ acquired: gameStore.visibleAnchorsCount >= 4 }">4</span>
         </span>
-        (servono 3+)
+        (servono 4)
       </span>
       <span v-else class="status-ok">
-        ✓ {{ gameStore.gridCols }}×{{ gameStore.gridRows }} ·
-        {{ gameStore.pieces.length }} pedine ·
-        {{ gameStore.allowNewMarkers ? '🔓' : '🔒' }}
+        ✓ {{ gameStore.gridCols }}×{{ gameStore.gridRows }} · {{ gameStore.pieces.length }} pedine · {{ gameStore.allowNewMarkers ? '🔓' : '🔒' }}
         <button class="reset-h-btn" @click="onResetHomography" title="Ricalibra griglia" aria-label="Ricalibra griglia">↺</button>
       </span>
     </div>
@@ -204,9 +199,11 @@
       </div>
     </transition>
 
-    <button v-if="viewMode === 'camera'" class="fab" @click="showPieceList = !showPieceList" aria-label="Mostra/nascondi elenco pedine"> 🎲 {{ gameStore.pieces.length }} </button>
+    <button v-if="viewMode === 'camera'" class="fab" @click="showPieceList = !showPieceList" aria-label="Mostra/nascondi elenco pedine">
+      🎲 {{ gameStore.pieces.length }}
+    </button>
 
-    <!-- Modal selezione mappa con gestione focus -->
+    <!-- Map Picker Modal -->
     <div v-if="showMapPicker" class="modal-overlay" @click.self="showMapPicker = false">
       <div class="modal-sheet" role="dialog" aria-modal="true" aria-label="Selezione mappa">
         <div class="modal-header">
@@ -262,8 +259,6 @@ const overlayCanvas = ref(null)
 const selectedMapId = ref(null)
 const showMapOverlay = ref(true)
 const showMapPicker = ref(false)
-
-// Ref per il primo elemento focusable nella modale
 const modalFirstElement = ref(null)
 
 let animationFrameId = null
@@ -341,7 +336,6 @@ function drawMapOverlay() {
   const homography = gameStore.homography
   const gridCols = gameStore.gridCols
   const gridRows = gameStore.gridRows
-
   if (!map || !homography || !gameStore.homographyReady) return
   if (map.cols !== gridCols || map.rows !== gridRows) {
     gameStore.setGridSize(map.cols, map.rows)
@@ -353,8 +347,8 @@ function drawMapOverlay() {
   if (!invH) return
 
   const gridToPixel = (col, row) => applyHomography(invH, { x: col, y: row })
-
   const grid = map.grid
+
   for (let row = 0; row < gridRows; row++) {
     for (let col = 0; col < gridCols; col++) {
       const cell = grid[row]?.[col] || { type: CELL_TYPES.EMPTY, details: null }
@@ -421,7 +415,6 @@ function selectMap(mapId) {
   if (mapId) {
     const map = mapStore.maps.find(m => m.id === mapId)
     if (map) {
-      // 🔥 CRITICAL: imposta la mappa corrente nello store, così CameraView la usa per le ancore
       mapStore.loadMap(mapId)
       gameStore.setGridSize(map.cols, map.rows)
       voice.say(`Mappa ${map.name} attivata (${map.cols}×${map.rows})`, 'map_selected', 1)
@@ -452,8 +445,10 @@ function getLosTargets(piece, allPieces) {
   const reachableCells = getReachableCells(
     markerData.losMask,
     mapGrid,
-    piece.col, piece.row,
-    cols, rows,
+    piece.col,
+    piece.row,
+    cols,
+    rows,
     blockerTypes
   )
   const targets = []
@@ -476,8 +471,10 @@ function getLofTargets(piece, allPieces) {
   const shootableCells = getShootableCells(
     markerData.lofMask,
     mapGrid,
-    piece.col, piece.row,
-    cols, rows,
+    piece.col,
+    piece.row,
+    cols,
+    rows,
     blockerTypes
   )
   const occupied = new Set()
@@ -551,7 +548,7 @@ function announceMarkerMode() {
 
 function onResetHomography() {
   gameStore.resetHomography()
-  voice.say('Calibrazione azzerata. Inquadra almeno 3 ancore.', 'reset_h', 2)
+  voice.say('Calibrazione azzerata. Inquadra almeno 4 ancore.', 'reset_h', 2)
 }
 
 function onUnknownMarker(marker) {
@@ -562,10 +559,9 @@ function onUnknownMarker(marker) {
 }
 
 function onFrameProcessed(payload) {
-  // non facciamo nulla di specifico
+  // Aggiornamento automatico
 }
 
-// Gestione focus per modale
 watch(showMapPicker, (val) => {
   if (val) {
     nextTick(() => {
@@ -583,7 +579,6 @@ watch(() => mapStore.maps, () => requestRedraw(), { deep: true })
 watch(() => [gameStore.gridCols, gameStore.gridRows], () => requestRedraw())
 
 onMounted(() => {
-  // 🔥 Se non c'è una mappa selezionata e ci sono mappe, seleziona la prima automaticamente
   if (!selectedMapId.value && mapStore.maps.length > 0) {
     selectMap(mapStore.maps[0].id)
   }
@@ -608,6 +603,8 @@ onUnmounted(() => {
   window.removeEventListener('resize', updateCanvasSize)
 })
 </script>
+
+
 
 <style scoped>
 /* ... stili esistenti (invariati) ... */
