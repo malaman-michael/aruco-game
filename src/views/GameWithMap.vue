@@ -415,6 +415,7 @@ function selectMap(mapId) {
   if (mapId) {
     const map = mapStore.maps.find(m => m.id === mapId)
     if (map) {
+      gameStore.resetHomography()
       mapStore.loadMap(mapId)
       gameStore.setGridSize(map.cols, map.rows)
       voice.say(`Mappa ${map.name} attivata (${map.cols}×${map.rows})`, 'map_selected', 1)
@@ -572,7 +573,7 @@ watch(showMapPicker, (val) => {
 
 watch(() => gameStore.homography, () => {
   if (gameStore.homographyReady) requestRedraw()
-}, { deep: true })
+})
 
 watch(selectedMapId, () => requestRedraw())
 watch(() => mapStore.maps, () => requestRedraw(), { deep: true })

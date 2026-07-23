@@ -6,6 +6,12 @@ import { voice } from '../services/voiceService.js'
 
 const STORAGE_KEY = 'aruco-game-config'
 
+// Limiti anti-esplosione combinatoria: selectBestFourAnchors è O(n^4), quindi il
+// numero di ancore "tracciate" contemporaneamente deve restare piccolo.
+const ANCHOR_TTL_MS = 3000        // un'ancora vista viene "dimenticata" dopo 3s se non più visibile
+const MAX_TRACKED_ANCHORS = 16    // tetto massimo assoluto di ancore tracciate
+const MAX_BRUTEFORCE_ANCHORS = 12 // oltre questa soglia, riduciamo il pool prima della ricerca O(n^4)
+
 export const useGameStore = defineStore('game', () => {
   const gridCols = ref(10)
   const gridRows = ref(10)
@@ -29,39 +35,89 @@ export const useGameStore = defineStore('game', () => {
 
   const homographyReady = computed(() => homography.value !== null)
 
+  // Aggiornamento "legacy" di una singola ancora. NON ricalcola più l'omografia
+  // internamente (era questa la causa del blocco: veniva chiamata una volta per
+  // ogni marker rilevato, ad ogni frame). Preferire setVisibleAnchors().
   function updateAnchor(markerId, center) {
     anchorPositions.value = {
       ...anchorPositions.value,
-      [markerId]: { center }
+      [markerId]: { center, lastSeen: Date.now() },
     }
+  }
+
+  // Sostituisce lo stato delle ancore con quelle viste nel frame corrente.
+  // - Le ancore riviste vengono "rinfrescate" (lastSeen aggiornato).
+  // - Le ancore non viste da più di ANCHOR_TTL_MS vengono eliminate.
+  // - Se il set supera MAX_TRACKED_ANCHORS, si tengono solo le più recenti.
+  // Questo mantiene l'insieme di ancore sempre limitato, evitando la crescita
+  // infinita che causava il blocco del programma, pur restando "stabile" per
+  // qualche secondo se un'ancora esce temporaneamente dall'inquadratura.
+  function setVisibleAnchors(visibleList) {
+    const now = Date.now()
+    const next = { ...anchorPositions.value }
+
+    for (const a of visibleList) {
+      next[a.id] = { center: a.center, lastSeen: now }
+    }
+
+    for (const id of Object.keys(next)) {
+      if (now - (next[id].lastSeen ?? 0) > ANCHOR_TTL_MS) {
+        delete next[id]
+      }
+    }
+
+    const ids = Object.keys(next)
+    if (ids.length > MAX_TRACKED_ANCHORS) {
+      const kept = ids
+        .map(id => ({ id, lastSeen: next[id].lastSeen }))
+        .sort((a, b) => b.lastSeen - a.lastSeen)
+        .slice(0, MAX_TRACKED_ANCHORS)
+        .map(x => x.id)
+      const capped = {}
+      for (const id of kept) capped[id] = next[id]
+      anchorPositions.value = capped
+    } else {
+      anchorPositions.value = next
+    }
+
     recomputeHomography()
   }
 
-  /**
-   * Seleziona i 4 punti che formano il quadrilatero di area massima
-   */
+  // Riduce un pool di candidati troppo grande, privilegiando i punti più
+  // distanti dal centro (di solito i migliori candidati per un quadrilatero
+  // ampio e stabile). Usata solo come rete di sicurezza extra.
+  function reduceAnchorPool(detected, max) {
+    const cx = detected.reduce((s, p) => s + p.center.x, 0) / detected.length
+    const cy = detected.reduce((s, p) => s + p.center.y, 0) / detected.length
+    return detected
+      .map(p => ({ ...p, _d: Math.hypot(p.center.x - cx, p.center.y - cy) }))
+      .sort((a, b) => b._d - a._d)
+      .slice(0, max)
+  }
+
   function selectBestFourAnchors(detected) {
     if (detected.length < 4) return null
+
+    let pool = detected
+    if (pool.length > MAX_BRUTEFORCE_ANCHORS) {
+      pool = reduceAnchorPool(pool, MAX_BRUTEFORCE_ANCHORS)
+    }
 
     let bestQuad = null
     let maxArea = -1
 
-    // Prova tutte le combinazioni di 4 punti
-    for (let i = 0; i < detected.length - 3; i++) {
-      for (let j = i + 1; j < detected.length - 2; j++) {
-        for (let k = j + 1; k < detected.length - 1; k++) {
-          for (let l = k + 1; l < detected.length; l++) {
-            const quad = [detected[i], detected[j], detected[k], detected[l]]
-            // Calcola il centro del quadrilatero
+    for (let i = 0; i < pool.length - 3; i++) {
+      for (let j = i + 1; j < pool.length - 2; j++) {
+        for (let k = j + 1; k < pool.length - 1; k++) {
+          for (let l = k + 1; l < pool.length; l++) {
+            const quad = [pool[i], pool[j], pool[k], pool[l]]
             const cx = quad.reduce((s, p) => s + p.center.x, 0) / 4
             const cy = quad.reduce((s, p) => s + p.center.y, 0) / 4
-            // Ordina i punti per angolo polare attorno al centro
             const sorted = [...quad].sort((a, b) => {
               const angleA = Math.atan2(a.center.y - cy, a.center.x - cx)
               const angleB = Math.atan2(b.center.y - cy, b.center.x - cx)
               return angleA - angleB
             })
-            // Calcola l'area con la formula di Gauss (shoelace)
             let area = 0
             for (let idx = 0; idx < 4; idx++) {
               const p1 = sorted[idx].center
@@ -84,7 +140,6 @@ export const useGameStore = defineStore('game', () => {
     const mapStore = useMapStore()
     const targets = mapStore.getMarkerAnchors()
     const detected = []
-
     for (const [id, data] of Object.entries(anchorPositions.value)) {
       const target = targets.find(t => t.id === Number(id))
       if (target) {
@@ -99,15 +154,11 @@ export const useGameStore = defineStore('game', () => {
         const H = buildHomographyFromMarkers(selected, targets)
         if (H) {
           homography.value = H
-          console.log('[gameStore] Omografia calcolata con 4 ancore (area massima):', selected.map(s => `#${s.id}`).join(', '))
-          // Annuncio vocale opzionale
           voice.say(`Omografia con ancore ${selected.map(s => s.id).join(', ')}`, 'homography_anchors', 1)
           return
         }
       }
     }
-
-    // Se non ci sono 4 ancore, resetta l'omografia
     homography.value = null
   }
 
@@ -139,6 +190,7 @@ export const useGameStore = defineStore('game', () => {
   }
 
   function setGridSize(cols, rows) {
+    if (gridCols.value === cols && gridRows.value === rows) return
     gridCols.value = cols
     gridRows.value = rows
     recomputeHomography()
@@ -185,6 +237,7 @@ export const useGameStore = defineStore('game', () => {
     allowNewMarkers,
     toggleNewMarkers,
     updateAnchor,
+    setVisibleAnchors,
     recomputeHomography,
     resetHomography,
     setGridSize,

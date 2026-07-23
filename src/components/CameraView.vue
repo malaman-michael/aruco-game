@@ -1,4 +1,4 @@
-// src/components/CameraView.vue
+<!-- src/components/CameraView.vue -->
 <template>
   <div class="camera-wrapper">
     <canvas ref="canvasEl" class="camera-canvas" />
@@ -20,12 +20,12 @@ import { voice } from '../services/voiceService.js'
 const props = defineProps({
   active: { type: Boolean, default: true },
 })
-const emit = defineEmits(['unknown-marker', 'frame-processed'])
+
+const emit = defineEmits(['unknown-marker', 'frame-processed', 'homography-updated'])
 
 const canvasEl = ref(null)
 const cameraReady = ref(false)
 const cameraError = ref('')
-
 const markersStore = useMarkersStore()
 const gameStore = useGameStore()
 const mapStore = useMapStore()
@@ -46,13 +46,11 @@ let frameCounter = 0
 let restartPending = false
 
 async function startCamera() {
-  // Controlla che l'API sia disponibile
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
     cameraError.value = 'Il browser non supporta la fotocamera o la connessione non è sicura (usa HTTPS).'
     cameraReady.value = false
     return
   }
-
   if (stream) {
     stream.getTracks().forEach(track => track.stop())
   }
@@ -107,6 +105,7 @@ watch(() => props.active, val => val ? startLoop() : stopLoop())
 function startLoop() {
   if (!rafId) loop()
 }
+
 function stopLoop() {
   cancelAnimationFrame(rafId)
   rafId = null
@@ -142,24 +141,20 @@ function processFrame() {
   if (!w || !h) return
 
   const canvas = canvasEl.value
-  // Ottieni le dimensioni effettive del contenitore (per eliminare le barre nere)
   const rect = canvas.getBoundingClientRect()
   const displayWidth = rect.width || canvas.clientWidth || window.innerWidth
   const displayHeight = rect.height || canvas.clientHeight || window.innerHeight
 
-  // Imposta il canvas alle dimensioni di visualizzazione (evita scaling CSS)
   if (canvas.width !== displayWidth || canvas.height !== displayHeight) {
     canvas.width = displayWidth
     canvas.height = displayHeight
   }
 
-  // Mantieni offscreen alle dimensioni originali del video per il rilevamento
   if (offscreen.width !== w || offscreen.height !== h) {
     offscreen.width = w
     offscreen.height = h
   }
 
-  // Preprocessa il frame (usa le dimensioni originali del video)
   const preprocessed = preprocessFrame(w, h)
 
   let markers = []
@@ -171,37 +166,30 @@ function processFrame() {
 
   const H = computeH(markers)
 
-  // Calcola il fattore di zoom per riempire il canvas (crop) senza barre nere
   const ratioW = displayWidth / w
   const ratioH = displayHeight / h
-  // Scegli il rapporto più grande per coprire l'area (crop)
   const zoom = Math.max(ratioW, ratioH) * cam.digitalZoom
   const sw = w * zoom
   const sh = h * zoom
   const offsetX = (displayWidth - sw) / 2
   const offsetY = (displayHeight - sh) / 2
 
-  // Applica filtro e disegna il video
   ctx.filter = buildCSSFilter()
   ctx.drawImage(video, offsetX, offsetY, sw, sh)
   ctx.filter = 'none'
 
-  // Applica la stessa trasformazione per griglia e marker
   ctx.save()
   ctx.setTransform(zoom, 0, 0, zoom, offsetX, offsetY)
-
   if (H && cam.showGrid) drawGrid(ctx, H, w, h)
   drawMarkers(ctx, markers, H, w)
-
   ctx.restore()
 
   handleGameLogic(markers, H)
 }
 
 function preprocessFrame(w, h) {
-  const needsProcessing = cam.brightness !== 100 || cam.contrast !== 100 ||
-    cam.saturation !== 100 || cam.grayscale || cam.threshold > 0 ||
-    cam.sharpness > 0
+  const needsProcessing = cam.brightness !== 100 || cam.contrast !== 100 || cam.saturation !== 100 ||
+    cam.grayscale || cam.threshold > 0 || cam.sharpness > 0
   if (!needsProcessing) return false
 
   offCtx.filter = buildCSSFilter()
@@ -256,27 +244,54 @@ function applyThreshold(ctx, w, h, thresh) {
   ctx.putImageData(imgData, 0, 0)
 }
 
+// --- Ancore / omografia ------------------------------------------------------
+// La mappa markerId -> {col,row} dipende solo dalla mappa attualmente caricata,
+// quindi viene messa in cache e ricostruita solo quando la mappa cambia
+// (prima veniva ricalcolata scorrendo l'intera griglia ad ogni singolo frame).
+let cachedMapId = null
+let cachedCellByMarkerId = {}
+
+function getCellByMarkerIdForCurrentMap() {
+  const currentMap = mapStore.currentMap
+  if (!currentMap) {
+    cachedMapId = null
+    cachedCellByMarkerId = {}
+    return cachedCellByMarkerId
+  }
+  if (cachedMapId === currentMap.id) {
+    return cachedCellByMarkerId
+  }
+  const map = {}
+  for (let row = 0; row < currentMap.rows; row++) {
+    for (let col = 0; col < currentMap.cols; col++) {
+      const cell = currentMap.grid[row][col]
+      if (cell.markerId !== undefined && cell.markerId !== null) {
+        map[cell.markerId] = { col, row }
+      }
+    }
+  }
+  cachedMapId = currentMap.id
+  cachedCellByMarkerId = map
+  return cachedCellByMarkerId
+}
+
 function computeH(markers) {
-  // Aggiorna le ancore rilevate
   const currentMap = mapStore.currentMap
   if (currentMap) {
-    // Crea una mappa id -> cella per la griglia corrente
-    const cellByMarkerId = {}
-    for (let row = 0; row < currentMap.rows; row++) {
-      for (let col = 0; col < currentMap.cols; col++) {
-        const cell = currentMap.grid[row][col]
-        if (cell.markerId !== undefined && cell.markerId !== null) {
-          cellByMarkerId[cell.markerId] = { col, row }
-        }
-      }
-    }
+    const cellByMarkerId = getCellByMarkerIdForCurrentMap()
+    const visible = []
     for (const m of markers) {
       if (cellByMarkerId[m.id]) {
-        gameStore.updateAnchor(m.id, m.center)
+        visible.push({ id: m.id, center: m.center })
       }
     }
-    // Ricalcola omografia se necessario
-    gameStore.recomputeHomography()
+    // IMPORTANTE: si aggiorna l'omografia UNA sola volta per frame (non una
+    // volta per marker), e le ancore non più viste vengono eliminate
+    // automaticamente da gameStore dopo qualche secondo. Prima le ancore si
+    // accumulavano all'infinito e il calcolo del miglior quadrilatero
+    // (O(n^4)) finiva per bloccare completamente l'app.
+    gameStore.setVisibleAnchors(visible)
+    emit('homography-updated', gameStore.homography)
   }
   return gameStore.homography
 }
@@ -286,11 +301,9 @@ function drawGrid(ctx, H, w, h) {
   const rows = gameStore.gridRows
   const invH = invert3x3(H)
   const opacity = cam.gridOpacity
-
   ctx.save()
   ctx.strokeStyle = `rgba(100, 200, 255, ${opacity})`
   ctx.lineWidth = 1
-
   for (let c = 0; c <= cols; c++) {
     const p1 = gridToPixel(invH, c, 0)
     const p2 = gridToPixel(invH, c, rows)
@@ -301,19 +314,15 @@ function drawGrid(ctx, H, w, h) {
     const p2 = gridToPixel(invH, cols, r)
     ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke()
   }
-
-  // Pedine
   for (const piece of gameStore.pieces) {
     if (piece.col === null) continue
     const tl = gridToPixel(invH, piece.col, piece.row)
     const tr = gridToPixel(invH, piece.col + 1, piece.row)
     const br = gridToPixel(invH, piece.col + 1, piece.row + 1)
     const bl = gridToPixel(invH, piece.col, piece.row + 1)
-    const color = piece.category === 'player'
-      ? `rgba(68,136,255,${opacity})`
-      : piece.category === 'enemy'
-        ? `rgba(255,68,68,${opacity})`
-        : `rgba(255,170,0,${opacity})`
+    const color = piece.category === 'player' ? `rgba(68,136,255,${opacity})` :
+                  piece.category === 'enemy' ? `rgba(255,68,68,${opacity})` :
+                  `rgba(255,170,0,${opacity})`
     ctx.beginPath()
     ctx.moveTo(tl.x, tl.y); ctx.lineTo(tr.x, tr.y)
     ctx.lineTo(br.x, br.y); ctx.lineTo(bl.x, bl.y)
@@ -328,7 +337,6 @@ function drawGrid(ctx, H, w, h) {
     const rotText = piece.rotationSymbol ? `, ${piece.rotationSymbol}` : ''
     ctx.fillText(`${piece.col},${piece.row}${rotText}`, cx, cy + 4)
   }
-
   ctx.restore()
 }
 
@@ -353,17 +361,11 @@ function invert3x3(m) {
 function drawMarkers(ctx, markers, H, videoW) {
   if (!cam.showIds && !cam.showCubes) return
   const fontSize = Math.max(16, videoW * 0.025)
-
   markers.forEach(({ id, corners, center, angle }) => {
     const known = markersStore.getMarker(id)
-    const color = !known
-      ? '#ff4444'
-      : known.category === 'player'
-        ? '#4488ff'
-        : known.category === 'enemy'
-          ? '#ff4444'
-          : '#00ff88' // fallback per altri tipi
-
+    const color = !known ? '#ff4444' :
+                  known.category === 'player' ? '#4488ff' :
+                  known.category === 'enemy' ? '#ff4444' : '#00ff88'
     ctx.beginPath()
     ctx.moveTo(corners[0].x, corners[0].y)
     corners.forEach(p => ctx.lineTo(p.x, p.y))
@@ -381,12 +383,14 @@ function drawMarkers(ctx, markers, H, videoW) {
       ctx.fillStyle = color + '33'
       ctx.fill()
       ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.stroke()
+
       ctx.beginPath()
       ctx.moveTo(corners[0].x, corners[0].y)
       ctx.lineTo(corners[0].x, corners[0].y - lift)
       ctx.moveTo(corners[1].x, corners[1].y)
       ctx.lineTo(corners[1].x, corners[1].y - lift)
       ctx.stroke()
+
       ctx.beginPath()
       ctx.moveTo(corners[0].x, corners[0].y - lift)
       ctx.lineTo(corners[1].x, corners[1].y - lift)
@@ -426,9 +430,11 @@ defineExpose({
     const c = tmp.getContext('2d')
     c.drawImage(video, 0, 0)
     const imageData = c.getImageData(0, 0, video.videoWidth, video.videoHeight)
-    const detector = window.AR?.DICTIONARIES ? (() => {
-      try { return arucoService?._detector ?? null } catch { return null }
-    })() : null
+    const detector = window.AR?.DICTIONARIES
+      ? (() => {
+          try { return arucoService?._detector ?? null } catch { return null }
+        })()
+      : null
     const AR = window.AR
     const det = AR ? new AR.Detector({ dictionaryName: Object.keys(AR.DICTIONARIES ?? {})[0] }) : null
     return { imageData, detector: det }
@@ -447,7 +453,6 @@ function handleGameLogic(markers, H) {
     }
   }
 
-  // Crea set di ancore per escluderle dalle pedine
   const anchors = new Set()
   const currentMap = mapStore.currentMap
   if (currentMap) {
@@ -463,7 +468,6 @@ function handleGameLogic(markers, H) {
 
   const pieces = []
   for (const m of markers) {
-    // Salta i marker che sono ancore (usati per l'omografia)
     if (anchors.has(m.id)) continue
     const data = markersStore.getMarker(m.id)
     if (!data) continue
@@ -474,6 +478,7 @@ function handleGameLogic(markers, H) {
       col = cell.col
       row = cell.row
     }
+
     const { degrees: rotationDeg, symbol: rotationSymbol } = approximateCardinalAngle(m.angle)
 
     pieces.push({
@@ -499,6 +504,7 @@ function handleGameLogic(markers, H) {
   }
 
   gameStore.updatePieces(pieces)
+
   emit('frame-processed', {
     markers,
     pieces,
