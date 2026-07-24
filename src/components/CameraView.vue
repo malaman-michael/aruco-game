@@ -62,19 +62,32 @@ async function enumerateCameras() {
     const videoDevices = devices.filter(d => d.kind === 'videoinput')
     if (videoDevices.length === 0) return
 
-    // Cerca una grandangolare (wide, ultra, 0.5x)
-    const wide = videoDevices.find(d =>
-      d.label.toLowerCase().includes('wide') ||
-      d.label.toLowerCase().includes('ultra') ||
-      d.label.toLowerCase().includes('0.5')
-    )
-    // La prima è considerata principale (di solito la posteriore)
-    const main = videoDevices.find(d => d.deviceId !== wide?.deviceId) || videoDevices[0]
+    // Separa le fotocamere posteriori da quelle anteriori basandosi sull'etichetta
+    const rearCams = videoDevices.filter(d => {
+      const label = d.label.toLowerCase()
+      // Escludiamo esplicitamente quelle con 'front' o 'selfie'
+      if (label.includes('front') || label.includes('selfie') || label.includes('facetime')) return false
+      // Consideriamo posteriori quelle con 'back', 'rear', 'main', oppure se non hanno 'front'
+      return label.includes('back') || label.includes('rear') || label.includes('main') || true
+    })
+
+    // Se non abbiamo trovato camere posteriori, usiamo tutte (per sicurezza)
+    const candidates = rearCams.length ? rearCams : videoDevices
+
+    // Tra le posteriori, cerchiamo una grandangolare (wide, ultra, 0.5)
+    const wide = candidates.find(d => {
+      const label = d.label.toLowerCase()
+      return label.includes('wide') || label.includes('ultra') || label.includes('0.5')
+    })
+
+    // La principale è la prima camera posteriore che non è la grandangolare,
+    // oppure la prima se non c'è grandangolare
+    const main = candidates.find(d => d.deviceId !== wide?.deviceId) || candidates[0]
 
     mainCameraId = main.deviceId
     wideCameraId = wide?.deviceId || null
 
-    // Se non troviamo grandangolare, usiamo la principale anche per zoom < 1
+    // Se non c'è una grandangolare, usiamo la principale per entrambi i casi
     if (!wideCameraId) {
       wideCameraId = mainCameraId
     }
@@ -134,14 +147,12 @@ async function startCamera(cameraId = null) {
 }
 
 // ---- Watcher per cambiare fotocamera in base allo zoom ----
-let previousZoom = cam.digitalZoom
 watch(() => cam.digitalZoom, async (newZoom, oldZoom) => {
   // Cambio solo se si supera la soglia 1.0
   const wasWide = oldZoom < 1
   const isWide = newZoom < 1
   if (wasWide === isWide) return // non c'è cambio di modalità
 
-  // Se lo zoom scende sotto 1, usiamo la grandangolare; altrimenti la principale
   const newCameraId = getCameraIdForZoom(newZoom)
   if (newCameraId && newCameraId !== currentCameraId) {
     if (stream) {
@@ -245,8 +256,6 @@ function processFrame() {
   const ratioW = displayWidth / w
   const ratioH = displayHeight / h
   const minScale = Math.max(ratioW, ratioH)
-  // Lo zoom effettivo non scende mai sotto 1 per evitare bordi neri,
-  // ma se stiamo usando la grandangolare, il campo visivo è già più ampio.
   const effectiveZoom = Math.max(1, cam.digitalZoom)
   const zoom = minScale * effectiveZoom
 
