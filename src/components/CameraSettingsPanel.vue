@@ -8,13 +8,16 @@
             <span class="panel-title">⚙️ Impostazioni rilevamento</span>
             <button class="close-btn" @click="$emit('close')">✕</button>
           </div>
+
           <div class="section">
             <div class="section-title">📷 Immagine</div>
             <SliderRow label="Luminosità" :value="cam.brightness" :min="30" :max="250" unit="%" @update="v => { cam.brightness = v; cam.save() }" />
             <SliderRow label="Contrasto" :value="cam.contrast" :min="50" :max="400" unit="%" @update="v => { cam.contrast = v; cam.save() }" />
             <SliderRow label="Saturazione" :value="cam.saturation" :min="0" :max="200" unit="%" @update="v => { cam.saturation = v; cam.save() }" />
             <SliderRow label="Nitidezza" :value="cam.sharpness" :min="0" :max="5" unit="" :step="1" @update="v => { cam.sharpness = v; cam.save() }" />
-<SliderRow label="Zoom digitale" :value="cam.digitalZoom" :min="0.6" :max="2" :step="0.1" unit="×" @update="v => { cam.digitalZoom = v; cam.save() }" />          </div>
+            <SliderRow label="Zoom digitale" :value="cam.digitalZoom" :min="0.6" :max="2" :step="0.1" unit="×" @update="v => { cam.digitalZoom = v; cam.save() }" />
+          </div>
+
           <div class="section">
             <div class="section-title">🔲 Binarizzazione (scarsa luce)</div>
             <div class="toggle-row">
@@ -31,6 +34,7 @@
               <button class="preset-btn" @click="applyPreset('mixed')">⛅ Mista</button>
             </div>
           </div>
+
           <div class="section">
             <div class="section-title">🗺️ Overlay AR</div>
             <div class="toggle-row">
@@ -53,6 +57,7 @@
               </button>
             </div>
           </div>
+
           <div class="section">
             <div class="section-title">⚡ Performance</div>
             <div class="toggle-row">
@@ -63,7 +68,7 @@
               </select>
             </div>
             <div class="toggle-row">
-              <span class="toggle-label">Frame rate (fotogrammi al secondo)</span>
+              <span class="toggle-label">Frame rate</span>
               <select :value="cam.frameSkip" @change="setFrameSkip($event.target.value)">
                 <option :value="1">60 fps (massimo)</option>
                 <option :value="2">30 fps (consigliato)</option>
@@ -75,6 +80,7 @@
               Ridurre risoluzione e frame rate allunga la durata della batteria.
             </div>
           </div>
+
           <div class="section">
             <div class="section-title">🎯 Modalità campo libero</div>
             <div class="toggle-row">
@@ -87,6 +93,7 @@
               {{ gameStore.freeMode ? 'Coordinate assolute (px) e orientamento in gradi' : 'Coordinate griglia (col, row) e orientamento N/S/E/O' }}
             </div>
           </div>
+
           <button class="reset-btn" @click="cam.reset()">↺ Ripristina default</button>
         </div>
       </div>
@@ -102,8 +109,8 @@ import SliderRow from './SliderRow.vue'
 defineProps({
   visible: { type: Boolean, default: false }
 })
-
 const emit = defineEmits(['close'])
+
 const cam = useCameraStore()
 const gameStore = useGameStore()
 
@@ -251,10 +258,12 @@ function setFrameSkip(skip) {
   cursor: pointer;
   margin-top: 0.5rem;
 }
-.slide-up-enter-active, .slide-up-leave-active {
+.slide-up-enter-active,
+.slide-up-leave-active {
   transition: transform 0.25s ease;
 }
-.slide-up-enter-from, .slide-up-leave-to {
+.slide-up-enter-from,
+.slide-up-leave-to {
   transform: translateY(100%);
 }
 @media (max-width: 480px) {

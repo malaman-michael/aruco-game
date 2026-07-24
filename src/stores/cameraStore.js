@@ -17,7 +17,7 @@ export const useCameraStore = defineStore('camera', () => {
   const gridOpacity = ref(0.5)
   const videoResolution = ref('1280x720')
   const frameSkip = ref(2)
-  const digitalZoom = ref(0.6)  
+  const digitalZoom = ref(0.6)
 
   function load() {
     try {
@@ -36,7 +36,7 @@ export const useCameraStore = defineStore('camera', () => {
       gridOpacity.value = s.gridOpacity ?? 0.5
       videoResolution.value = s.videoResolution ?? '1280x720'
       frameSkip.value = s.frameSkip ?? 2
-      digitalZoom.value = Math.max(1, s.digitalZoom ?? 1)
+      digitalZoom.value = s.digitalZoom ?? 0.6
     } catch {}
   }
 

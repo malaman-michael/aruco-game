@@ -45,7 +45,48 @@ let ctx = null
 let frameCounter = 0
 let restartPending = false
 
-async function startCamera() {
+// IDs delle fotocamere
+let mainCameraId = null
+let wideCameraId = null
+let currentCameraId = null
+
+// ---- Selettore fotocamera in base allo zoom ----
+function getCameraIdForZoom(zoom) {
+  if (zoom < 1 && wideCameraId) return wideCameraId
+  return mainCameraId || wideCameraId || null
+}
+
+async function enumerateCameras() {
+  try {
+    const devices = await navigator.mediaDevices.enumerateDevices()
+    const videoDevices = devices.filter(d => d.kind === 'videoinput')
+    if (videoDevices.length === 0) return
+
+    // Cerca una grandangolare (wide, ultra, 0.5x)
+    const wide = videoDevices.find(d =>
+      d.label.toLowerCase().includes('wide') ||
+      d.label.toLowerCase().includes('ultra') ||
+      d.label.toLowerCase().includes('0.5')
+    )
+    // La prima è considerata principale (di solito la posteriore)
+    const main = videoDevices.find(d => d.deviceId !== wide?.deviceId) || videoDevices[0]
+
+    mainCameraId = main.deviceId
+    wideCameraId = wide?.deviceId || null
+
+    // Se non troviamo grandangolare, usiamo la principale anche per zoom < 1
+    if (!wideCameraId) {
+      wideCameraId = mainCameraId
+    }
+
+    console.log('[CameraView] Camera principale:', main.label || main.deviceId)
+    console.log('[CameraView] Camera grandangolare:', wide?.label || 'non trovata')
+  } catch (e) {
+    console.warn('[CameraView] Impossibile enumerare le fotocamere:', e)
+  }
+}
+
+async function startCamera(cameraId = null) {
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
     cameraError.value = 'Il browser non supporta la fotocamera o la connessione non è sicura (usa HTTPS).'
     cameraReady.value = false
@@ -54,21 +95,32 @@ async function startCamera() {
   if (stream) {
     stream.getTracks().forEach(track => track.stop())
   }
+
+  const targetId = cameraId || getCameraIdForZoom(cam.digitalZoom)
   let [width, height] = cam.videoResolution.split('x').map(Number)
   if (!width || !height) { width = 1280; height = 720 }
+
+  const constraints = {
+    video: {
+      facingMode: 'environment',
+      width: { ideal: width },
+      height: { ideal: height }
+    },
+    audio: false,
+  }
+
+  // Se abbiamo un ID specifico, lo usiamo
+  if (targetId) {
+    constraints.video.deviceId = { exact: targetId }
+  }
+
   try {
-    stream = await navigator.mediaDevices.getUserMedia({
-      video: {
-        facingMode: 'environment',
-        width: { ideal: width },
-        height: { ideal: height }
-      },
-      audio: false,
-    })
+    stream = await navigator.mediaDevices.getUserMedia(constraints)
     video.srcObject = stream
     await video.play()
     cameraReady.value = true
     cameraError.value = ''
+    currentCameraId = targetId
     if (restartPending) {
       restartPending = false
       startLoop()
@@ -81,8 +133,31 @@ async function startCamera() {
   }
 }
 
+// ---- Watcher per cambiare fotocamera in base allo zoom ----
+let previousZoom = cam.digitalZoom
+watch(() => cam.digitalZoom, async (newZoom, oldZoom) => {
+  // Cambio solo se si supera la soglia 1.0
+  const wasWide = oldZoom < 1
+  const isWide = newZoom < 1
+  if (wasWide === isWide) return // non c'è cambio di modalità
+
+  // Se lo zoom scende sotto 1, usiamo la grandangolare; altrimenti la principale
+  const newCameraId = getCameraIdForZoom(newZoom)
+  if (newCameraId && newCameraId !== currentCameraId) {
+    if (stream) {
+      stopLoop()
+      restartPending = true
+      await startCamera(newCameraId)
+      if (props.active) startLoop()
+    }
+  }
+})
+
+// ---- Ciclo di vita ----
 onMounted(async () => {
+  await enumerateCameras()
   await startCamera()
+
   ctx = canvasEl.value.getContext('2d', { willReadFrequently: true })
   offCtx = offscreen.getContext('2d', { willReadFrequently: true })
   try {
@@ -123,12 +198,13 @@ function loop() {
   })
 }
 
+// ---- Ascolta eventi di cambio risoluzione ----
 onMounted(() => {
   window.addEventListener('camera-settings-changed', () => {
     if (stream) {
       stopLoop()
       restartPending = true
-      startCamera().then(() => {
+      startCamera(currentCameraId).then(() => {
         if (props.active) startLoop()
       })
     }
@@ -168,7 +244,12 @@ function processFrame() {
 
   const ratioW = displayWidth / w
   const ratioH = displayHeight / h
-  const zoom = Math.max(ratioW, ratioH) * cam.digitalZoom
+  const minScale = Math.max(ratioW, ratioH)
+  // Lo zoom effettivo non scende mai sotto 1 per evitare bordi neri,
+  // ma se stiamo usando la grandangolare, il campo visivo è già più ampio.
+  const effectiveZoom = Math.max(1, cam.digitalZoom)
+  const zoom = minScale * effectiveZoom
+
   const sw = w * zoom
   const sh = h * zoom
   const offsetX = (displayWidth - sw) / 2
@@ -245,9 +326,6 @@ function applyThreshold(ctx, w, h, thresh) {
 }
 
 // --- Ancore / omografia ------------------------------------------------------
-// La mappa markerId -> {col,row} dipende solo dalla mappa attualmente caricata,
-// quindi viene messa in cache e ricostruita solo quando la mappa cambia
-// (prima veniva ricalcolata scorrendo l'intera griglia ad ogni singolo frame).
 let cachedMapId = null
 let cachedCellByMarkerId = {}
 
@@ -285,11 +363,6 @@ function computeH(markers) {
         visible.push({ id: m.id, center: m.center })
       }
     }
-    // IMPORTANTE: si aggiorna l'omografia UNA sola volta per frame (non una
-    // volta per marker), e le ancore non più viste vengono eliminate
-    // automaticamente da gameStore dopo qualche secondo. Prima le ancore si
-    // accumulavano all'infinito e il calcolo del miglior quadrilatero
-    // (O(n^4)) finiva per bloccare completamente l'app.
     gameStore.setVisibleAnchors(visible)
     emit('homography-updated', gameStore.homography)
   }
