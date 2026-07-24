@@ -14,8 +14,7 @@
             <SliderRow label="Contrasto" :value="cam.contrast" :min="50" :max="400" unit="%" @update="v => { cam.contrast = v; cam.save() }" />
             <SliderRow label="Saturazione" :value="cam.saturation" :min="0" :max="200" unit="%" @update="v => { cam.saturation = v; cam.save() }" />
             <SliderRow label="Nitidezza" :value="cam.sharpness" :min="0" :max="5" unit="" :step="1" @update="v => { cam.sharpness = v; cam.save() }" />
-            <SliderRow label="Zoom digitale" :value="cam.digitalZoom" :min="0.5" :max="2" :step="0.1" unit="×" @update="v => { cam.digitalZoom = v; cam.save() }" />
-          </div>
+<SliderRow label="Zoom digitale" :value="cam.digitalZoom" :min="0.6" :max="2" :step="0.1" unit="×" @update="v => { cam.digitalZoom = v; cam.save() }" />          </div>
           <div class="section">
             <div class="section-title">🔲 Binarizzazione (scarsa luce)</div>
             <div class="toggle-row">
