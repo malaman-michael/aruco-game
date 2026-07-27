@@ -440,61 +440,52 @@ function invert3x3(m) {
   ]
 }
 
+// =============== FUNZIONE MODIFICATA (senza cubi) ===============
 function drawMarkers(ctx, markers, H, videoW) {
-  if (!cam.showIds && !cam.showCubes) return
+  // Se non vogliamo mostrare nemmeno gli ID, possiamo uscire prima
+  // Ma teniamo il bordo anche se showIds è false? Per sicurezza mostriamo sempre bordo e puntino.
+  // La label viene mostrata solo se showIds è true.
   const fontSize = Math.max(16, videoW * 0.025)
   markers.forEach(({ id, corners, center, angle }) => {
     const known = markersStore.getMarker(id)
     const color = !known ? '#ff4444' :
                   known.category === 'player' ? '#4488ff' :
                   known.category === 'enemy' ? '#ff4444' : '#00ff88'
+
+    // --- Bordo del marker (quadrato) ---
     ctx.beginPath()
     ctx.moveTo(corners[0].x, corners[0].y)
     corners.forEach(p => ctx.lineTo(p.x, p.y))
     ctx.closePath()
-    ctx.strokeStyle = color; ctx.lineWidth = 3; ctx.stroke()
+    ctx.strokeStyle = color
+    ctx.lineWidth = 3
+    ctx.stroke()
 
-    if (cam.showCubes) {
-      const lift = Math.max(18, videoW * 0.022)
-      ctx.beginPath()
-      ctx.moveTo(corners[0].x, corners[0].y - lift)
-      ctx.lineTo(corners[1].x, corners[1].y - lift)
-      ctx.lineTo(corners[1].x, corners[1].y)
-      ctx.lineTo(corners[0].x, corners[0].y)
-      ctx.closePath()
-      ctx.fillStyle = color + '33'
-      ctx.fill()
-      ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.stroke()
-
-      ctx.beginPath()
-      ctx.moveTo(corners[0].x, corners[0].y)
-      ctx.lineTo(corners[0].x, corners[0].y - lift)
-      ctx.moveTo(corners[1].x, corners[1].y)
-      ctx.lineTo(corners[1].x, corners[1].y - lift)
-      ctx.stroke()
-
-      ctx.beginPath()
-      ctx.moveTo(corners[0].x, corners[0].y - lift)
-      ctx.lineTo(corners[1].x, corners[1].y - lift)
-      ctx.strokeStyle = color; ctx.lineWidth = 3; ctx.stroke()
-    }
-
+    // --- Puntino giallo nell'angolo in alto a sinistra ---
     ctx.beginPath()
     ctx.arc(corners[0].x, corners[0].y, 6, 0, Math.PI * 2)
-    ctx.fillStyle = '#ffff00'; ctx.fill()
+    ctx.fillStyle = '#ffff00'
+    ctx.fill()
 
+    // --- Etichetta con ID, emoji e posizione (solo se showIds è attivo) ---
     if (cam.showIds) {
-      const lift = cam.showCubes ? Math.max(18, videoW * 0.022) : 0
-      const textY = Math.min(...corners.map(c=>c.y)) - lift - 8
+      // Calcola la coordinata Y in alto (sopra il bordo superiore)
+      const topY = Math.min(...corners.map(c => c.y))
+      const textY = topY - 8 // piccolo margine
+
       let label = `#${id}`
       if (known?.emoji) label += ` ${known.emoji}`
+
+      // Aggiungi posizione griglia se disponibile
       const piece = gameStore.pieces.find(p => p.id === id)
       if (piece?.col !== null && piece?.col !== undefined) {
         const rot = piece.rotationSymbol ? ` ${piece.rotationSymbol}` : ''
         label += ` (${piece.col},${piece.row}${rot})`
       }
+
       ctx.font = `bold ${fontSize}px monospace`
       ctx.textAlign = 'center'
+      // Sfondo nero per migliorare la leggibilità
       ctx.lineWidth = 5
       ctx.strokeStyle = 'rgba(0,0,0,0.85)'
       ctx.strokeText(label, center.x, textY)
@@ -504,6 +495,7 @@ function drawMarkers(ctx, markers, H, videoW) {
     }
   })
 }
+// =================================================================
 
 defineExpose({
   getCalibrationData() {
