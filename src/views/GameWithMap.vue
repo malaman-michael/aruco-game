@@ -406,7 +406,7 @@ function drawMapOffscreen() {
       const height = Math.hypot(p3.x - p0.x, p3.y - p0.y)
       const cellSize = Math.min(width, height)
       let fontSize = cellSize * 0.5
-      fontSize = Math.min(48, Math.max(12, fontSize))
+      fontSize = Math.min(48, Math.max(18, fontSize))
       ctx.font = `${fontSize}px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif`
       ctx.textAlign = 'center'
       ctx.textBaseline = 'middle'

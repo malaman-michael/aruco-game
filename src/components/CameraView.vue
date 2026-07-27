@@ -445,7 +445,7 @@ function drawMarkers(ctx, markers, H, videoW) {
   // Se non vogliamo mostrare nemmeno gli ID, possiamo uscire prima
   // Ma teniamo il bordo anche se showIds è false? Per sicurezza mostriamo sempre bordo e puntino.
   // La label viene mostrata solo se showIds è true.
-  const fontSize = Math.max(16, videoW * 0.025)
+  const fontSize = Math.max(20, videoW * 0.250)
   markers.forEach(({ id, corners, center, angle }) => {
     const known = markersStore.getMarker(id)
     const color = !known ? '#ff4444' :
