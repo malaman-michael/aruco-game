@@ -31,6 +31,13 @@ export function computeHomography(srcPts, dstPts) {
   if (srcPts.length !== dstPts.length || srcPts.length < 4) {
     throw new Error('Servono almeno 4 corrispondenze')
   }
+  // Filtra punti con coordinate non finite
+  const valid = srcPts.every(p => isFinite(p.x) && isFinite(p.y)) &&
+                dstPts.every(p => isFinite(p.x) && isFinite(p.y))
+  if (!valid) {
+    console.warn('[Homography] Punti non validi, omografia non calcolabile')
+    return null
+  }
   const n = srcPts.length
   const A = [], b = []
   for (let i = 0; i < n; i++) {
@@ -87,8 +94,8 @@ export function buildHomographyFromMarkers(markerDetected, anchors, cellSize = 1
   for (const marker of markerDetected) {
     const anchor = anchors.find(a => a.id === marker.id)
     if (anchor) {
+      if (!isFinite(marker.center.x) || !isFinite(marker.center.y)) continue
       srcPts.push({ x: marker.center.x, y: marker.center.y })
-      // Il marker è al centro della cella → destinazione = centro cella
       dstPts.push({
         x: (anchor.col + 0.5) * cellSize,
         y: (anchor.row + 0.5) * cellSize

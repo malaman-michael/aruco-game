@@ -275,6 +275,8 @@ function processFrame() {
   ctx.restore()
 
   handleGameLogic(markers, H)
+  console.log('[CameraView] markers:', markers.length)
+
 }
 
 function preprocessFrame(w, h) {
@@ -423,10 +425,11 @@ function drawGrid(ctx, H, w, h) {
 }
 
 function gridToPixel(invH, col, row) {
-  const wx = invH[0]*col + invH[1]*row + invH[2]
-  const wy = invH[3]*col + invH[4]*row + invH[5]
-  const ww = invH[6]*col + invH[7]*row + invH[8]
-  return { x: wx/ww, y: wy/ww }
+  const wx = invH[0] * col + invH[1] * row + invH[2]
+  const wy = invH[3] * col + invH[4] * row + invH[5]
+  const ww = invH[6] * col + invH[7] * row + invH[8]
+  if (Math.abs(ww) < 1e-10) return { x: 0, y: 0 }
+  return { x: wx / ww, y: wy / ww }
 }
 
 function invert3x3(m) {
