@@ -9,10 +9,6 @@
         <div class="hero-icon">🎲</div>
         <h1>ArUco Game</h1>
         <p>Gioco da tavolo in realtà aumentata.<br />Punta la fotocamera sulla plancia.</p>
-        <p class="subtitle">
-          <strong>Campo aperto</strong> → usa la configurazione pedine e griglia<br />
-          <strong>Con mappa</strong> → usa le mappe create nell’Editor Mappa
-        </p>
       </div>
 
       <div class="info-card">

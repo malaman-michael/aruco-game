@@ -97,38 +97,56 @@ export const useMapStore = defineStore('map', () => {
    * Se il caricamento ha successo, sostituisce le mappe (eliminando la demo) e
    * seleziona la prima mappa caricata.
    */
-  async function loadDefaultMapFromFile() {
-    try {
-      const response = await fetch('/map-heroquest_32_32.json')
-      if (!response.ok) throw new Error('File non trovato')
-      const data = await response.json()
+/**
+ * Tenta di caricare il file "heroquest_32x32.json" dalla cartella public/.
+ * Se il caricamento ha successo, aggiunge le mappe all'elenco (se non già presenti)
+ * e se non c'è una mappa selezionata, seleziona la prima.
+ */
+async function loadDefaultMapFromFile() {
+  try {
+    const response = await fetch('/heroquest_32x32.json')
+    if (!response.ok) throw new Error('File non trovato')
+    const data = await response.json()
 
-      let mapList = []
-      if (data.maps && Array.isArray(data.maps)) {
-        // Formato con proprietà "maps" (array)
-        mapList = data.maps
-      } else if (Array.isArray(data)) {
-        // Formato con array diretto di mappe
-        mapList = data
-      } else if (data.map && data.map.grid) {
-        // ✅ Formato con singola mappa sotto proprietà "map"
-        mapList = [data.map]
-      } else {
-        throw new Error('Formato JSON non riconosciuto')
-      }
-
-      if (mapList.length === 0) throw new Error('Nessuna mappa nel file')
-
-      // Sostituisci le mappe esistenti (la demo) con quelle caricate
-      maps.value = mapList
-      currentMapId.value = mapList[0].id
-      saveMaps()
-      console.log('[mapStore] Mappa predefinita caricata:', mapList[0].name)
-    } catch (error) {
-      console.warn('[mapStore] Caricamento mappa predefinita fallito:', error.message)
-      // Mantiene la mappa demo già creata
+    let mapList = []
+    if (data.maps && Array.isArray(data.maps)) {
+      mapList = data.maps
+    } else if (Array.isArray(data)) {
+      mapList = data
+    } else if (data.map && data.map.grid) {
+      mapList = [data.map]
+    } else {
+      throw new Error('Formato JSON non riconosciuto')
     }
+
+    if (mapList.length === 0) throw new Error('Nessuna mappa nel file')
+
+    // Aggiungi le mappe che non esistono già (per ID)
+    let added = 0
+    for (const newMap of mapList) {
+      const exists = maps.value.some(m => m.id === newMap.id)
+      if (!exists) {
+        maps.value.push(newMap)
+        added++
+      }
+    }
+
+    if (added === 0) {
+      console.log('[mapStore] Mappa predefinita già presente, nessuna aggiunta.')
+      return
+    }
+
+    // Se non c'è una mappa selezionata, seleziona la prima appena aggiunta
+    if (!currentMapId.value) {
+      currentMapId.value = mapList[0].id
+    }
+
+    saveMaps()
+    console.log(`[mapStore] Aggiunte ${added} mappe dal file predefinito.`)
+  } catch (error) {
+    console.warn('[mapStore] Caricamento mappa predefinita fallito:', error.message)
   }
+}
 
   function saveMaps() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(maps.value))
