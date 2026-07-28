@@ -48,10 +48,10 @@
         <div class="section-container section-game">
           <h2 class="section-title">🎮 Gioco</h2>
           <div class="btn-group">
-            <button class="btn-primary btn-play-wo-map" @click="$router.push('/gameOpenGrid')">
+            <!--button class="btn-primary btn-play-wo-map" @click="$router.push('/gameOpenGrid')">
               🏞️ Campo aperto
               <span class="btn-desc">(usa configurazione pedine)</span>
-            </button>
+            </button -->
             <button class="btn-primary btn-play-map" @click="$router.push('/gameWithMap')">
               🗺️ Con mappa
               <span class="btn-desc">(usa mappe editor)</span>

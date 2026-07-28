@@ -3,10 +3,19 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 
 export const CELL_TYPES = {
-  EMPTY: 'empty', FLOOR: 'floor', WALL: 'wall',
-  DOOR_CLOSED: 'door_closed', DOOR_OPEN: 'door_open', DOOR_SECRET: 'door_secret',
-  STAIRS: 'stairs', FURNITURE: 'furniture', TRAP: 'trap',
-  HERO: 'hero', MONSTER: 'monster', ENTRANCE: 'entrance', SPECIAL: 'special'
+  EMPTY: 'empty',
+  FLOOR: 'floor',
+  WALL: 'wall',
+  DOOR_CLOSED: 'door_closed',
+  DOOR_OPEN: 'door_open',
+  DOOR_SECRET: 'door_secret',
+  STAIRS: 'stairs',
+  FURNITURE: 'furniture',
+  TRAP: 'trap',
+  HERO: 'hero',
+  MONSTER: 'monster',
+  ENTRANCE: 'entrance',
+  SPECIAL: 'special'
 }
 
 export const FURNITURE_STATIC_TYPES = [
@@ -84,7 +93,7 @@ export const useMapStore = defineStore('map', () => {
   }
 
   /**
-   * Tenta di caricare il file "map-heroquest 32x32.json" dalla cartella public/.
+   * Tenta di caricare il file "heroquest_32x32.json" dalla cartella public/.
    * Se il caricamento ha successo, sostituisce le mappe (eliminando la demo) e
    * seleziona la prima mappa caricata.
    */
@@ -96,9 +105,14 @@ export const useMapStore = defineStore('map', () => {
 
       let mapList = []
       if (data.maps && Array.isArray(data.maps)) {
+        // Formato con proprietà "maps" (array)
         mapList = data.maps
       } else if (Array.isArray(data)) {
+        // Formato con array diretto di mappe
         mapList = data
+      } else if (data.map && data.map.grid) {
+        // ✅ Formato con singola mappa sotto proprietà "map"
+        mapList = [data.map]
       } else {
         throw new Error('Formato JSON non riconosciuto')
       }

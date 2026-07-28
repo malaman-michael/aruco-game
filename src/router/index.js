@@ -1,9 +1,9 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import SetupView from '../views/SetupView.vue'
-import GameOpenGrid from '../views/GameOpenGrid.vue'
+/*import GameOpenGrid from '../views/GameOpenGrid.vue'*/
 import GameWithMap from '../views/GameWithMap.vue'
-import MapEditorView from '../views/MapEditorView.vue' // 👈 nuovo
+import MapEditorView from '../views/MapEditorView.vue' 
 import PlacementAssistantView from '../views/PlacementAssistantView.vue'
 import GestureRecognitionView from '../views/GestureRecognitionView.vue'
 import VoiceColorView from '../views/VoiceColorView.vue'
@@ -15,9 +15,9 @@ const routes = [
   { path: '/', component: HomeView },
   { path: '/placement-assistant', component: PlacementAssistantView },
   { path: '/setup', component: SetupView },
-  { path: '/gameOpenGrid', component: GameOpenGrid },
+  /*{ path: '/gameOpenGrid', component: GameOpenGrid },*/
   { path: '/gameWithMap', component: GameWithMap },
-  { path: '/map-editor', component: MapEditorView }, // 👈 nuova route
+  { path: '/map-editor', component: MapEditorView }, 
   { path: '/gesture-recognition', component: GestureRecognitionView },
   { path: '/voice-color', component: VoiceColorView },
   { path: '/voice-movement', component: VoiceMovementView },
