@@ -14,7 +14,7 @@ import { useMarkersStore, MARKER_CATEGORIES } from '../stores/markersStore.js'
 import { useGameStore } from '../stores/gameStore.js'
 import { useCameraStore } from '../stores/cameraStore.js'
 import { useMapStore } from '../stores/mapStore.js'
-import { buildHomographyFromCorners, pointToCell } from '../services/homographyService.js'
+import { buildHomographyFromCorners, pointToCell, applyHomography } from '../services/homographyService.js'
 import { voice } from '../services/voiceService.js'
 
 const props = defineProps({
@@ -548,9 +548,14 @@ function handleGameLogic(markers, H) {
 
     let col = null, row = null
     if (H) {
-      const cell = pointToCell(H, m.center, gameStore.gridCols, gameStore.gridRows)
-      col = cell.col
-      row = cell.row
+      // Proietta il centro del marker in coordinate di griglia
+      const colRow = applyHomography(H, m.center)
+      const cell = pointToCell(colRow, gameStore.gridCols, gameStore.gridRows)
+      // Se la cella è valida (col/row >= 0), la usa, altrimenti mantiene null
+      if (cell.col >= 0 && cell.row >= 0) {
+        col = cell.col
+        row = cell.row
+      }
     }
 
     const { degrees: rotationDeg, symbol: rotationSymbol } = approximateCardinalAngle(m.angle)

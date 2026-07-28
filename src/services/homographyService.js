@@ -46,15 +46,35 @@ export function computeHomography(srcPts, dstPts) {
 export function applyHomography(H, pt) {
   const { x, y } = pt
   const w = H[6] * x + H[7] * y + H[8]
+  // Se il denominatore è zero o molto piccolo, la trasformazione non è definita
+  if (Math.abs(w) < 1e-10) {
+    return { col: Infinity, row: Infinity }
+  }
   const col = (H[0] * x + H[1] * y + H[2]) / w
   const row = (H[3] * x + H[4] * y + H[5]) / w
+  // Assicura che i valori siano numeri finiti (se per qualche motivo diventano NaN, li trasformiamo in Infinity)
+  if (!isFinite(col) || !isFinite(row)) {
+    return { col: Infinity, row: Infinity }
+  }
   return { col, row }
 }
 
 export function pointToCell(colRow, gridCols, gridRows) {
+  // Controlla che le coordinate siano finite
+  if (!isFinite(colRow.col) || !isFinite(colRow.row)) {
+    // Valore speciale per indicare "nessuna cella"
+    return { col: -1, row: -1 }
+  }
+  const col = Math.floor(colRow.col)
+  const row = Math.floor(colRow.row)
+  // Se dopo il floor i valori non sono numeri (non dovrebbe succedere, ma per sicurezza)
+  if (!isFinite(col) || !isFinite(row)) {
+    return { col: -1, row: -1 }
+  }
+  // Ora limitiamo alle dimensioni della griglia
   return {
-    col: Math.max(0, Math.min(gridCols - 1, Math.floor(colRow.col))),
-    row: Math.max(0, Math.min(gridRows - 1, Math.floor(colRow.row)))
+    col: Math.max(0, Math.min(gridCols - 1, col)),
+    row: Math.max(0, Math.min(gridRows - 1, row))
   }
 }
 
