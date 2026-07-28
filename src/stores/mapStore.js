@@ -46,6 +46,7 @@ export const CELL_TYPE_INFO = {
 }
 
 const STORAGE_KEY = 'heroquest_maps'
+const DEFAULT_FILE_NAME = 'heroquest_32_32.json' // 👈 Modifica con il nome esatto del file
 
 export const useMapStore = defineStore('map', () => {
   const maps = ref([])
@@ -53,100 +54,88 @@ export const useMapStore = defineStore('map', () => {
   const currentMap = computed(() => maps.value.find(m => m.id === currentMapId.value) || null)
 
   /**
-   * Carica le mappe da localStorage. Se non ci sono mappe, crea una demo
-   * e poi tenta di caricare il file predefinito.
-   * Se esiste solo la mappa demo, la sostituisce con quella dal file.
+   * Carica le mappe dal file predefinito e le salva in localStorage.
+   * Viene eseguita sempre all'avvio.
+   * Sostituisce completamente le mappe esistenti con quelle del file.
    */
-  function loadMaps() {
-    const stored = localStorage.getItem(STORAGE_KEY)
-    if (stored) {
-      maps.value = JSON.parse(stored)
-      // Se c'è solo la mappa demo, prova a caricare il file e sostituirla
-      if (maps.value.length === 1 && maps.value[0].id === 'demo') {
-        loadDefaultMapFromFile()
-      } else {
-        if (maps.value.length > 0) {
-          currentMapId.value = maps.value[0].id
-        }
-      }
-      return
-    }
+  async function loadDefaultMapFromFile() {
+    try {
+      const response = await fetch(`/${DEFAULT_FILE_NAME}`)
+      if (!response.ok) throw new Error('File non trovato')
+      const data = await response.json()
 
-    // Nessuna mappa salvata: crea una demo temporanea e carica il file
-    const demo = {
-      id: 'demo',
-      name: 'Mappa Demo',
-      cols: 10,
-      rows: 10,
-      grid: Array(10).fill().map(() =>
-        Array(10).fill().map(() => ({
-          type: CELL_TYPES.FLOOR,
-          details: null,
-          markerId: null
-        }))
-      )
+      let mapList = []
+      if (data.maps && Array.isArray(data.maps)) {
+        mapList = data.maps
+      } else if (Array.isArray(data)) {
+        mapList = data
+      } else if (data.map && data.map.grid) {
+        mapList = [data.map]
+      } else {
+        throw new Error('Formato JSON non riconosciuto')
+      }
+
+      if (mapList.length === 0) throw new Error('Nessuna mappa nel file')
+
+      // Sostituisci completamente le mappe con quelle del file
+      maps.value = mapList
+
+      // Se la mappa selezionata non esiste più, seleziona la prima
+      if (!maps.value.some(m => m.id === currentMapId.value)) {
+        currentMapId.value = maps.value[0]?.id || null
+      }
+
+      saveMaps()
+      console.log('[mapStore] Mappe caricate dal file predefinito:', mapList.map(m => m.name).join(', '))
+    } catch (error) {
+      console.warn('[mapStore] Caricamento mappa predefinita fallito:', error.message)
+      // Se il file non viene trovato, usa una mappa demo di fallback
+      if (maps.value.length === 0) {
+        const demo = {
+          id: 'demo',
+          name: 'Mappa Demo',
+          cols: 10,
+          rows: 10,
+          grid: Array(10).fill().map(() =>
+            Array(10).fill().map(() => ({
+              type: CELL_TYPES.FLOOR,
+              details: null,
+              markerId: null
+            }))
+          )
+        }
+        maps.value = [demo]
+        currentMapId.value = 'demo'
+        saveMaps()
+      }
     }
-    maps.value = [demo]
-    currentMapId.value = 'demo'
-    saveMaps()
-    loadDefaultMapFromFile()
   }
 
   /**
-   * Tenta di caricare il file "heroquest_32x32.json" dalla cartella public/.
-   * Se il caricamento ha successo, sostituisce le mappe (eliminando la demo) e
-   * seleziona la prima mappa caricata.
+   * Inizializza il negozio: carica sempre il file predefinito all'avvio.
    */
-/**
- * Tenta di caricare il file "heroquest_32x32.json" dalla cartella public/.
- * Se il caricamento ha successo, aggiunge le mappe all'elenco (se non già presenti)
- * e se non c'è una mappa selezionata, seleziona la prima.
- */
-async function loadDefaultMapFromFile() {
-  try {
-    const response = await fetch('/heroquest_32x32.json')
-    if (!response.ok) throw new Error('File non trovato')
-    const data = await response.json()
-
-    let mapList = []
-    if (data.maps && Array.isArray(data.maps)) {
-      mapList = data.maps
-    } else if (Array.isArray(data)) {
-      mapList = data
-    } else if (data.map && data.map.grid) {
-      mapList = [data.map]
-    } else {
-      throw new Error('Formato JSON non riconosciuto')
-    }
-
-    if (mapList.length === 0) throw new Error('Nessuna mappa nel file')
-
-    // Aggiungi le mappe che non esistono già (per ID)
-    let added = 0
-    for (const newMap of mapList) {
-      const exists = maps.value.some(m => m.id === newMap.id)
-      if (!exists) {
-        maps.value.push(newMap)
-        added++
+  async function initStore() {
+    await loadDefaultMapFromFile()
+    // Se per qualche motivo non ci sono mappe, crea la demo
+    if (maps.value.length === 0) {
+      const demo = {
+        id: 'demo',
+        name: 'Mappa Demo',
+        cols: 10,
+        rows: 10,
+        grid: Array(10).fill().map(() =>
+          Array(10).fill().map(() => ({
+            type: CELL_TYPES.FLOOR,
+            details: null,
+            markerId: null
+          }))
+        )
       }
+      maps.value = [demo]
+      currentMapId.value = 'demo'
+      saveMaps()
     }
-
-    if (added === 0) {
-      console.log('[mapStore] Mappa predefinita già presente, nessuna aggiunta.')
-      return
-    }
-
-    // Se non c'è una mappa selezionata, seleziona la prima appena aggiunta
-    if (!currentMapId.value) {
-      currentMapId.value = mapList[0].id
-    }
-
-    saveMaps()
-    console.log(`[mapStore] Aggiunte ${added} mappe dal file predefinito.`)
-  } catch (error) {
-    console.warn('[mapStore] Caricamento mappa predefinita fallito:', error.message)
   }
-}
 
   function saveMaps() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(maps.value))
@@ -226,8 +215,8 @@ async function loadDefaultMapFromFile() {
     return anchors
   }
 
-  // Inizializza il caricamento
-  loadMaps()
+  // Inizializzazione: carica sempre il file predefinito
+  initStore()
 
   return {
     maps,
