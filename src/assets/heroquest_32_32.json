@@ -1,0 +1,6384 @@
+{
+  "version": "1.0",
+  "exportedAt": "2026-07-28T09:59:44.414Z",
+  "map": {
+    "id": "1785229405411",
+    "name": "heroquest_32_32.json",
+    "cols": 32,
+    "rows": 32,
+    "grid": [
+      [
+        {
+          "type": "floor",
+          "details": {
+            "category": "structure",
+            "typeId": "anchor",
+            "label": "Ancora",
+            "emoji": "📍",
+            "widthStud": 2,
+            "heightStud": 2,
+            "rotation": 0,
+            "objectId": "1785229598952_tlzbz"
+          },
+          "markerId": 5
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229860947_fsgua"
+          },
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229861939_mn4uv"
+          },
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229861523_9ikzy"
+          },
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229862467_2zql5"
+          },
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229862957_lm4mc"
+          },
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229863419_bfy77"
+          },
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229863819_5a0y9"
+          },
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229864227_1zbx5"
+          },
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229864627_d6763"
+          },
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229865051_nqg09"
+          },
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229865813_2odkm"
+          },
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229866315_vfdsl"
+          },
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229866843_trin7"
+          },
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229867275_vmozh"
+          },
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": {
+            "category": "structure",
+            "typeId": "anchor",
+            "label": "Ancora",
+            "emoji": "📍",
+            "widthStud": 2,
+            "heightStud": 2,
+            "rotation": 0,
+            "objectId": "1785229706462_8qgvx"
+          },
+          "markerId": 78
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229938035_v485h"
+          },
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229938475_8tj4n"
+          },
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229938923_atxkd"
+          },
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229939355_mfx7h"
+          },
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229939795_mokzq"
+          },
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229940147_lcv57"
+          },
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229940571_kpwd3"
+          },
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229941107_ltr9t"
+          },
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229941581_2qlz0"
+          },
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229941955_2cum2"
+          },
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229942409_mxesp"
+          },
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229942779_egkoz"
+          },
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229943701_szewv"
+          },
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229944301_ncnac"
+          },
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229944771_8jxxq"
+          },
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": {
+            "category": "structure",
+            "typeId": "anchor",
+            "label": "Ancora",
+            "emoji": "📍",
+            "widthStud": 2,
+            "heightStud": 2,
+            "rotation": 0,
+            "objectId": "1785229711176_sjla5"
+          },
+          "markerId": 6
+        }
+      ],
+      [
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229851507_15c7f"
+          },
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229959147_wslc5"
+          },
+          "markerId": null
+        }
+      ],
+      [
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229852307_geln1"
+          },
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229958653_4re2l"
+          },
+          "markerId": null
+        }
+      ],
+      [
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229852723_f3ywe"
+          },
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229958131_usajx"
+          },
+          "markerId": null
+        }
+      ],
+      [
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229853301_72ojs"
+          },
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229957643_3nbnt"
+          },
+          "markerId": null
+        }
+      ],
+      [
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229853829_1ump6"
+          },
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229957171_vpc18"
+          },
+          "markerId": null
+        }
+      ],
+      [
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229854299_ecgo3"
+          },
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": {
+            "category": "structure",
+            "typeId": "anchor",
+            "label": "Ancora",
+            "emoji": "📍",
+            "widthStud": 2,
+            "heightStud": 2,
+            "rotation": 0,
+            "objectId": "1785232760034_ekgpf"
+          },
+          "markerId": 4
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229956795_5h3yl"
+          },
+          "markerId": null
+        }
+      ],
+      [
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229854789_8znlw"
+          },
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229955115_wrig9"
+          },
+          "markerId": null
+        }
+      ],
+      [
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229855420_kdqix"
+          },
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": {
+            "category": "structure",
+            "typeId": "anchor",
+            "label": "Ancora",
+            "emoji": "📍",
+            "widthStud": 2,
+            "heightStud": 2,
+            "rotation": 0,
+            "objectId": "1785232696034_madd6"
+          },
+          "markerId": 7
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229954485_uzy6j"
+          },
+          "markerId": null
+        }
+      ],
+      [
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229856044_b2yzt"
+          },
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229953357_fyj6i"
+          },
+          "markerId": null
+        }
+      ],
+      [
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229856523_qs7wi"
+          },
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229952803_wa9cu"
+          },
+          "markerId": null
+        }
+      ],
+      [
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229857299_b1bsx"
+          },
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229952317_qhcy0"
+          },
+          "markerId": null
+        }
+      ],
+      [
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229857924_0gi2k"
+          },
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229951765_i6dre"
+          },
+          "markerId": null
+        }
+      ],
+      [
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229858611_0ihxs"
+          },
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": {
+            "category": "structure",
+            "typeId": "anchor",
+            "label": "Ancora",
+            "emoji": "📍",
+            "widthStud": 2,
+            "heightStud": 2,
+            "rotation": 0,
+            "objectId": "1785230200920_ocuwk"
+          },
+          "markerId": 88
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": {
+            "category": "structure",
+            "typeId": "anchor",
+            "label": "Ancora",
+            "emoji": "📍",
+            "widthStud": 2,
+            "heightStud": 2,
+            "rotation": 0,
+            "objectId": "1785230186878_a5lqb"
+          },
+          "markerId": 76
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229950836_tf5gs"
+          },
+          "markerId": null
+        }
+      ],
+      [
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229859349_oeqgr"
+          },
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229950332_ylsol"
+          },
+          "markerId": null
+        }
+      ],
+      [
+        {
+          "type": "floor",
+          "details": {
+            "category": "structure",
+            "typeId": "anchor",
+            "label": "Ancora",
+            "emoji": "📍",
+            "widthStud": 2,
+            "heightStud": 2,
+            "rotation": 0,
+            "objectId": "1785231789985_e9ao7"
+          },
+          "markerId": 11
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229949780_a7hte"
+          },
+          "markerId": null
+        }
+      ],
+      [
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229869348_98xhq"
+          },
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": {
+            "category": "structure",
+            "typeId": "anchor",
+            "label": "Ancora",
+            "emoji": "📍",
+            "widthStud": 2,
+            "heightStud": 2,
+            "rotation": 0,
+            "objectId": "1785229759728_fa09b"
+          },
+          "markerId": 12
+        }
+      ],
+      [
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229869787_juo74"
+          },
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229987459_yessp"
+          },
+          "markerId": null
+        }
+      ],
+      [
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229870428_45v4u"
+          },
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229986963_yjpbf"
+          },
+          "markerId": null
+        }
+      ],
+      [
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229870963_80hua"
+          },
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": {
+            "category": "structure",
+            "typeId": "anchor",
+            "label": "Ancora",
+            "emoji": "📍",
+            "widthStud": 2,
+            "heightStud": 2,
+            "rotation": 0,
+            "objectId": "1785230090928_kvgzh"
+          },
+          "markerId": 14
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": {
+            "category": "structure",
+            "typeId": "anchor",
+            "label": "Ancora",
+            "emoji": "📍",
+            "widthStud": 2,
+            "heightStud": 2,
+            "rotation": 0,
+            "objectId": "1785230129336_oeb59"
+          },
+          "markerId": 15
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229986484_c80fp"
+          },
+          "markerId": null
+        }
+      ],
+      [
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229871459_705aa"
+          },
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229986019_06kzc"
+          },
+          "markerId": null
+        }
+      ],
+      [
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229872132_4vuny"
+          },
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229985571_kr4wq"
+          },
+          "markerId": null
+        }
+      ],
+      [
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229873427_1jxt3"
+          },
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229985091_ue4vo"
+          },
+          "markerId": null
+        }
+      ],
+      [
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229873971_8a6n0"
+          },
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229984611_l6i1f"
+          },
+          "markerId": null
+        }
+      ],
+      [
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229874492_1t4qg"
+          },
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": {
+            "category": "structure",
+            "typeId": "anchor",
+            "label": "Ancora",
+            "emoji": "📍",
+            "widthStud": 2,
+            "heightStud": 2,
+            "rotation": 0,
+            "objectId": "1785231809497_zei48"
+          },
+          "markerId": 16
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": {
+            "category": "structure",
+            "typeId": "anchor",
+            "label": "Ancora",
+            "emoji": "📍",
+            "widthStud": 2,
+            "heightStud": 2,
+            "rotation": 0,
+            "objectId": "1785231918785_1b81t"
+          },
+          "markerId": 13
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229984163_k3ubq"
+          },
+          "markerId": null
+        }
+      ],
+      [
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229875067_4pqz0"
+          },
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229983747_0sbne"
+          },
+          "markerId": null
+        }
+      ],
+      [
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229876299_5tga8"
+          },
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229983307_sl1j4"
+          },
+          "markerId": null
+        }
+      ],
+      [
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229876780_tktpe"
+          },
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229982883_go6fg"
+          },
+          "markerId": null
+        }
+      ],
+      [
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229877275_z85lc"
+          },
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229982443_suz4b"
+          },
+          "markerId": null
+        }
+      ],
+      [
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229878011_m8jr7"
+          },
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229979563_gg4g0"
+          },
+          "markerId": null
+        }
+      ],
+      [
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229878875_tekia"
+          },
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": null,
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229979123_2jp5q"
+          },
+          "markerId": null
+        }
+      ],
+      [
+        {
+          "type": "floor",
+          "details": {
+            "category": "structure",
+            "typeId": "anchor",
+            "label": "Ancora",
+            "emoji": "📍",
+            "widthStud": 2,
+            "heightStud": 2,
+            "rotation": 0,
+            "objectId": "1785229557630_hfrcj"
+          },
+          "markerId": 145
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229421827_slb4h"
+          },
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229422251_8qz6h"
+          },
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229422667_xutss"
+          },
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229423035_gnwyt"
+          },
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229423435_mk9wm"
+          },
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229423803_lkkv5"
+          },
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229424155_gllx4"
+          },
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229424523_o0qy6"
+          },
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229424923_4yjxk"
+          },
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229425403_j1cqo"
+          },
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229425891_apwut"
+          },
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229426347_3yu63"
+          },
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229426923_eb97v"
+          },
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229427499_uus7d"
+          },
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229428003_43iya"
+          },
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": {
+            "category": "structure",
+            "typeId": "anchor",
+            "label": "Ancora",
+            "emoji": "📍",
+            "widthStud": 2,
+            "heightStud": 2,
+            "rotation": 0,
+            "objectId": "1785229562662_x9kx4"
+          },
+          "markerId": 74
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229428875_30gax"
+          },
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229429291_3v26v"
+          },
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229429699_3guin"
+          },
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229430059_1mr3n"
+          },
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229430459_5w10s"
+          },
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229430907_0x48i"
+          },
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229431355_hgh4a"
+          },
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229431779_ydr97"
+          },
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229432387_7s59i"
+          },
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229433259_02qmu"
+          },
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229434419_oqael"
+          },
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229434971_0fuw2"
+          },
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229435563_2mt4q"
+          },
+          "markerId": null
+        },
+        {
+          "type": "wall",
+          "details": {
+            "category": "structure",
+            "typeId": "wall",
+            "label": "Muro",
+            "emoji": "🧱",
+            "widthStud": 1,
+            "heightStud": 1,
+            "rotation": 0,
+            "objectId": "1785229436787_vklqr"
+          },
+          "markerId": null
+        },
+        {
+          "type": "floor",
+          "details": {
+            "category": "structure",
+            "typeId": "anchor",
+            "label": "Ancora",
+            "emoji": "📍",
+            "widthStud": 2,
+            "heightStud": 2,
+            "rotation": 0,
+            "objectId": "1785229567782_w3qcz"
+          },
+          "markerId": 0
+        }
+      ]
+    ]
+  }
+}
